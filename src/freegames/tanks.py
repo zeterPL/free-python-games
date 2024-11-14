@@ -145,6 +145,7 @@ class Tank:
         }
         for dx, dy in cannonOffsets[angle]:
             drawSquare(tankTurtle, x + dx, y + dy, 2, self.tankColor)
+        drawSquare(tankTurtle, x, y, 3, "red")
 
     def setControls(self):
         onkey(lambda: self.change(vector(0, 0)), self.stoppingControl)
@@ -185,12 +186,21 @@ tank = Tank(40+tankCentralization, 0+tankCentralization, "dark green", controls1
 enemyTank = Tank(-100+tankCentralization, 100+tankCentralization, "slate gray", controls2, "Shift_L")
 
 
+def tanksCollision(tank1, tank2, collisionThreshold=20):
+    distanceBetweenTanks = abs(tank1.position - tank2.position)
+    return distanceBetweenTanks < collisionThreshold
+
+
 def move():
     tankTurtle.clear()
     tank.tankMovement()
     enemyTank.tankMovement()
     tank.move()
     enemyTank.move()
+    w = tanksCollision(tank, enemyTank)
+    if w:
+        print("Tanks collide. Everyone died")
+        return
     update()
     ontimer(move, 100)
 
