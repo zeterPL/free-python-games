@@ -33,6 +33,7 @@ tiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
 ]
 
+
 def squareMap(x, y, squareColor):
     """Draw square using path at (x, y)."""
     path.color("black")
@@ -76,6 +77,22 @@ def square(x, y, size, fillColor, circuitColor=None):
     up()
 
 
+# def offset(point):
+#     """Return offset of point in tiles."""
+#     x = (floor(point.x, 20) + 200) / 20
+#     y = (180 - floor(point.y, 20)) / 20
+#     index = int(x + y * 20)
+#     return index
+#
+#
+# def valid(point):
+#     """Return True if point is valid in tiles."""
+#     index = offset(point)
+#     if tiles[index] in [2, 4]:
+#         return False
+#     return point.x % 20 == 0 or point.y % 20 == 0
+
+
 class Tank:
     def __init__(self, x, y):
         self.position = vector(x, y)
@@ -89,12 +106,13 @@ class Tank:
             self.direction = angle
 
     def move(self):
+        # if valid(self.position + self.speed):
         self.position.move(self.speed)
         self.drawTank()
 
     def drawTank(self):
-        x = self.position.x + 10
-        y = self.position.y + 10
+        x = self.position.x#+2
+        y = self.position.y#+2
         angle = self.direction
         # Obrót o 0 stopni (czołg skierowany do przodu)
         if angle == 0:
@@ -152,6 +170,7 @@ class Tank:
             square(x + 4, y + 12, 4, "green")  # top track
             square(x + 8, y + 12, 4, "green")  # top track
             square(x + 12, y + 12, 4, "green")  # top track
+        # square(x, y, 1, "red")
 
 
 setup(420, 420, 500, 100)
@@ -160,6 +179,7 @@ tracer(False)
 
 
 tank = Tank(40, 0)
+
 
 def move():
     clear()
