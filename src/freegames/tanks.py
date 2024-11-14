@@ -58,7 +58,7 @@ def drawBoard():
         if tile > 0:
             x = (index % 20) * 20 - 200
             y = 180 - (index // 20) * 20
-            tileColor = "yellow" if tile == 1 else "blue" if tile == 2 else "green" if tile == 3 else "gray" if tile == 4 else "orange"
+            tileColor = "light goldenrod" if tile == 1 else "navy" if tile == 2 else "forest green" if tile == 3 else "snow2" if tile == 4 else "dark orange"
             drawSquare(mapTurtle, x, y, squareColor=tileColor)
 
 
@@ -83,13 +83,17 @@ def valid(point):
 
 
 class Tank:
-    def __init__(self, x, y):
+    def __init__(self, x, y, tankColor, controls, stoppingControl):
         self.position = vector(x, y)
         self.speed = vector(0, 0)
         self.direction = 0  # 0 - forward, 90 - right, 180 - backward, 270 - left
+        self.tankColor = tankColor
+        self.controls = controls
+        self.stoppingControl = stoppingControl
+        self.setControls()
+        self.keysPressed = {key: False for key in controls}
 
     def change(self, tankSpeedDirection, angle=None):
-        # print(f"Otzymano {tankSpeedDirection.x} {tankSpeedDirection.y} i kat {angle}. Mam z wczesniej x:{self.speed.x} y:{self.speed.y}")
         offsets = {
             90: vector(5, 0),  # prawo
             180: vector(0, -5),  # dół
@@ -120,7 +124,7 @@ class Tank:
         x = self.position.x
         y = self.position.y
         angle = self.direction
-        """Rysuje gasienice"""
+        """Draw tracks."""
         trackOffsets = {
             0: [(0, 0), (0, 4), (0, 8), (0, 12), (12, 0), (12, 4), (12, 8), (12, 12)],
             90: [(0, 0), (4, 0), (8, 0), (12, 0), (0, 12), (4, 12), (8, 12), (12, 12)],
@@ -128,11 +132,11 @@ class Tank:
             270: [(0, 0), (4, 0), (8, 0), (12, 0), (0, 12), (4, 12), (8, 12), (12, 12)]
         }
         for dx, dy in trackOffsets[angle]:
-            drawSquare(tankTurtle, x + dx, y + dy, 4, "green")
-        """Rysuje kadłub czołgu."""
+            drawSquare(tankTurtle, x + dx, y + dy, 4, self.tankColor)
+        """Draw hull."""
         hullOffsets = {0: (4, 1), 90: (1, 4), 180: (4, 7), 270: (7, 4)}
-        drawSquare(tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8, "green")
-        """Rysuje lufę czołgu."""
+        drawSquare(tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8, self.tankColor)
+        """Draw cannon."""
         cannonOffsets = {
             0: [(7, 9), (7, 11), (7, 13)],
             90: [(9, 7), (11, 7), (13, 7)],
@@ -140,47 +144,53 @@ class Tank:
             270: [(5, 7), (3, 7), (1, 7)]
         }
         for dx, dy in cannonOffsets[angle]:
-            drawSquare(tankTurtle, x + dx, y + dy, 2, "green")
+            drawSquare(tankTurtle, x + dx, y + dy, 2, self.tankColor)
+
+    def setControls(self):
+        onkey(lambda: self.change(vector(0, 0)), self.stoppingControl)
+        for key, (tankSpeed, angle) in self.controls.items():
+            onkey(lambda k=key: self.keyPressHandler(k), key)
+
+    def keyPressHandler(self, key):
+        self.keysPressed[key] = True
+
+    def tankMovement(self):
+        for key, (tankSpeed, angle) in self.controls.items():
+            if self.keysPressed[key]:
+                if self.change(tankSpeed, angle) != -1:
+                    for k in self.keysPressed:
+                        self.keysPressed[k] = False
+                break
 
 
 setup(420, 420, 500, 100)
 hideturtle()
 tracer(False)
+listen()
 
-
-tank = Tank(40+tankCentralization, 0+tankCentralization)
-
-movementDict = {
+controls1 = {
     "Up": (vector(0, 5), 0),
     "Down": (vector(0, -5), 180),
     "Left": (vector(-5, 0), 270),
     "Right": (vector(5, 0), 90)
 }
-keysPressed = {key: False for key in movementDict}
+controls2 = {
+    "w": (vector(0, 5), 0),
+    "s": (vector(0, -5), 180),
+    "a": (vector(-5, 0), 270),
+    "d": (vector(5, 0), 90)
+}
 
-listen()
-onkey(lambda: tank.change(vector(0, 0)), "space")
-onkey(lambda: keyPressHandler("Up"), "Up")
-onkey(lambda: keyPressHandler("Down"), "Down")
-onkey(lambda: keyPressHandler("Left"), "Left")
-onkey(lambda: keyPressHandler("Right"), "Right")
-
-
-def keyPressHandler(key):
-    keysPressed[key] = True
+tank = Tank(40+tankCentralization, 0+tankCentralization, "dark green", controls1, "Control_R")
+enemyTank = Tank(-100+tankCentralization, 100+tankCentralization, "slate gray", controls2, "Shift_L")
 
 
 def move():
     tankTurtle.clear()
-
-    for key, (tankSpeed, angle) in movementDict.items():
-        if keysPressed[key]:
-            if tank.change(tankSpeed, angle) != -1:
-                for k in keysPressed:
-                    keysPressed[k] = False
-            break
-
+    tank.tankMovement()
+    enemyTank.tankMovement()
     tank.move()
+    enemyTank.move()
     update()
     ontimer(move, 100)
 
