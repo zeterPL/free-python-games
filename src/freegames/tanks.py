@@ -85,32 +85,17 @@ def offset(point):
     return index
 
 
-tankCentralization = 2  # minimal shift to make tank stay in the center of the title
+tankCentralization = 2  # minimal shift of tank to make tank stay in the center of the title
 
 
 def valid(point):
     """Return True if point is valid in tiles."""
-
-    # oA = offset(point)
-    # print(f"A offset = {oA}  tiles value = {tiles[oA]}")
-    # oL = offset(point + vector(-20, 0))
-    # print(f"L offset = {oL}  tiles value = {tiles[oL]}")
-    # oR = offset(point + vector(20, 0))
-    # print(f"R offset = {oR}  tiles value = {tiles[oR]}")
-    # oU = offset(point + vector(0, 20))
-    # print(f"U offset = {oU}  tiles value = {tiles[oU]}")
-    # oD = offset(point + vector(0, -20))
-    # print(f"D offset = {oD}  tiles value = {tiles[oD]}")
-
     index = offset(point)
     if tiles[index] in [0, 2, 4]:
         return False
-
     index = offset(point + 19 - tankCentralization)
-
     if tiles[index] in [0, 2, 4]:
         return False
-
     return point.x % 20 == tankCentralization or point.y % 20 == tankCentralization
 
 
@@ -121,7 +106,20 @@ class Tank:
         self.direction = 0  # 0 - forward, 90 - right, 180 - backward, 270 - left
 
     def change(self, tankSpeedDirection, angle=None):
-        if (angle == 90 and valid(self.position + vector(25, 0))) or (angle == 180 and valid(self.position + vector(0, -25))) or (angle == 270 and valid(self.position + vector(-25, 0))) or (angle == 0 and valid(self.position + vector(0, 25))):
+        if self.speed.x == 0 and self.speed.y == 0 and angle is not None:
+            self.direction = angle  # if tank was stopped before then he can turn in any direction
+
+        if tankSpeedDirection.x == 0 and tankSpeedDirection.y == 0:
+            self.speed = tankSpeedDirection  # stop tank
+
+        offsets = {
+            90: vector(5, 0),  # prawo
+            180: vector(0, -5),  # dół
+            270: vector(-5, 0),  # lewo
+            0: vector(0, 5)  # góra
+        }
+
+        if angle in offsets and valid(self.position + offsets[angle]):
             self.speed = tankSpeedDirection
             self.direction = angle
 
@@ -190,7 +188,6 @@ class Tank:
             square(x + 4, y + 12, 4, "green")  # top track
             square(x + 8, y + 12, 4, "green")  # top track
             square(x + 12, y + 12, 4, "green")  # top track
-        square(x, y, 1, "red")
 
 
 setup(420, 420, 500, 100)
