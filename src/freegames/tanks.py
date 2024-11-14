@@ -149,14 +149,20 @@ tracer(False)
 
 tank = Tank(40+tankCentralization, 0+tankCentralization)
 
-keysPressed = {"Up": False, "Down": False, "Left": False, "Right": False}
+movementDict = {
+    "Up": (vector(0, 5), 0),
+    "Down": (vector(0, -5), 180),
+    "Left": (vector(-5, 0), 270),
+    "Right": (vector(5, 0), 90)
+}
+keysPressed = {key: False for key in movementDict}
 
 listen()
 onkey(lambda: tank.change(vector(0, 0)), 'space')
-onkeypress(lambda: keyPressHandler("Up"), "Up")
-onkeypress(lambda: keyPressHandler("Down"), "Down")
-onkeypress(lambda: keyPressHandler("Left"), "Left")
-onkeypress(lambda: keyPressHandler("Right"), "Right")
+onkey(lambda: keyPressHandler("Up"), "Up")
+onkey(lambda: keyPressHandler("Down"), "Down")
+onkey(lambda: keyPressHandler("Left"), "Left")
+onkey(lambda: keyPressHandler("Right"), "Right")
 
 
 def keyPressHandler(key):
@@ -166,30 +172,7 @@ def keyPressHandler(key):
 def move():
     tankTurtle.clear()
 
-    # if keysPressed["Up"]:
-    #     if tank.change(vector(0, 5), 0) == 0:
-    #         for key in keysPressed:
-    #             keysPressed[key] = False
-    # if keysPressed["Down"]:
-    #     if tank.change(vector(0, -5), 180) == 0:
-    #         for key in keysPressed:
-    #             keysPressed[key] = False
-    # if keysPressed["Left"]:
-    #     if tank.change(vector(-5, 0), 270) == 0:
-    #         for key in keysPressed:
-    #             keysPressed[key] = False
-    # if keysPressed["Right"]:
-    #     if tank.change(vector(5, 0), 90) == 0:
-    #         for key in keysPressed:
-    #             keysPressed[key] = False
-
-    movementMap = {
-        "Up": (vector(0, 5), 0),
-        "Down": (vector(0, -5), 180),
-        "Left": (vector(-5, 0), 270),
-        "Right": (vector(5, 0), 90)
-    }
-    for key, (tankSpeed, angle) in movementMap.items():
+    for key, (tankSpeed, angle) in movementDict.items():
         if keysPressed[key]:
             if tank.change(tankSpeed, angle) == 0:
                 for k in keysPressed:
