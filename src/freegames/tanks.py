@@ -89,15 +89,7 @@ class Tank:
         self.direction = 0  # 0 - forward, 90 - right, 180 - backward, 270 - left
 
     def change(self, tankSpeedDirection, angle=None):
-        if self.speed.x == 0 and self.speed.y == 0 and angle is not None:
-            self.direction = angle  # if tank was stopped before then he can turn in any direction
-            self.speed = tankSpeedDirection
-            return 2
-
-        if tankSpeedDirection.x == 0 and tankSpeedDirection.y == 0:
-            self.speed = tankSpeedDirection  # stop tank
-            return 1
-
+        # print(f"Otzymano {tankSpeedDirection.x} {tankSpeedDirection.y} i kat {angle}. Mam z wczesniej x:{self.speed.x} y:{self.speed.y}")
         offsets = {
             90: vector(5, 0),  # prawo
             180: vector(0, -5),  # dół
@@ -108,6 +100,15 @@ class Tank:
             self.speed = tankSpeedDirection
             self.direction = angle
             return 0
+        # stop tank
+        if tankSpeedDirection.x == 0 and tankSpeedDirection.y == 0:
+            self.speed = tankSpeedDirection
+            return 1
+        # if tank was stopped before then he can turn in any direction
+        if self.speed.x == 0 and self.speed.y == 0 and angle is not None:
+            self.direction = angle
+            return 2
+        # if tank move in wrong direction, where he can't go
         return -1
 
     def move(self):
@@ -158,7 +159,7 @@ movementDict = {
 keysPressed = {key: False for key in movementDict}
 
 listen()
-onkey(lambda: tank.change(vector(0, 0)), 'space')
+onkey(lambda: tank.change(vector(0, 0)), "space")
 onkey(lambda: keyPressHandler("Up"), "Up")
 onkey(lambda: keyPressHandler("Down"), "Down")
 onkey(lambda: keyPressHandler("Left"), "Left")
@@ -174,7 +175,7 @@ def move():
 
     for key, (tankSpeed, angle) in movementDict.items():
         if keysPressed[key]:
-            if tank.change(tankSpeed, angle) == 0:
+            if tank.change(tankSpeed, angle) != -1:
                 for k in keysPressed:
                     keysPressed[k] = False
             break
