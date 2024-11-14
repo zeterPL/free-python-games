@@ -91,9 +91,12 @@ class Tank:
     def change(self, tankSpeedDirection, angle=None):
         if self.speed.x == 0 and self.speed.y == 0 and angle is not None:
             self.direction = angle  # if tank was stopped before then he can turn in any direction
+            self.speed = tankSpeedDirection
+            return 2
 
         if tankSpeedDirection.x == 0 and tankSpeedDirection.y == 0:
             self.speed = tankSpeedDirection  # stop tank
+            return 1
 
         offsets = {
             90: vector(5, 0),  # prawo
@@ -104,6 +107,8 @@ class Tank:
         if angle in offsets and valid(self.position + offsets[angle]):
             self.speed = tankSpeedDirection
             self.direction = angle
+            return 0
+        return -1
 
     def move(self):
         if valid(self.position + self.speed):
@@ -124,14 +129,8 @@ class Tank:
         for dx, dy in trackOffsets[angle]:
             drawSquare(tankTurtle, x + dx, y + dy, 4, "green")
         """Rysuje kadłub czołgu."""
-        if angle == 0:
-            drawSquare(tankTurtle, x + 4, y + 1, 8, "green")
-        elif angle == 90:
-            drawSquare(tankTurtle, x + 1, y + 4, 8, "green")
-        elif angle == 180:
-            drawSquare(tankTurtle, x + 4, y + 7, 8, "green")
-        elif angle == 270:
-            drawSquare(tankTurtle, x + 7, y + 4, 8, "green")
+        hullOffsets = {0: (4, 1), 90: (1, 4), 180: (4, 7), 270: (7, 4)}
+        drawSquare(tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8, "green")
         """Rysuje lufę czołgu."""
         cannonOffsets = {
             0: [(7, 9), (7, 11), (7, 13)],
@@ -150,20 +149,57 @@ tracer(False)
 
 tank = Tank(40+tankCentralization, 0+tankCentralization)
 
+keysPressed = {"Up": False, "Down": False, "Left": False, "Right": False}
+
+listen()
+onkey(lambda: tank.change(vector(0, 0)), 'space')
+onkeypress(lambda: keyPressHandler("Up"), "Up")
+onkeypress(lambda: keyPressHandler("Down"), "Down")
+onkeypress(lambda: keyPressHandler("Left"), "Left")
+onkeypress(lambda: keyPressHandler("Right"), "Right")
+
+
+def keyPressHandler(key):
+    keysPressed[key] = True
+
 
 def move():
     tankTurtle.clear()
+
+    # if keysPressed["Up"]:
+    #     if tank.change(vector(0, 5), 0) == 0:
+    #         for key in keysPressed:
+    #             keysPressed[key] = False
+    # if keysPressed["Down"]:
+    #     if tank.change(vector(0, -5), 180) == 0:
+    #         for key in keysPressed:
+    #             keysPressed[key] = False
+    # if keysPressed["Left"]:
+    #     if tank.change(vector(-5, 0), 270) == 0:
+    #         for key in keysPressed:
+    #             keysPressed[key] = False
+    # if keysPressed["Right"]:
+    #     if tank.change(vector(5, 0), 90) == 0:
+    #         for key in keysPressed:
+    #             keysPressed[key] = False
+
+    movementMap = {
+        "Up": (vector(0, 5), 0),
+        "Down": (vector(0, -5), 180),
+        "Left": (vector(-5, 0), 270),
+        "Right": (vector(5, 0), 90)
+    }
+    for key, (tankSpeed, angle) in movementMap.items():
+        if keysPressed[key]:
+            if tank.change(tankSpeed, angle) == 0:
+                for k in keysPressed:
+                    keysPressed[k] = False
+            break
+
     tank.move()
     update()
     ontimer(move, 100)
 
-
-listen()
-onkey(lambda: tank.change(vector(0, 0)), 'space')
-onkey(lambda: tank.change(vector(5, 0), 90), 'Right')
-onkey(lambda: tank.change(vector(-5, 0), 270), 'Left')
-onkey(lambda: tank.change(vector(0, 5), 0), 'Up')
-onkey(lambda: tank.change(vector(0, -5), 180), 'Down')
 
 drawBoard()
 move()
