@@ -1,7 +1,8 @@
 from turtle import *
 from freegames import floor, vector
 
-path = Turtle(visible=False)
+mapTurtle = Turtle(visible=False)
+tankTurtle = Turtle(visible=False)
 """
 0 - no tile
 1 - road
@@ -34,18 +35,19 @@ tiles = [
 ]
 
 
-def squareMap(x, y, squareColor):
+def square(turtleObject, x, y, size=20, squareColor=None, circuitColor=None):
     """Draw square using path at (x, y)."""
-    path.color("black")
-    path.fillcolor(squareColor)
-    path.up()
-    path.goto(x, y)
-    path.down()
-    path.begin_fill()
+    if circuitColor:
+        turtleObject.color(circuitColor)
+    turtleObject.fillcolor(squareColor)
+    turtleObject.up()
+    turtleObject.goto(x, y)
+    turtleObject.down()
+    turtleObject.begin_fill()
     for count in range(4):
-        path.forward(20)
-        path.left(90)
-    path.end_fill()
+        turtleObject.forward(size)
+        turtleObject.left(90)
+    turtleObject.end_fill()
 
 
 def world():
@@ -57,28 +59,10 @@ def world():
             x = (index % 20) * 20 - 200
             y = 180 - (index // 20) * 20
             tileColor = "yellow" if tile == 1 else "blue" if tile == 2 else "green" if tile == 3 else "gray" if tile == 4 else "orange"
-            squareMap(x, y, tileColor)
-
-
-def square(x, y, size, fillColor, circuitColor=None):
-    up()
-    goto(x, y)
-    down()
-    if circuitColor:
-        pencolor(circuitColor)
-    else:
-        pencolor(fillColor)
-    fillcolor(fillColor)
-    begin_fill()
-    for count in range(4):
-        forward(size)
-        left(90)
-    end_fill()
-    up()
+            square(mapTurtle, x, y, squareColor=tileColor)
 
 
 def offset(point):
-    """Return offset of point in tiles."""
     x = (floor(point.x, 20) + 200) / 20
     y = (180 - floor(point.y, 20)) / 20
     index = int(x + y * 20)
@@ -89,7 +73,6 @@ tankCentralization = 2  # minimal shift of tank to make tank stay in the center 
 
 
 def valid(point):
-    """Return True if point is valid in tiles."""
     index = offset(point)
     if tiles[index] in [0, 2, 4]:
         return False
@@ -118,7 +101,6 @@ class Tank:
             270: vector(-5, 0),  # lewo
             0: vector(0, 5)  # góra
         }
-
         if angle in offsets and valid(self.position + offsets[angle]):
             self.speed = tankSpeedDirection
             self.direction = angle
@@ -134,60 +116,60 @@ class Tank:
         angle = self.direction
         # Obrót o 0 stopni (czołg skierowany do przodu)
         if angle == 0:
-            square(x, y, 4, "green")       # left track
-            square(x, y+4, 4, "green")     # left track
-            square(x, y+8, 4, "green")     # left track
-            square(x, y+12, 4, "green")    # left track
-            square(x+4, y+1, 8, "green")   # tank hull
-            square(x+7, y+9, 2, "green")   # tank canon
-            square(x+7, y+11, 2, "green")  # tank canon
-            square(x+7, y+13, 2, "green")  # tank canon
-            square(x+12, y, 4, "green")     # right track
-            square(x+12, y+4, 4, "green")   # right track
-            square(x+12, y+8, 4, "green")   # right track
-            square(x+12, y+12, 4, "green")  # right track
+            square(tankTurtle, x, y+4, 4, "green")     # left track
+            square(tankTurtle, x, y+8, 4, "green")     # left track
+            square(tankTurtle, x, y+12, 4, "green")    # left track
+            square(tankTurtle, x+4, y+1, 8, "green")   # tank hull
+            square(tankTurtle, x+7, y+9, 2, "green")   # tank canon
+            square(tankTurtle, x+7, y+11, 2, "green")  # tank canon
+            square(tankTurtle, x+7, y+13, 2, "green")  # tank canon
+            square(tankTurtle, x+12, y, 4, "green")     # right track
+            square(tankTurtle, x+12, y+4, 4, "green")   # right track
+            square(tankTurtle, x+12, y+8, 4, "green")   # right track
+            square(tankTurtle, x+12, y+12, 4, "green")  # right track
+            square(tankTurtle, x, y, 4, "green")       # left track
         # Obrót o 90 stopni w prawo (czołg skierowany w prawo)
         elif angle == 90:
-            square(x, y, 4, "green")       # bottom track
-            square(x+4, y, 4, "green")     # bottom track
-            square(x+8, y, 4, "green")     # bottom track
-            square(x+12, y, 4, "green")    # bottom track
-            square(x+1, y+4, 8, "green")   # tank hull
-            square(x+9, y+7, 2, "green")   # tank canon
-            square(x+11, y+7, 2, "green")  # tank canon
-            square(x+13, y+7, 2, "green")  # tank canon
-            square(x, y+12, 4, "green")     # top track
-            square(x+4, y+12, 4, "green")   # top track
-            square(x+8, y+12, 4, "green")   # top track
-            square(x+12, y+12, 4, "green")  # top track
+            square(tankTurtle, x+4, y, 4, "green")     # bottom track
+            square(tankTurtle, x+8, y, 4, "green")     # bottom track
+            square(tankTurtle, x+12, y, 4, "green")    # bottom track
+            square(tankTurtle, x+1, y+4, 8, "green")   # tank hull
+            square(tankTurtle, x+9, y+7, 2, "green")   # tank canon
+            square(tankTurtle, x+11, y+7, 2, "green")  # tank canon
+            square(tankTurtle, x+13, y+7, 2, "green")  # tank canon
+            square(tankTurtle, x, y+12, 4, "green")     # top track
+            square(tankTurtle, x+4, y+12, 4, "green")   # top track
+            square(tankTurtle, x+8, y+12, 4, "green")   # top track
+            square(tankTurtle, x+12, y+12, 4, "green")  # top track
+            square(tankTurtle, x, y, 4, "green")       # bottom track
         # Obrót o 180 stopni (czołg skierowany do tyłu)
         elif angle == 180:
-            square(x, y, 4, "green")  # left track
-            square(x, y+4, 4, "green")  # left track
-            square(x, y+8, 4, "green")  # left track
-            square(x, y+12, 4, "green")  # left track
-            square(x+4, y+7, 8, "green")  # tank hull
-            square(x+7, y+5, 2, "green")   # tank canon
-            square(x+7, y+3, 2, "green")  # tank canon
-            square(x+7, y+1, 2, "green")  # tank canon
-            square(x + 12, y, 4, "green")  # right track
-            square(x + 12, y + 4, 4, "green")  # right track
-            square(x + 12, y + 8, 4, "green")  # right track
-            square(x + 12, y + 12, 4, "green")  # right track
+            square(tankTurtle, x, y+4, 4, "green")  # left track
+            square(tankTurtle, x, y+8, 4, "green")  # left track
+            square(tankTurtle, x, y+12, 4, "green")  # left track
+            square(tankTurtle, x+4, y+7, 8, "green")  # tank hull
+            square(tankTurtle, x+7, y+5, 2, "green")   # tank canon
+            square(tankTurtle, x+7, y+3, 2, "green")  # tank canon
+            square(tankTurtle, x+7, y+1, 2, "green")  # tank canon
+            square(tankTurtle, x + 12, y, 4, "green")  # right track
+            square(tankTurtle, x + 12, y + 4, 4, "green")  # right track
+            square(tankTurtle, x + 12, y + 8, 4, "green")  # right track
+            square(tankTurtle, x + 12, y + 12, 4, "green")  # right track
+            square(tankTurtle, x, y, 4, "green")  # left track
         # Obrót o 270 stopni (czołg skierowany w lewo)
         elif angle == 270:
-            square(x, y, 4, "green")  # bottom track
-            square(x + 4, y, 4, "green")  # bottom track
-            square(x + 8, y, 4, "green")  # bottom track
-            square(x + 12, y, 4, "green")  # bottom track
-            square(x + 7, y + 4, 8, "green")  # tank hull
-            square(x + 5, y + 7, 2, "green")  # tank canon
-            square(x + 3, y + 7, 2, "green")  # tank canon
-            square(x + 1, y + 7, 2, "green")  # tank canon
-            square(x, y+12, 4, "green")  # top track
-            square(x + 4, y + 12, 4, "green")  # top track
-            square(x + 8, y + 12, 4, "green")  # top track
-            square(x + 12, y + 12, 4, "green")  # top track
+            square(tankTurtle, x + 4, y, 4, "green")  # bottom track
+            square(tankTurtle, x + 8, y, 4, "green")  # bottom track
+            square(tankTurtle, x + 12, y, 4, "green")  # bottom track
+            square(tankTurtle, x + 7, y + 4, 8, "green")  # tank hull
+            square(tankTurtle, x + 5, y + 7, 2, "green")  # tank canon
+            square(tankTurtle, x + 3, y + 7, 2, "green")  # tank canon
+            square(tankTurtle, x + 1, y + 7, 2, "green")  # tank canon
+            square(tankTurtle, x, y+12, 4, "green")  # top track
+            square(tankTurtle, x + 4, y + 12, 4, "green")  # top track
+            square(tankTurtle, x + 8, y + 12, 4, "green")  # top track
+            square(tankTurtle, x + 12, y + 12, 4, "green")  # top track
+            square(tankTurtle, x, y, 4, "green")  # bottom track
 
 
 setup(420, 420, 500, 100)
@@ -199,7 +181,7 @@ tank = Tank(40+tankCentralization, 0+tankCentralization)
 
 
 def move():
-    clear()
+    tankTurtle.clear()
     tank.move()
     update()
     ontimer(move, 100)
