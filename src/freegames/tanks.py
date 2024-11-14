@@ -77,20 +77,38 @@ def square(x, y, size, fillColor, circuitColor=None):
     up()
 
 
-# def offset(point):
-#     """Return offset of point in tiles."""
-#     x = (floor(point.x, 20) + 200) / 20
-#     y = (180 - floor(point.y, 20)) / 20
-#     index = int(x + y * 20)
-#     return index
-#
-#
-# def valid(point):
-#     """Return True if point is valid in tiles."""
-#     index = offset(point)
-#     if tiles[index] in [2, 4]:
-#         return False
-#     return point.x % 20 == 0 or point.y % 20 == 0
+def offset(point):
+    """Return offset of point in tiles."""
+    x = (floor(point.x, 20) + 200) / 20
+    y = (180 - floor(point.y, 20)) / 20
+    index = int(x + y * 20)
+    return index
+
+
+def valid(point):
+    """Return True if point is valid in tiles."""
+
+    # oA = offset(point)
+    # print(f"A offset = {oA}  tiles value = {tiles[oA]}")
+    # oL = offset(point + vector(-20, 0))
+    # print(f"L offset = {oL}  tiles value = {tiles[oL]}")
+    # oR = offset(point + vector(20, 0))
+    # print(f"R offset = {oR}  tiles value = {tiles[oR]}")
+    # oU = offset(point + vector(0, 20))
+    # print(f"U offset = {oU}  tiles value = {tiles[oU]}")
+    # oD = offset(point + vector(0, -20))
+    # print(f"D offset = {oD}  tiles value = {tiles[oD]}")
+
+    index = offset(point)
+    if tiles[index] in [0, 2, 4]:
+        return False
+
+    index = offset(point + 19)
+
+    if tiles[index] in [0, 2, 4]:
+        return False
+
+    return point.x % 20 == 0 or point.y % 20 == 0
 
 
 class Tank:
@@ -99,15 +117,14 @@ class Tank:
         self.speed = vector(0, 0)
         self.direction = 0  # 0 - forward, 90 - right, 180 - backward, 270 - left
 
-    def change(self, x, y, angle=None):
-        self.speed.x = x
-        self.speed.y = y
-        if angle is not None:
+    def change(self, tankSpeedDirection, angle=None):
+        if (angle == 90 and valid(self.position + vector(25, 0))) or (angle == 180 and valid(self.position + vector(0, -25))) or (angle == 270 and valid(self.position + vector(-25, 0))) or (angle == 0 and valid(self.position + vector(0, 25))):
+            self.speed = tankSpeedDirection
             self.direction = angle
 
     def move(self):
-        # if valid(self.position + self.speed):
-        self.position.move(self.speed)
+        if valid(self.position + self.speed):
+            self.position.move(self.speed)
         self.drawTank()
 
     def drawTank(self):
@@ -170,7 +187,7 @@ class Tank:
             square(x + 4, y + 12, 4, "green")  # top track
             square(x + 8, y + 12, 4, "green")  # top track
             square(x + 12, y + 12, 4, "green")  # top track
-        # square(x, y, 1, "red")
+        square(x, y, 1, "red")
 
 
 setup(420, 420, 500, 100)
@@ -189,11 +206,11 @@ def move():
 
 
 listen()
-onkey(lambda: tank.change(0, 0), 'space')
-onkey(lambda: tank.change(5, 0, 90), 'Right')
-onkey(lambda: tank.change(-5, 0, 270), 'Left')
-onkey(lambda: tank.change(0, 5, 0), 'Up')
-onkey(lambda: tank.change(0, -5, 180), 'Down')
+onkey(lambda: tank.change(vector(0, 0)), 'space')
+onkey(lambda: tank.change(vector(5, 0), 90), 'Right')
+onkey(lambda: tank.change(vector(-5, 0), 270), 'Left')
+onkey(lambda: tank.change(vector(0, 5), 0), 'Up')
+onkey(lambda: tank.change(vector(0, -5), 180), 'Down')
 
 world()
 move()
