@@ -85,6 +85,9 @@ def offset(point):
     return index
 
 
+tankCentralization = 2  # minimal shift to make tank stay in the center of the title
+
+
 def valid(point):
     """Return True if point is valid in tiles."""
 
@@ -103,12 +106,12 @@ def valid(point):
     if tiles[index] in [0, 2, 4]:
         return False
 
-    index = offset(point + 19)
+    index = offset(point + 19 - tankCentralization)
 
     if tiles[index] in [0, 2, 4]:
         return False
 
-    return point.x % 20 == 0 or point.y % 20 == 0
+    return point.x % 20 == tankCentralization or point.y % 20 == tankCentralization
 
 
 class Tank:
@@ -128,8 +131,8 @@ class Tank:
         self.drawTank()
 
     def drawTank(self):
-        x = self.position.x#+2
-        y = self.position.y#+2
+        x = self.position.x
+        y = self.position.y
         angle = self.direction
         # Obrót o 0 stopni (czołg skierowany do przodu)
         if angle == 0:
@@ -195,7 +198,7 @@ hideturtle()
 tracer(False)
 
 
-tank = Tank(40, 0)
+tank = Tank(40+tankCentralization, 0+tankCentralization)
 
 
 def move():
