@@ -92,11 +92,9 @@ class Tank:
         if self.speed.x == 0 and self.speed.y == 0 and angle is not None:
             self.direction = angle  # if tank was stopped before then he can turn in any direction
             self.speed = tankSpeedDirection
-            return 2
 
         if tankSpeedDirection.x == 0 and tankSpeedDirection.y == 0:
             self.speed = tankSpeedDirection  # stop tank
-            return 1
 
         offsets = {
             90: vector(5, 0),  # prawo
@@ -107,8 +105,6 @@ class Tank:
         if angle in offsets and valid(self.position + offsets[angle]):
             self.speed = tankSpeedDirection
             self.direction = angle
-            return 0
-        return -1
 
     def move(self):
         if valid(self.position + self.speed):
@@ -149,35 +145,37 @@ tracer(False)
 
 tank = Tank(40+tankCentralization, 0+tankCentralization)
 
-movementDict = {
-    "Up": (vector(0, 5), 0),
-    "Down": (vector(0, -5), 180),
-    "Left": (vector(-5, 0), 270),
-    "Right": (vector(5, 0), 90)
-}
-keysPressed = {key: False for key in movementDict}
-
+keysPressed = {"Up": False, "Down": False, "Left": False, "Right": False}
 listen()
 onkey(lambda: tank.change(vector(0, 0)), 'space')
-onkey(lambda: keyPressHandler("Up"), "Up")
-onkey(lambda: keyPressHandler("Down"), "Down")
-onkey(lambda: keyPressHandler("Left"), "Left")
-onkey(lambda: keyPressHandler("Right"), "Right")
+onkeypress(lambda: keyPressHandler("Up"), "Up")
+onkeypress(lambda: keyPressHandler("Down"), "Down")
+onkeypress(lambda: keyPressHandler("Left"), "Left")
+onkeypress(lambda: keyPressHandler("Right"), "Right")
+onkeyrelease(lambda: keyReleaseHandler("Up"), "Up")
+onkeyrelease(lambda: keyReleaseHandler("Down"), "Down")
+onkeyrelease(lambda: keyReleaseHandler("Left"), "Left")
+onkeyrelease(lambda: keyReleaseHandler("Right"), "Right")
 
 
 def keyPressHandler(key):
     keysPressed[key] = True
 
 
+def keyReleaseHandler(key):
+    keysPressed[key] = False
+
+
 def move():
     tankTurtle.clear()
-
-    for key, (tankSpeed, angle) in movementDict.items():
-        if keysPressed[key]:
-            if tank.change(tankSpeed, angle) == 0:
-                for k in keysPressed:
-                    keysPressed[k] = False
-            break
+    if keysPressed["Up"]:
+        tank.change(vector(0, 5), 0)
+    elif keysPressed["Down"]:
+        tank.change(vector(0, -5), 180)
+    elif keysPressed["Left"]:
+        tank.change(vector(-5, 0), 270)
+    elif keysPressed["Right"]:
+        tank.change(vector(5, 0), 90)
 
     tank.move()
     update()
