@@ -35,8 +35,8 @@ tiles = [
 ]
 
 
-def square(turtleObject, x, y, size=20, squareColor=None, circuitColor=None):
-    """Draw square using path at (x, y)."""
+def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor=None):
+    """Draw drawSquare using path at (x, y)."""
     if circuitColor:
         turtleObject.color(circuitColor)
     turtleObject.fillcolor(squareColor)
@@ -50,7 +50,7 @@ def square(turtleObject, x, y, size=20, squareColor=None, circuitColor=None):
     turtleObject.end_fill()
 
 
-def world():
+def drawBoard():
     """Draw map using path."""
     bgcolor('black')
     for index in range(len(tiles)):
@@ -59,7 +59,7 @@ def world():
             x = (index % 20) * 20 - 200
             y = 180 - (index // 20) * 20
             tileColor = "yellow" if tile == 1 else "blue" if tile == 2 else "green" if tile == 3 else "gray" if tile == 4 else "orange"
-            square(mapTurtle, x, y, squareColor=tileColor)
+            drawSquare(mapTurtle, x, y, squareColor=tileColor)
 
 
 def offset(point):
@@ -114,62 +114,33 @@ class Tank:
         x = self.position.x
         y = self.position.y
         angle = self.direction
-        # Obrót o 0 stopni (czołg skierowany do przodu)
+        """Rysuje gasienice"""
+        trackOffsets = {
+            0: [(0, 0), (0, 4), (0, 8), (0, 12), (12, 0), (12, 4), (12, 8), (12, 12)],
+            90: [(0, 0), (4, 0), (8, 0), (12, 0), (0, 12), (4, 12), (8, 12), (12, 12)],
+            180: [(0, 0), (0, 4), (0, 8), (0, 12), (12, 0), (12, 4), (12, 8), (12, 12)],
+            270: [(0, 0), (4, 0), (8, 0), (12, 0), (0, 12), (4, 12), (8, 12), (12, 12)]
+        }
+        for dx, dy in trackOffsets[angle]:
+            drawSquare(tankTurtle, x + dx, y + dy, 4, "green")
+        """Rysuje kadłub czołgu."""
         if angle == 0:
-            square(tankTurtle, x, y+4, 4, "green")     # left track
-            square(tankTurtle, x, y+8, 4, "green")     # left track
-            square(tankTurtle, x, y+12, 4, "green")    # left track
-            square(tankTurtle, x+4, y+1, 8, "green")   # tank hull
-            square(tankTurtle, x+7, y+9, 2, "green")   # tank canon
-            square(tankTurtle, x+7, y+11, 2, "green")  # tank canon
-            square(tankTurtle, x+7, y+13, 2, "green")  # tank canon
-            square(tankTurtle, x+12, y, 4, "green")     # right track
-            square(tankTurtle, x+12, y+4, 4, "green")   # right track
-            square(tankTurtle, x+12, y+8, 4, "green")   # right track
-            square(tankTurtle, x+12, y+12, 4, "green")  # right track
-            square(tankTurtle, x, y, 4, "green")       # left track
-        # Obrót o 90 stopni w prawo (czołg skierowany w prawo)
+            drawSquare(tankTurtle, x + 4, y + 1, 8, "green")
         elif angle == 90:
-            square(tankTurtle, x+4, y, 4, "green")     # bottom track
-            square(tankTurtle, x+8, y, 4, "green")     # bottom track
-            square(tankTurtle, x+12, y, 4, "green")    # bottom track
-            square(tankTurtle, x+1, y+4, 8, "green")   # tank hull
-            square(tankTurtle, x+9, y+7, 2, "green")   # tank canon
-            square(tankTurtle, x+11, y+7, 2, "green")  # tank canon
-            square(tankTurtle, x+13, y+7, 2, "green")  # tank canon
-            square(tankTurtle, x, y+12, 4, "green")     # top track
-            square(tankTurtle, x+4, y+12, 4, "green")   # top track
-            square(tankTurtle, x+8, y+12, 4, "green")   # top track
-            square(tankTurtle, x+12, y+12, 4, "green")  # top track
-            square(tankTurtle, x, y, 4, "green")       # bottom track
-        # Obrót o 180 stopni (czołg skierowany do tyłu)
+            drawSquare(tankTurtle, x + 1, y + 4, 8, "green")
         elif angle == 180:
-            square(tankTurtle, x, y+4, 4, "green")  # left track
-            square(tankTurtle, x, y+8, 4, "green")  # left track
-            square(tankTurtle, x, y+12, 4, "green")  # left track
-            square(tankTurtle, x+4, y+7, 8, "green")  # tank hull
-            square(tankTurtle, x+7, y+5, 2, "green")   # tank canon
-            square(tankTurtle, x+7, y+3, 2, "green")  # tank canon
-            square(tankTurtle, x+7, y+1, 2, "green")  # tank canon
-            square(tankTurtle, x + 12, y, 4, "green")  # right track
-            square(tankTurtle, x + 12, y + 4, 4, "green")  # right track
-            square(tankTurtle, x + 12, y + 8, 4, "green")  # right track
-            square(tankTurtle, x + 12, y + 12, 4, "green")  # right track
-            square(tankTurtle, x, y, 4, "green")  # left track
-        # Obrót o 270 stopni (czołg skierowany w lewo)
+            drawSquare(tankTurtle, x + 4, y + 7, 8, "green")
         elif angle == 270:
-            square(tankTurtle, x + 4, y, 4, "green")  # bottom track
-            square(tankTurtle, x + 8, y, 4, "green")  # bottom track
-            square(tankTurtle, x + 12, y, 4, "green")  # bottom track
-            square(tankTurtle, x + 7, y + 4, 8, "green")  # tank hull
-            square(tankTurtle, x + 5, y + 7, 2, "green")  # tank canon
-            square(tankTurtle, x + 3, y + 7, 2, "green")  # tank canon
-            square(tankTurtle, x + 1, y + 7, 2, "green")  # tank canon
-            square(tankTurtle, x, y+12, 4, "green")  # top track
-            square(tankTurtle, x + 4, y + 12, 4, "green")  # top track
-            square(tankTurtle, x + 8, y + 12, 4, "green")  # top track
-            square(tankTurtle, x + 12, y + 12, 4, "green")  # top track
-            square(tankTurtle, x, y, 4, "green")  # bottom track
+            drawSquare(tankTurtle, x + 7, y + 4, 8, "green")
+        """Rysuje lufę czołgu."""
+        cannonOffsets = {
+            0: [(7, 9), (7, 11), (7, 13)],
+            90: [(9, 7), (11, 7), (13, 7)],
+            180: [(7, 5), (7, 3), (7, 1)],
+            270: [(5, 7), (3, 7), (1, 7)]
+        }
+        for dx, dy in cannonOffsets[angle]:
+            drawSquare(tankTurtle, x + dx, y + dy, 2, "green")
 
 
 setup(420, 420, 500, 100)
@@ -194,6 +165,6 @@ onkey(lambda: tank.change(vector(-5, 0), 270), 'Left')
 onkey(lambda: tank.change(vector(0, 5), 0), 'Up')
 onkey(lambda: tank.change(vector(0, -5), 180), 'Down')
 
-world()
+drawBoard()
 move()
 done()
