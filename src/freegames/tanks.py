@@ -83,13 +83,12 @@ def valid(point):
     return point.x % 20 == tankCentralization or point.y % 20 == tankCentralization
 
 
-bullets = []
 class Bullet:
-    def __init__(self, bulletPosition, direction, bulletSpeed=10):
-        print(f"Dane bulletPosition = {bulletPosition.x} {bulletPosition.y} direction = {direction}")
+    def __init__(self, bulletPosition, direction, owner, bulletSpeed=10):
         self.position = vector(bulletPosition.x+7, bulletPosition.y+7)  # plus 7 to make more or less shooting from the middle of the title
         self.direction = direction
         self.bulletSpeed = bulletSpeed
+        self.owner = owner
 
     def move(self):
         bulletOffsets = {
@@ -186,7 +185,7 @@ class Tank:
                 break
 
     def shoot(self):
-        bullet = Bullet(self.position, self.direction)
+        bullet = Bullet(self.position, self.direction, self)
         bullets.append(bullet)
 
 
@@ -208,8 +207,9 @@ controls2 = {
     "d": (vector(5, 0), 90)
 }
 
-tank = Tank(40+tankCentralization, 0+tankCentralization, "dark green", controls1, "Control_R", "Return")
-enemyTank = Tank(-100+tankCentralization, 100+tankCentralization, "slate gray", controls2, "Control_L", "Shift_L")
+firstTank = Tank(40 + tankCentralization, 0 + tankCentralization, "dark green", controls1, "Control_R", "Return")
+secondTank = Tank(-100 + tankCentralization, 100 + tankCentralization, "slate gray", controls2, "Control_L", "Shift_L")
+bullets = []
 
 
 def tanksCollision(tank1, tank2, collisionThreshold=20):
@@ -217,13 +217,21 @@ def tanksCollision(tank1, tank2, collisionThreshold=20):
     return distanceBetweenTanks < collisionThreshold
 
 
+def checkBulletColisionWithTanks(bullet, tanks, collisionThreshold=20):
+    for tank in tanks:
+        if tank != bullet.owner and abs(tank.position - bullet.position) < collisionThreshold:
+            print("Trafiony")
+            return True
+    return False
+
+
 def move():
     tankTurtle.clear()
-    tank.tankMovement()
-    enemyTank.tankMovement()
-    tank.move()
-    enemyTank.move()
-    w = tanksCollision(tank, enemyTank)
+    firstTank.tankMovement()
+    secondTank.tankMovement()
+    firstTank.move()
+    secondTank.move()
+    w = tanksCollision(firstTank, secondTank)
     if w:
         print("Tanks collide. Everyone died")
         return
@@ -231,6 +239,7 @@ def move():
     bulletTurtle.clear()
     for bullet in bullets:
         bullet.move()
+        checkBulletColisionWithTanks(bullet, [firstTank, secondTank])
 
     update()
     ontimer(move, 100)
