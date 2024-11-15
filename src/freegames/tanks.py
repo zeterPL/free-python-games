@@ -3,6 +3,7 @@ from freegames import floor, vector
 
 mapTurtle = Turtle(visible=False)
 tankTurtle = Turtle(visible=False)
+bulletTurtle = Turtle(visible=False)
 """
 0 - no tile
 1 - road
@@ -82,16 +83,36 @@ def valid(point):
     return point.x % 20 == tankCentralization or point.y % 20 == tankCentralization
 
 
+bullets = []
+class Bullet:
+    def __init__(self, bulletPosition, direction, bulletSpeed=10):
+        print(f"Dane bulletPosition = {bulletPosition.x} {bulletPosition.y} direction = {direction}")
+        self.position = vector(bulletPosition.x+7, bulletPosition.y+7)  # plus 7 to make more or less shooting from the middle of the title
+        self.direction = direction
+        self.bulletSpeed = bulletSpeed
+
+    def move(self):
+        bulletOffsets = {
+            90: vector(self.bulletSpeed, 0),
+            180: vector(0, -self.bulletSpeed),
+            270: vector(-self.bulletSpeed, 0),
+            0: vector(0, self.bulletSpeed)
+        }
+        self.position.move(bulletOffsets[self.direction])
+        drawSquare(bulletTurtle, self.position.x, self.position.y, 3, "red")
+
+
 class Tank:
-    def __init__(self, x, y, tankColor, controls, stoppingControl):
+    def __init__(self, x, y, tankColor, moveControls, stoppingControl, shootingControl):
         self.position = vector(x, y)
         self.speed = vector(0, 0)
         self.direction = 0  # 0 - forward, 90 - right, 180 - backward, 270 - left
         self.tankColor = tankColor
-        self.controls = controls
+        self.moveControls = moveControls
         self.stoppingControl = stoppingControl
+        self.shootingControl = shootingControl
         self.setControls()
-        self.keysPressed = {key: False for key in controls}
+        self.keysPressed = {key: False for key in moveControls}
 
     def change(self, tankSpeedDirection, angle=None):
         offsets = {
@@ -148,20 +169,25 @@ class Tank:
         drawSquare(tankTurtle, x, y, 3, "red")
 
     def setControls(self):
+        onkey(lambda: self.shoot(), self.shootingControl)
         onkey(lambda: self.change(vector(0, 0)), self.stoppingControl)
-        for key, (tankSpeed, angle) in self.controls.items():
+        for key, (tankSpeed, angle) in self.moveControls.items():
             onkey(lambda k=key: self.keyPressHandler(k), key)
 
     def keyPressHandler(self, key):
         self.keysPressed[key] = True
 
     def tankMovement(self):
-        for key, (tankSpeed, angle) in self.controls.items():
+        for key, (tankSpeed, angle) in self.moveControls.items():
             if self.keysPressed[key]:
                 if self.change(tankSpeed, angle) != -1:
                     for k in self.keysPressed:
                         self.keysPressed[k] = False
                 break
+
+    def shoot(self):
+        bullet = Bullet(self.position, self.direction)
+        bullets.append(bullet)
 
 
 setup(420, 420, 500, 100)
@@ -182,8 +208,8 @@ controls2 = {
     "d": (vector(5, 0), 90)
 }
 
-tank = Tank(40+tankCentralization, 0+tankCentralization, "dark green", controls1, "Control_R")
-enemyTank = Tank(-100+tankCentralization, 100+tankCentralization, "slate gray", controls2, "Shift_L")
+tank = Tank(40+tankCentralization, 0+tankCentralization, "dark green", controls1, "Control_R", "Return")
+enemyTank = Tank(-100+tankCentralization, 100+tankCentralization, "slate gray", controls2, "Control_L", "Shift_L")
 
 
 def tanksCollision(tank1, tank2, collisionThreshold=20):
@@ -201,6 +227,11 @@ def move():
     if w:
         print("Tanks collide. Everyone died")
         return
+
+    bulletTurtle.clear()
+    for bullet in bullets:
+        bullet.move()
+
     update()
     ontimer(move, 100)
 
