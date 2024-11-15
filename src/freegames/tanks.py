@@ -74,11 +74,12 @@ tankCentralization = 2  # minimal shift of tank to make tank stay in the center 
 
 
 def valid(point):
+    blockingTiles = [0, 2, 4, 5]
     index = offset(point)
-    if tiles[index] in [0, 2, 4]:
+    if tiles[index] in blockingTiles:
         return False
     index = offset(point + 19 - tankCentralization)
-    if tiles[index] in [0, 2, 4]:
+    if tiles[index] in blockingTiles:
         return False
     return point.x % 20 == tankCentralization or point.y % 20 == tankCentralization
 
@@ -217,9 +218,9 @@ def tanksCollision(tank1, tank2, collisionThreshold=20):
     return distanceBetweenTanks < collisionThreshold
 
 
-def checkBulletColisionWithTanks(bullet, tanks, collisionThreshold=20):
+def checkBulletCollisionWithTanks(bullet, tanks, tankSize=16):
     for tank in tanks:
-        if tank != bullet.owner and abs(tank.position - bullet.position) < collisionThreshold:
+        if tank != bullet.owner and tank.position.x <= bullet.position.x <= tank.position.x+tankSize and tank.position.y <= bullet.position.y <= tank.position.y+tankSize:
             print("Trafiony")
             return True
     return False
@@ -239,7 +240,7 @@ def move():
     bulletTurtle.clear()
     for bullet in bullets:
         bullet.move()
-        checkBulletColisionWithTanks(bullet, [firstTank, secondTank])
+        checkBulletCollisionWithTanks(bullet, [firstTank, secondTank])
 
     update()
     ontimer(move, 100)
