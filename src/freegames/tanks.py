@@ -9,8 +9,10 @@ bulletTurtle = Turtle(visible=False)
 1 - road
 2 - river
 3 - forest
-4 - industructible block
+4 - indestructible block
 5 - destructible block
+6 - destroyed destructible block
+7 - road with mine
 """
 tiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -19,7 +21,7 @@ tiles = [
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
+    4, 1, 1, 1, 1, 1, 1, 1, 1, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
@@ -51,16 +53,24 @@ def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor=None)
     turtleObject.end_fill()
 
 
+def getTilePosition(index):
+    x = (index % 20) * 20 - 200
+    y = 180 - (index // 20) * 20
+    return x, y
+
+
 def drawBoard():
     """Draw map using path."""
     bgcolor('black')
     for index in range(len(tiles)):
         tile = tiles[index]
         if tile > 0:
-            x = (index % 20) * 20 - 200
-            y = 180 - (index // 20) * 20
-            tileColor = "light goldenrod" if tile == 1 else "navy" if tile == 2 else "forest green" if tile == 3 else "snow2" if tile == 4 else "dark orange"
+            x, y = getTilePosition(index)
+            tileColor = "light goldenrod" if tile in [1, 7] else "navy" if tile == 2 else "forest green" if tile == 3 else "snow2" if tile == 4 else "dark orange"
             drawSquare(mapTurtle, x, y, squareColor=tileColor)
+            if tile == 7:  # drawing mines
+                goto(x+10, y+10)
+                dot(10, "black")
 
 
 def offset(point):
@@ -139,7 +149,12 @@ class Tank:
     def move(self):
         if valid(self.position + self.speed):
             self.position.move(self.speed)
-        self.drawTank()
+        if tiles[offset(self.position)] == 7:
+            print("Tank destroyed by mine.")
+        elif tiles[offset(self.position)] == 3:
+            pass  # tank hide in forest
+        else:
+            self.drawTank()
 
     def drawTank(self):
         x = self.position.x
@@ -218,11 +233,19 @@ def tanksCollision(tank1, tank2, collisionThreshold=20):
     return distanceBetweenTanks < collisionThreshold
 
 
-def checkBulletCollisionWithTanks(bullet, tanks, tankSize=16):
+def checkBulletCollision(bullet, tanks, tankSize=16):
     for tank in tanks:
         if tank != bullet.owner and tank.position.x <= bullet.position.x <= tank.position.x+tankSize and tank.position.y <= bullet.position.y <= tank.position.y+tankSize:
-            print("Trafiony")
+            print("Tank hit.")
             return True
+    bulletTileValue = tiles[offset(bullet.position)]
+    if bulletTileValue in [4, 5]:
+        print("Bullet hit obstacle.")
+        if bulletTileValue == 5:
+            tiles[offset(bullet.position)] = 6
+            x, y = getTilePosition(offset(bullet.position))
+            drawSquare(mapTurtle, x, y, squareColor="tan1")
+        return True
     return False
 
 
@@ -240,7 +263,8 @@ def move():
     bulletTurtle.clear()
     for bullet in bullets:
         bullet.move()
-        checkBulletCollisionWithTanks(bullet, [firstTank, secondTank])
+        if checkBulletCollision(bullet, [firstTank, secondTank]):
+            bullets.remove(bullet)
 
     update()
     ontimer(move, 100)
