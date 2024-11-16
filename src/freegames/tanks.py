@@ -35,6 +35,7 @@ tiles = [
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
 ]
+tileColors = {1: "light goldenrod", 2: "navy", 3: "forest green", 4: "snow2", 5: "dark orange", 6: "tan1", 7: "light goldenrod"}
 
 
 def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="black"):
@@ -42,7 +43,7 @@ def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="blac
     if circuitColor:
         turtleObject.color(circuitColor)
     else:
-        turtleObject.color(squareColor)
+        turtleObject.color("")
     turtleObject.fillcolor(squareColor)
     turtleObject.up()
     turtleObject.goto(x, y)
@@ -67,7 +68,7 @@ def drawBoard():
         tile = tiles[index]
         if tile > 0:
             x, y = getTilePosition(index)
-            tileColor = "light goldenrod" if tile in [1, 7] else "navy" if tile == 2 else "forest green" if tile == 3 else "snow2" if tile == 4 else "dark orange"
+            tileColor = tileColors[tile]
             drawSquare(mapTurtle, x, y, squareColor=tileColor)
             if tile == 7:  # drawing mines
                 goto(x+10, y+10)
@@ -160,10 +161,10 @@ class Tank:
 
     def change(self, tankSpeedDirection, angle=None):
         offsets = {
-            90: vector(5, 0),  # prawo
-            180: vector(0, -5),  # dół
-            270: vector(-5, 0),  # lewo
-            0: vector(0, 5)  # góra
+            90: vector(5, 0),  # right
+            180: vector(0, -5),  # down
+            270: vector(-5, 0),  # left
+            0: vector(0, 5)  # up
         }
         if angle in offsets and valid(self.position + offsets[angle]):
             self.speed = tankSpeedDirection
@@ -185,13 +186,15 @@ class Tank:
         if valid(self.position + self.speed):
             self.position.move(self.speed)
         if tiles[offset(self.position)] == 7:
+            x, y = getTilePosition(offset(self.position))
+            drawSquare(mapTurtle, x, y, squareColor=tileColors[7])
             stopGame([self], "tank ran over a mine")
         elif tiles[offset(self.position)] == 3:
             pass  # tank hide in forest
         else:
             self.drawTank()
 
-    def drawTank(self):
+    def drawTank(self, tankDestroyed=False):
         x, y = self.position
         angle = self.direction
         """Draw tracks."""
@@ -201,11 +204,19 @@ class Tank:
             180: [(0, 0), (0, 4), (0, 8), (0, 12), (12, 0), (12, 4), (12, 8), (12, 12)],
             270: [(0, 0), (4, 0), (8, 0), (12, 0), (0, 12), (4, 12), (8, 12), (12, 12)]
         }
-        for dx, dy in trackOffsets[angle]:
+        for index, (dx, dy) in enumerate(trackOffsets[angle]):
             drawSquare(tankTurtle, x + dx, y + dy, 4, self.tankColor)
+            if tankDestroyed and index in [0, 3, 5, 6]:
+                drawSquare(tankTurtle, x + dx, y + dy, 4, "black")
         """Draw hull."""
         hullOffsets = {0: (4, 1), 90: (1, 4), 180: (4, 7), 270: (7, 4)}
         drawSquare(tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8, self.tankColor)
+        if tankDestroyed:
+            drawSquare(tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2, "black", "")
+            drawSquare(tankTurtle, x + hullOffsets[angle][0]+4, y + hullOffsets[angle][1], 2, "black", "")
+            drawSquare(tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1]+4, 2, "black", "")
+            drawSquare(tankTurtle, x + hullOffsets[angle][0]+2, y + hullOffsets[angle][1]+2, 2, "black", "")
+            drawSquare(tankTurtle, x + hullOffsets[angle][0]+6, y + hullOffsets[angle][1]+4, 2, "black", "")
         """Draw cannon."""
         cannonOffsets = {
             0: [(7, 9), (7, 11), (7, 13)],
@@ -215,6 +226,8 @@ class Tank:
         }
         for dx, dy in cannonOffsets[angle]:
             drawSquare(tankTurtle, x + dx, y + dy, 2, self.tankColor)
+        if tankDestroyed:
+            drawSquare(tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2, "black")
 
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
@@ -266,7 +279,7 @@ def stopGame(tanks, reason):
     global gameRunning
     gameRunning = False
     for tank in tanks:
-        # tank.drawDestroyedTank()
+        tank.drawTank(True)
         print(f"Game ended, tank {tank.tankId} lost because: {reason}.")
 
 
@@ -288,7 +301,7 @@ def checkBulletCollision(bullet, tanks, tankSize=16):
         if bulletTileValue == 5:
             tiles[offset(bullet.position)] = 6
             x, y = getTilePosition(offset(bullet.position))
-            drawSquare(mapTurtle, x, y, squareColor="tan1")
+            drawSquare(mapTurtle, x, y, squareColor=tileColors[6])
         return True
     return False
 
