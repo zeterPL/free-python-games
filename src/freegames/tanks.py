@@ -3,7 +3,6 @@ from freegames import floor, vector
 
 mapTurtle = Turtle(visible=False)
 tankTurtle = Turtle(visible=False)
-bulletTurtle = Turtle(visible=False)
 """
 0 - no tile
 1 - road
@@ -102,8 +101,10 @@ class Bullet:
         self.direction = direction
         self.bulletSpeed = bulletSpeed
         self.owner = owner
+        self.bulletTurtle = Turtle(visible=False)
 
     def move(self):
+        self.bulletTurtle.clear()
         bulletOffsets = {
             90: vector(self.bulletSpeed, 0),
             180: vector(0, -self.bulletSpeed),
@@ -111,7 +112,37 @@ class Bullet:
             0: vector(0, self.bulletSpeed)
         }
         self.position.move(bulletOffsets[self.direction])
-        drawSquare(bulletTurtle, self.position.x, self.position.y, 3, "red")
+        drawSquare(self.bulletTurtle, self.position.x, self.position.y, 3, "red")
+
+    # def drawExplosion(self, x, y, explosionIteration=0):
+    #     # there should draw destroyed tank, explosion etc.
+    #     explosionColors = ["red", "orange", "yellow"]  # Colors for the fire effect
+    #     drawSquare(self.explosionTurtle, x, y, 2, "yellow")
+    #     drawSquare(self.explosionTurtle, x + 2, y, 2, "red", "")
+    #     drawSquare(self.explosionTurtle, x - 2, y, 2, "red", "")
+    #     drawSquare(self.explosionTurtle, x, y + 2, 2, "red", "")
+    #     drawSquare(self.explosionTurtle, x, y - 2, 2, "red", "")
+    #     if explosionIteration <= 3:
+    #         ontimer(lambda: self.drawExplosion(x + 2, y, explosionIteration + 1), 100)
+    #         ontimer(lambda: self.drawExplosion(x - 2, y, explosionIteration + 1), 100)
+    #         ontimer(lambda: self.drawExplosion(x, y + 2, explosionIteration + 1), 100)
+    #         ontimer(lambda: self.drawExplosion(x, y - 2, explosionIteration + 1), 100)
+    #     # ontimer(self.explosionTurtle.clear(), explosionIteration*100)
+
+    def drawExplosion(self, x, y, explosionIteration=0, maxIterations=3):
+        explosionColors = ["red", "yellow", "orange"]
+        explosionColor = explosionColors[explosionIteration % len(explosionColors)]
+        offsets = [
+            (0, 0),
+            (2, 2), (-2, -2), (-2, 2), (2, -2),
+            (4, 0), (0, 4), (-4, 0), (0, -4),
+        ]
+        for dx, dy in offsets:
+            drawSquare(self.bulletTurtle, x + dx * (explosionIteration + 1), y + dy * (explosionIteration + 1), 2 + explosionIteration, explosionColor)
+        if explosionIteration < maxIterations:
+            ontimer(lambda: self.drawExplosion(x, y, explosionIteration + 1, maxIterations), 150)
+        else:
+            ontimer(self.bulletTurtle.clear, 200)
 
 
 class Tank:
@@ -184,11 +215,6 @@ class Tank:
         }
         for dx, dy in cannonOffsets[angle]:
             drawSquare(tankTurtle, x + dx, y + dy, 2, self.tankColor)
-        self.drawDestroyedTank()
-
-    def drawDestroyedTank(self):
-        x, y = self.position
-        # there should draw destroyed tank, explosion etc.
 
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
@@ -240,25 +266,25 @@ def stopGame(tanks, reason):
     global gameRunning
     gameRunning = False
     for tank in tanks:
-        tank.drawDestroyedTank()
+        # tank.drawDestroyedTank()
         print(f"Game ended, tank {tank.tankId} lost because: {reason}.")
 
 
 def tanksCollision(tank1, tank2, collisionThreshold=20):
     distanceBetweenTanks = abs(tank1.position - tank2.position)
     if distanceBetweenTanks < collisionThreshold:
-        stopGame([tank1, tank2], "tanks collision. Everyone died.")
+        stopGame([tank1, tank2], "tanks collision. Everyone died")
 
 
 def checkBulletCollision(bullet, tanks, tankSize=16):
     for tank in tanks:
         if tank != bullet.owner and tank.position.x <= bullet.position.x <= tank.position.x+tankSize and tank.position.y <= bullet.position.y <= tank.position.y+tankSize:
-            print()
-            stopGame([tank], f"tank were shot down by {bullet.owner.tankId}.")
+            bullet.drawExplosion(bullet.position.x, bullet.position.y)
+            stopGame([tank], f"tank were shot down by {bullet.owner.tankId}")
             return True
     bulletTileValue = tiles[offset(bullet.position)]
     if bulletTileValue in [4, 5]:
-        print("Bullet hit obstacle.")
+        bullet.bulletTurtle.clear()
         if bulletTileValue == 5:
             tiles[offset(bullet.position)] = 6
             x, y = getTilePosition(offset(bullet.position))
@@ -268,8 +294,6 @@ def checkBulletCollision(bullet, tanks, tankSize=16):
 
 
 def move():
-    if not gameRunning:
-        return
     tankTurtle.clear()
     firstTank.tankMovement()
     secondTank.tankMovement()
@@ -277,14 +301,14 @@ def move():
     secondTank.move()
     tanksCollision(firstTank, secondTank)
 
-    bulletTurtle.clear()
     for bullet in bullets:
         bullet.move()
         if checkBulletCollision(bullet, [firstTank, secondTank]):
             bullets.remove(bullet)
 
     update()
-    ontimer(move, 100)
+    if gameRunning:
+        ontimer(move, 100)
 
 
 drawBoard()
