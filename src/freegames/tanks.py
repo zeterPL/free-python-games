@@ -1,18 +1,19 @@
 from turtle import *
 from freegames import floor, vector
+from enum import Enum
 
-mapTurtle = Turtle(visible=False)
-tankTurtle = Turtle(visible=False)
-"""
-0 - no tile
-1 - road
-2 - river
-3 - forest
-4 - indestructible block
-5 - destructible block
-6 - destroyed destructible block
-7 - road with mine
-"""
+
+class Tile(Enum):
+    NO_TILE = 0
+    ROAD = 1
+    RIVER = 2
+    FOREST = 3
+    INDESTRUCTIBLE_BLOCK = 4
+    DESTRUCTIBLE_BLOCK = 5
+    DESTROYED_DESTRUCTIBLE_BLOCK = 6
+    MINE = 7
+
+
 tiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
@@ -35,7 +36,17 @@ tiles = [
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
 ]
-tileColors = {1: "light goldenrod", 2: "navy", 3: "forest green", 4: "snow2", 5: "dark orange", 6: "tan1", 7: "light goldenrod"}
+tileColors = {
+    Tile.ROAD.value: "light goldenrod",
+    Tile.RIVER.value: "navy",
+    Tile.FOREST.value: "forest green",
+    Tile.INDESTRUCTIBLE_BLOCK.value: "snow2",
+    Tile.DESTRUCTIBLE_BLOCK.value: "dark orange",
+    Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value: "tan1",
+    Tile.MINE.value: "light goldenrod",
+}
+mapTurtle = Turtle(visible=False)
+tankTurtle = Turtle(visible=False)
 
 
 def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="black"):
@@ -70,7 +81,7 @@ def drawBoard():
             x, y = getTilePosition(index)
             tileColor = tileColors[tile]
             drawSquare(mapTurtle, x, y, squareColor=tileColor)
-            if tile == 7:  # drawing mines
+            if tile == Tile.MINE.value:  # drawing mines
                 goto(x+10, y+10)
                 dot(10, "black")
 
@@ -82,11 +93,11 @@ def offset(point):
     return index
 
 
-tankCentralization = 2  # minimal shift of tank to make tank stay in the center of the title
+tankCentralization = 2  # minimal shift of tanks to make tanks stay in the center of the title
 
 
 def valid(point):
-    blockingTiles = [0, 2, 4, 5]
+    blockingTiles = [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]
     index = offset(point)
     if tiles[index] in blockingTiles:
         return False
@@ -114,21 +125,6 @@ class Bullet:
         }
         self.position.move(bulletOffsets[self.direction])
         drawSquare(self.bulletTurtle, self.position.x, self.position.y, 3, "red")
-
-    # def drawExplosion(self, x, y, explosionIteration=0):
-    #     # there should draw destroyed tank, explosion etc.
-    #     explosionColors = ["red", "orange", "yellow"]  # Colors for the fire effect
-    #     drawSquare(self.explosionTurtle, x, y, 2, "yellow")
-    #     drawSquare(self.explosionTurtle, x + 2, y, 2, "red", "")
-    #     drawSquare(self.explosionTurtle, x - 2, y, 2, "red", "")
-    #     drawSquare(self.explosionTurtle, x, y + 2, 2, "red", "")
-    #     drawSquare(self.explosionTurtle, x, y - 2, 2, "red", "")
-    #     if explosionIteration <= 3:
-    #         ontimer(lambda: self.drawExplosion(x + 2, y, explosionIteration + 1), 100)
-    #         ontimer(lambda: self.drawExplosion(x - 2, y, explosionIteration + 1), 100)
-    #         ontimer(lambda: self.drawExplosion(x, y + 2, explosionIteration + 1), 100)
-    #         ontimer(lambda: self.drawExplosion(x, y - 2, explosionIteration + 1), 100)
-    #     # ontimer(self.explosionTurtle.clear(), explosionIteration*100)
 
     def drawExplosion(self, x, y, explosionIteration=0, maxIterations=3):
         explosionColors = ["red", "yellow", "orange"]
@@ -182,14 +178,14 @@ class Tank:
         return -1
 
     def move(self):
-        global gameRunning
-        if valid(self.position + self.speed):
-            self.position.move(self.speed)
-        if tiles[offset(self.position)] == 7:
+        if not valid(self.position + self.speed):
+            return
+        self.position.move(self.speed)
+        if tiles[offset(self.position)] == Tile.MINE.value:
             x, y = getTilePosition(offset(self.position))
-            drawSquare(mapTurtle, x, y, squareColor=tileColors[7])
+            drawSquare(mapTurtle, x, y, squareColor=tileColors[Tile.MINE.value])
             stopGame([self], "tank ran over a mine")
-        elif tiles[offset(self.position)] == 3:
+        elif tiles[offset(self.position)] == Tile.FOREST.value:
             pass  # tank hide in forest
         else:
             self.drawTank()
@@ -296,12 +292,12 @@ def checkBulletCollision(bullet, tanks, tankSize=16):
             stopGame([tank], f"tank were shot down by {bullet.owner.tankId}")
             return True
     bulletTileValue = tiles[offset(bullet.position)]
-    if bulletTileValue in [4, 5]:
+    if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
         bullet.bulletTurtle.clear()
-        if bulletTileValue == 5:
-            tiles[offset(bullet.position)] = 6
+        if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
+            tiles[offset(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
             x, y = getTilePosition(offset(bullet.position))
-            drawSquare(mapTurtle, x, y, squareColor=tileColors[6])
+            drawSquare(mapTurtle, x, y, squareColor=tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
         return True
     return False
 
