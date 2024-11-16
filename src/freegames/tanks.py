@@ -38,10 +38,12 @@ tiles = [
 ]
 
 
-def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor=None):
+def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="black"):
     """Draw drawSquare using path at (x, y)."""
     if circuitColor:
         turtleObject.color(circuitColor)
+    else:
+        turtleObject.color(squareColor)
     turtleObject.fillcolor(squareColor)
     turtleObject.up()
     turtleObject.goto(x, y)
@@ -113,11 +115,12 @@ class Bullet:
 
 
 class Tank:
-    def __init__(self, x, y, tankColor, moveControls, stoppingControl, shootingControl):
+    def __init__(self, x, y, tankColor, tankId, moveControls, stoppingControl, shootingControl):
         self.position = vector(x, y)
         self.speed = vector(0, 0)
         self.direction = 0  # 0 - forward, 90 - right, 180 - backward, 270 - left
         self.tankColor = tankColor
+        self.tankId = tankId
         self.moveControls = moveControls
         self.stoppingControl = stoppingControl
         self.shootingControl = shootingControl
@@ -147,18 +150,18 @@ class Tank:
         return -1
 
     def move(self):
+        global gameRunning
         if valid(self.position + self.speed):
             self.position.move(self.speed)
         if tiles[offset(self.position)] == 7:
-            print("Tank destroyed by mine.")
+            stopGame([self], "tank ran over a mine")
         elif tiles[offset(self.position)] == 3:
             pass  # tank hide in forest
         else:
             self.drawTank()
 
     def drawTank(self):
-        x = self.position.x
-        y = self.position.y
+        x, y = self.position
         angle = self.direction
         """Draw tracks."""
         trackOffsets = {
@@ -181,7 +184,11 @@ class Tank:
         }
         for dx, dy in cannonOffsets[angle]:
             drawSquare(tankTurtle, x + dx, y + dy, 2, self.tankColor)
-        drawSquare(tankTurtle, x, y, 3, "red")
+        self.drawDestroyedTank()
+
+    def drawDestroyedTank(self):
+        x, y = self.position
+        # there should draw destroyed tank, explosion etc.
 
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
@@ -223,20 +230,31 @@ controls2 = {
     "d": (vector(5, 0), 90)
 }
 
-firstTank = Tank(40 + tankCentralization, 0 + tankCentralization, "dark green", controls1, "Control_R", "Return")
-secondTank = Tank(-100 + tankCentralization, 100 + tankCentralization, "slate gray", controls2, "Control_L", "Shift_L")
+firstTank = Tank(40 + tankCentralization, 0 + tankCentralization, "dark green", 1, controls1, "Control_R", "Return")
+secondTank = Tank(-100 + tankCentralization, 100 + tankCentralization, "slate gray", 2, controls2, "Control_L", "Shift_L")
 bullets = []
+gameRunning = True
+
+
+def stopGame(tanks, reason):
+    global gameRunning
+    gameRunning = False
+    for tank in tanks:
+        tank.drawDestroyedTank()
+        print(f"Game ended, tank {tank.tankId} lost because: {reason}.")
 
 
 def tanksCollision(tank1, tank2, collisionThreshold=20):
     distanceBetweenTanks = abs(tank1.position - tank2.position)
-    return distanceBetweenTanks < collisionThreshold
+    if distanceBetweenTanks < collisionThreshold:
+        stopGame([tank1, tank2], "tanks collision. Everyone died.")
 
 
 def checkBulletCollision(bullet, tanks, tankSize=16):
     for tank in tanks:
         if tank != bullet.owner and tank.position.x <= bullet.position.x <= tank.position.x+tankSize and tank.position.y <= bullet.position.y <= tank.position.y+tankSize:
-            print("Tank hit.")
+            print()
+            stopGame([tank], f"tank were shot down by {bullet.owner.tankId}.")
             return True
     bulletTileValue = tiles[offset(bullet.position)]
     if bulletTileValue in [4, 5]:
@@ -250,15 +268,14 @@ def checkBulletCollision(bullet, tanks, tankSize=16):
 
 
 def move():
+    if not gameRunning:
+        return
     tankTurtle.clear()
     firstTank.tankMovement()
     secondTank.tankMovement()
     firstTank.move()
     secondTank.move()
-    w = tanksCollision(firstTank, secondTank)
-    if w:
-        print("Tanks collide. Everyone died")
-        return
+    tanksCollision(firstTank, secondTank)
 
     bulletTurtle.clear()
     for bullet in bullets:
