@@ -178,9 +178,8 @@ class Tank:
         return -1
 
     def move(self):
-        if not valid(self.position + self.speed):
-            return
-        self.position.move(self.speed)
+        if valid(self.position + self.speed):
+            self.position.move(self.speed)
         if tiles[offset(self.position)] == Tile.MINE.value:
             x, y = getTilePosition(offset(self.position))
             drawSquare(mapTurtle, x, y, squareColor=tileColors[Tile.MINE.value])
