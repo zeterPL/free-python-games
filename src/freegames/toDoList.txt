@@ -1,0 +1,14 @@
+tanks:
+	do zrobienia:
+	    znisczenie czogu jeśli nie kończy gry to albo czołg znika, albo staje się przeszkodą
+
+	potencjalne:
+		znikajace miny po czasie
+		wczytywanie mapy/ustawien z pliku
+		baza (trzeba chronic)
+		czolgi komputera
+		życia / punktacja
+		bonusy (szybsze pociski, szybsza jazda, pociski ze specalnymi efektami np. rozdzielające się lub samonaprawadzające się jeśli w pobliżu)
+		dzwiek
+		tekstury zamiast rysowania
+		dostep z 2 komputerow
