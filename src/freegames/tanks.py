@@ -47,11 +47,8 @@ tileColors = {
 }
 mapTurtle = Turtle(visible=False)
 tankTurtle = Turtle(visible=False)
+gameOverTurtle = Turtle(visible=False)
 
-gameOverTurtle = Turtle(visible=False)  # Żółw do rysowania komunikatu
-gameOverTurtle.up()
-gameOverTurtle.hideturtle()
-gameOverTurtle.color("red")
 
 def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="black"):
     """Draw drawSquare using path at (x, y)."""
@@ -159,24 +156,14 @@ class Tank:
         self.setControls()
         self.hp = hp
         self.keysPressed = {key: False for key in moveControls}
-
         self.hpTurtle = Turtle(visible=False)
-        self.hpTurtle.up()
-        self.hpTurtle.hideturtle()
-        self.hpTurtle.color("red")
 
-    def drawHP(self):
-        self.hpTurtle.clear()
-        x, y = self.position
-        self.hpTurtle.goto(x + 10, y + 25) 
-        self.hpTurtle.write(f"HP: {self.hp}", align="center", font=("Arial", 10, "bold"))
-
-    def takeDamage(self):
-        self.hp -= 1
-        if self.hp <= 0:
-            stopGame([self], f"tank {self.tankId} został zniszczony")
-        else:
+    def takeDamage(self, reason):
+        if self.hp > 0:
+            self.hp -= 1
             print(f"Tank {self.tankId} HP: {self.hp}")
+            if self.hp == 0:
+                stopGame([self], reason)
 
     def change(self, tankSpeedDirection, angle=None):
         offsets = {
@@ -205,12 +192,21 @@ class Tank:
             self.position.move(self.speed)
         if tiles[offset(self.position)] == Tile.MINE.value:
             x, y = getTilePosition(offset(self.position))
-            drawSquare(mapTurtle, x, y, squareColor=tileColors[Tile.MINE.value])
-            stopGame([self], "tank ran over a mine")
+            tiles[offset(self.position)] = Tile.ROAD.value
+            drawSquare(mapTurtle, x, y, squareColor=tileColors[Tile.ROAD.value])
+            self.takeDamage("tank ran over a mine")
         elif tiles[offset(self.position)] == Tile.FOREST.value:
-            pass  # tank hide in forest
+            self.hpTurtle.clear()  # tank hide in forest
         else:
             self.drawTank()
+
+    def drawHP(self, hpColor="red"):
+        self.hpTurtle.clear()
+        x, y = self.position
+        self.hpTurtle.up()
+        self.hpTurtle.goto(x + 10, y + 25)
+        self.hpTurtle.color(hpColor)
+        self.hpTurtle.write(f"HP: {self.hp}", align="center", font=("Arial", 10, "bold"))
 
     def drawTank(self, tankDestroyed=False):
         x, y = self.position
@@ -246,6 +242,7 @@ class Tank:
             drawSquare(tankTurtle, x + dx, y + dy, 2, self.tankColor)
         if tankDestroyed:
             drawSquare(tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2, "black")
+        self.drawHP()
 
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
@@ -269,9 +266,27 @@ class Tank:
         bullets.append(bullet)
 
 
+def startGame():
+    global firstTank, secondTank, bullets, gameRunning
+
+    bullets = []
+    gameRunning = True
+
+    tankTurtle.clear()
+    mapTurtle.clear()
+    gameOverTurtle.clear()
+
+    firstTank = Tank(40 + tankCentralization, 0 + tankCentralization, "dark green", 1, controls1, "Control_R", "Return")
+    secondTank = Tank(-100 + tankCentralization, 100 + tankCentralization, "slate gray", 2, controls2, "Control_L", "Shift_L")
+
+    drawBoard()
+    move()
+
+
 setup(420, 420, 500, 100)
 hideturtle()
 tracer(False)
+onkey(startGame, "r")
 listen()
 
 controls1 = {
@@ -287,62 +302,44 @@ controls2 = {
     "d": (vector(5, 0), 90)
 }
 
-def startGame():
-    global firstTank, secondTank, bullets, gameRunning
 
-    bullets = [] 
-    gameRunning = True
-
-    tankTurtle.clear()  
-    mapTurtle.clear()  
-    gameOverTurtle.clear()  
-
-    firstTank = Tank(40 + tankCentralization, 0 + tankCentralization, "dark green", 1, controls1, "Control_R", "Return")
-    secondTank = Tank(-100 + tankCentralization, 100 + tankCentralization, "slate gray", 2, controls2, "Control_L", "Shift_L")
-
-    drawBoard()  
-    move()  
-
-def drawModalBackground(x, y, width, height, color="white", border_color="black"):
-    gameOverTurtle.color(border_color)
-    gameOverTurtle.fillcolor(color)
+def drawModalBackground(x, y, modalWidth, modalHeight, backgroundColor="white", borderColor="black"):
+    gameOverTurtle.color(borderColor)
+    gameOverTurtle.fillcolor(backgroundColor)
     gameOverTurtle.penup()
-    gameOverTurtle.goto(x - width / 2, y - height / 2)
+    gameOverTurtle.goto(x - modalWidth / 2, y - modalHeight / 2)
     gameOverTurtle.pendown()
     gameOverTurtle.begin_fill()
     for _ in range(2):
-        gameOverTurtle.forward(width)
+        gameOverTurtle.forward(modalWidth)
         gameOverTurtle.left(90)
-        gameOverTurtle.forward(height)
+        gameOverTurtle.forward(modalHeight)
         gameOverTurtle.left(90)
+
     gameOverTurtle.end_fill()
     gameOverTurtle.penup()
 
-def hideGameElements():
-    tankTurtle.clear()  
-    for bullet in bullets:
-        bullet.bulletTurtle.clear() 
-    firstTank.hpTurtle.clear() 
-    secondTank.hpTurtle.clear()  
 
-def stopGame(tanks, reason):
-    global gameRunning
-    gameRunning = False
+def drawEndMessage(reason):
+    drawModalBackground(0, 0, 350, 120)
 
-    hideGameElements()
-
-    drawModalBackground(0, 0, 300, 150)
-
-    gameOverTurtle.goto(0, 20)
+    gameOverTurtle.goto(0, 0)
     message = f"Game Over!\n{reason}"
     gameOverTurtle.write(message, align="center", font=("Arial", 16, "bold"))
 
     gameOverTurtle.goto(0, -40)
     gameOverTurtle.write("Press 'R' to restart", align="center", font=("Arial", 12, "normal"))
 
-    for tank in tanks:
+
+def stopGame(tanks, reason):
+    global gameRunning
+    gameRunning = False
+
+    for tank in tanks:  # draw destroyed tanks
         tank.drawTank(True)
-        print(f"Game ended, tank {tank.tankId} lost because: {reason}.")
+
+    drawEndMessage(reason)
+
 
 def tanksCollision(tank1, tank2, collisionThreshold=20):
     distanceBetweenTanks = abs(tank1.position - tank2.position)
@@ -354,10 +351,8 @@ def checkBulletCollision(bullet, tanks, tankSize=16):
     for tank in tanks:
         if tank != bullet.owner and tank.position.x <= bullet.position.x <= tank.position.x+tankSize and tank.position.y <= bullet.position.y <= tank.position.y+tankSize:
             bullet.drawExplosion(bullet.position.x, bullet.position.y)
-            tank.takeDamage()
-            #bullets.remove(bullet)
-            #stopGame([tank], f"tank were shot down by {bullet.owner.tankId}")
-            return True
+            tank.takeDamage(f"tank {tank.tankId} was shot down by tank {bullet.owner.tankId}")
+            bullets.remove(bullet)
     bulletTileValue = tiles[offset(bullet.position)]
     if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
         bullet.bulletTurtle.clear()
@@ -365,8 +360,7 @@ def checkBulletCollision(bullet, tanks, tankSize=16):
             tiles[offset(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
             x, y = getTilePosition(offset(bullet.position))
             drawSquare(mapTurtle, x, y, squareColor=tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
-        return True
-    return False
+        bullets.remove(bullet)
 
 
 def move():
@@ -375,27 +369,16 @@ def move():
     secondTank.tankMovement()
     firstTank.move()
     secondTank.move()
-    firstTank.drawHP()
-    secondTank.drawHP()
     tanksCollision(firstTank, secondTank)
 
     for bullet in bullets[:]:
         bullet.move()
-        if checkBulletCollision(bullet, [firstTank, secondTank]):
-            continue
+        checkBulletCollision(bullet, [firstTank, secondTank])
 
     update()
     if gameRunning:
         ontimer(move, 100)
 
-def setupRestart():
-    onkey(startGame, "r")
-    listen()
 
-setup(420, 420, 500, 100)
-hideturtle()
-tracer(False)
-
-setupRestart()  
 startGame()
 done()

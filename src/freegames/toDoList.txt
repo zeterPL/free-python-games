@@ -1,5 +1,6 @@
 tanks:
 	do zrobienia:
+	    eksplozje i znika mina po wybuchu
 	    znisczenie czogu jeśli nie kończy gry to albo czołg znika, albo staje się przeszkodą
 
 	potencjalne:
@@ -10,5 +11,6 @@ tanks:
 		życia / punktacja
 		bonusy (szybsze pociski, szybsza jazda, pociski ze specalnymi efektami np. rozdzielające się lub samonaprawadzające się jeśli w pobliżu)
 		dzwiek
+
 		tekstury zamiast rysowania
 		dostep z 2 komputerow
