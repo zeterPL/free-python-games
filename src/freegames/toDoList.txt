@@ -1,15 +1,15 @@
 tanks:
 	do zrobienia:
-	    eksplozje i znika mina po wybuchu
 	    znisczenie czogu jeśli nie kończy gry to albo czołg znika, albo staje się przeszkodą
 
 	potencjalne:
+	    czas przeladowania pomiedzy strzelaniem
 		znikajace miny po czasie
 		wczytywanie mapy/ustawien z pliku
 		baza (trzeba chronic)
 		czolgi komputera
 		życia / punktacja
-		bonusy (szybsze pociski, szybsza jazda, pociski ze specalnymi efektami np. rozdzielające się lub samonaprawadzające się jeśli w pobliżu)
+		bonusy (szybsze pociski, szybsza jazda, pociski ze specalnymi efektami np. rozdzielające się lub samonaprawadzające się jeśli w pobliżu, dodatkowa aminucja jesli ograniczona ilosc, szybsze strzelanie jesli czas przeladowania)
 		dzwiek
 
 		tekstury zamiast rysowania

@@ -111,7 +111,8 @@ class Game:
         setup(420, 420, 500, 100)
         hideturtle()
         tracer(False)
-        onkey(self.startGame, "r")
+        for key in ["r", "R"]:
+            onkey(self.startGame, key)
         listen()
 
         self.startGame()
@@ -181,6 +182,8 @@ class Game:
         self.gameOverTurtle.write("Press 'R' to restart", align="center", font=("Arial", 12, "normal"))
 
     def startGame(self):
+        if self.gameRunning:  # don't start game if it's already started
+            return
         self.gameRunning = True
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
 
@@ -201,7 +204,7 @@ class Game:
         for tank in tanks:  # draw destroyed tanks
             tank.drawTank(True)
 
-        self.drawEndMessage(reason)
+        ontimer(lambda r=reason: self.drawEndMessage(r), 500)
 
     def tanksCollision(self, tank1, tank2, collisionThreshold=20):
         distanceBetweenTanks = abs(tank1.position - tank2.position)
@@ -214,6 +217,7 @@ class Game:
                 self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
                 tank.takeDamage(f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
                 self.bullets.remove(bullet)
+                bullet.bulletTurtle.clear()
         bulletTileValue = self.tiles[offset(bullet.position)]
         if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
             bullet.bulletTurtle.clear()
@@ -368,6 +372,8 @@ class Tank:
         onkey(lambda: self.change(vector(0, 0)), self.stoppingControl)
         for key, (tankSpeed, angle) in self.moveControls.items():
             onkey(lambda k=key: self.keyPressHandler(k), key)
+            if len(key) == 1 and key.isalpha():
+                onkey(lambda k=key: self.keyPressHandler(k), key.upper())
 
     def keyPressHandler(self, key):
         self.keysPressed[key] = True
