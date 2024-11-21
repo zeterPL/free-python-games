@@ -1,0 +1,11 @@
+Game Instructions:
+Player 1: Movement - Arrow keys, Shooting - Enter.
+Player 2: Movement - WASD keys, Shooting - Shift.
+
+Global controls:
+Pause: P
+Help: H
+Restart: R
+
+The objective of the game is to destroy your opponent.
+Avoid mines and obstacles on the map.

@@ -2,6 +2,13 @@ from turtle import *
 from freegames import floor, vector
 from enum import Enum
 
+def load_file_as_array(filename, errorMessage = "There was a problem loading file content"):
+    try:
+        with open(filename, "r", encoding="utf-8") as file:
+            return file.readlines()
+    except FileNotFoundError:
+        print(f"{errorMessage} File {filename} not found")
+        return [errorMessage]
 
 def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="black"):
     """Draw drawSquare using path at (x, y)."""
@@ -91,14 +98,21 @@ tileColors = {
 
 
 class Game:
-    def __init__(self, dafault_tiles, initialTileColors, map_file=None):
+    def __init__(self, dafault_tiles, initialTileColors, map_file=None, help_file=None):
         self.initialTiles = dafault_tiles
+
         if map_file:
             loaded_tiles = load_map_from_file(map_file)
             if loaded_tiles:
                 self.initialTiles = loaded_tiles
                 print(f"Map successfully loaded from '{map_file}'!")
-        
+
+        if help_file:
+            self.help_content = load_file_as_array(help_file, "There was a problem loading help content.")
+        else: 
+            self.help_content = ["There was a problem loading help content."]
+            print("There was a problem loading help content. File help file id null.")
+     
         self.tiles = list(self.initialTiles)
         self.tileColors = initialTileColors
 
@@ -137,7 +151,10 @@ class Game:
         for key in ["r", "R"]:
             onkey(self.startGame, key)
         for key in ["p", "P"]:
-            onkey(self.togglePause, key)    
+            onkey(self.togglePause, key)   
+        for key in ["h", "H"]:
+            onkey(self.toggleHelpMenu, key)
+ 
         listen()
 
         self.startGame()
@@ -153,6 +170,15 @@ class Game:
         else:
             print("Game paused!") 
             self.drawPauseMessage()   
+
+    def toggleHelpMenu(self):
+        if not self.gamePaused:
+            self.gamePaused = True 
+            self.drawHelpMenu()
+        else:
+            self.gamePaused = False
+            self.messageTurtle.clear()
+            self.roundOfMovement()        
 
     def drawBoard(self):
         bgcolor('black')
@@ -209,18 +235,20 @@ class Game:
         self.messageTurtle.penup()
 
     def drawEndMessage(self, reason):
+        self.messageTurtle.clear() 
+
         message = f"Game Over!\n{reason}"
         submessage = "Press 'R' to restart"
 
         self.drawModalMessage(message, submessage)
 
     def drawPauseMessage(self):
+        self.messageTurtle.clear() 
+
         message = "Game Paused!"
         submessage = "Press 'P' to play"   
 
         self.drawModalMessage(message, submessage) 
-
-    
 
     def drawModalMessage(self, message, submessage, x=0, y=0, width=250, heigh=120):
         self.drawModalBackground(x, y, width, heigh)
@@ -230,6 +258,20 @@ class Game:
 
         self.messageTurtle.goto(0, -40)
         self.messageTurtle.write(submessage, align="center", font=("Arial", 12, "normal"))
+
+    def drawHelpMenu(self):
+        self.messageTurtle.clear() 
+        self.drawModalBackground(0, 0, 350, 330, backgroundColor="white", borderColor="black")
+
+        y_offset = 100  
+        for line in self.help_content:
+            self.messageTurtle.goto(0, y_offset)
+            self.messageTurtle.write(line, align="center", font=("Arial", 10, "normal"))
+            y_offset -= 20
+
+        self.messageTurtle.goto(0, y_offset - 20)
+        self.messageTurtle.write("Press 'H', to exit", align="center", font=("Arial", 8, "italic"))
+    
 
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
@@ -445,4 +487,4 @@ class Tank:
         self.game.bullets.append(bullet)
 
 
-Game(dafault_tiles, tileColors, "tanks_maps/map1.txt")
+Game(dafault_tiles, tileColors, "tanks_maps/map1.txt", "files/help.txt")
