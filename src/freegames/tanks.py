@@ -220,8 +220,10 @@ class Game:
 
         self.drawModalMessage(message, submessage) 
 
-    def drawModalMessage(self, message, submessage):
-        self.drawModalBackground(0, 0, 350, 120)
+    
+
+    def drawModalMessage(self, message, submessage, x=0, y=0, width=250, heigh=120):
+        self.drawModalBackground(x, y, width, heigh)
 
         self.messageTurtle.goto(0, 0)
         self.messageTurtle.write(message, align="center", font=("Arial", 16, "bold"))
