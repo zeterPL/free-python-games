@@ -217,7 +217,7 @@ class Game:
         self.secondTank = Tank(self, -100 + self.tankCentralization, 100 + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
 
         self.drawBoard()
-        ontimer(self.minesTurtle.clear, 2000)  # hiding mines after 2 seconds
+        ontimer(self.minesTurtle.clear, 5000)  # hiding mines after 5 seconds
         self.roundOfMovement()
 
     def stopGame(self, tanks, reason):
@@ -226,7 +226,7 @@ class Game:
         for tank in tanks:  # draw destroyed tanks
             tank.drawTank(True)
 
-        ontimer(lambda r=reason: self.drawEndMessage(r), 500)
+        ontimer(lambda r=reason: self.drawEndMessage(r), 2500)
 
     def tanksCollision(self, tank1, tank2, collisionThreshold=20):
         distanceBetweenTanks = abs(tank1.position - tank2.position)
