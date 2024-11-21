@@ -126,6 +126,8 @@ class Game:
         self.gameRunning = False
         self.gamePaused = False
 
+        self.showingHelpFromGame = False
+
         self.firstTank = None
         self.secondTank = None
 
@@ -157,7 +159,7 @@ class Game:
  
         listen()
 
-        self.startGame()
+        self.startScreen()
         done()
 
     def togglePause(self):
@@ -173,12 +175,19 @@ class Game:
 
     def toggleHelpMenu(self):
         if not self.gamePaused:
-            self.gamePaused = True 
+            self.showingHelpFromGame = self.gameRunning
+            self.gamePaused = True
             self.drawHelpMenu()
         else:
             self.gamePaused = False
             self.messageTurtle.clear()
-            self.roundOfMovement()        
+            if self.showingHelpFromGame:
+                self.showingHelpFromGame = False
+                self.roundOfMovement()
+            else:
+                self.drawStartModal()
+                self.awaitStart()
+        
 
     def drawBoard(self):
         bgcolor('black')
@@ -260,18 +269,44 @@ class Game:
         self.messageTurtle.write(submessage, align="center", font=("Arial", 12, "normal"))
 
     def drawHelpMenu(self):
-        self.messageTurtle.clear() 
+        self.messageTurtle.clear()
         self.drawModalBackground(0, 0, 350, 330, backgroundColor="white", borderColor="black")
 
         y_offset = 100  
         for line in self.help_content:
             self.messageTurtle.goto(0, y_offset)
-            self.messageTurtle.write(line, align="center", font=("Arial", 10, "normal"))
+            self.messageTurtle.write(line.strip(), align="center", font=("Arial", 10, "normal"))
             y_offset -= 20
 
         self.messageTurtle.goto(0, y_offset - 20)
-        self.messageTurtle.write("Press 'H', to exit", align="center", font=("Arial", 8, "italic"))
+        if self.showingHelpFromGame:
+            self.messageTurtle.write("Press 'H' to return to the game", align="center", font=("Arial", 8, "italic"))
+        else:
+            self.messageTurtle.write("Press 'H' to return to the start screen", align="center", font=("Arial", 8, "italic"))
+
     
+    def drawStartModal(self):
+        self.messageTurtle.clear()
+        self.drawModalBackground(0, 0, 350, 200, backgroundColor="white", borderColor="black")
+
+        self.messageTurtle.goto(0, 50)
+        self.messageTurtle.write("Tank Battle Game", align="center", font=("Arial", 16, "bold"))
+
+        self.messageTurtle.goto(0, -20)
+        self.messageTurtle.write("Press 'S' to Start", align="center", font=("Arial", 12, "normal"))
+        self.messageTurtle.goto(0, -60)
+        self.messageTurtle.write("Press 'H' for Help", align="center", font=("Arial", 12, "normal"))
+
+    def startScreen(self):
+        self.gameRunning = False
+        self.drawStartModal()
+        self.awaitStart()
+    
+    def awaitStart(self):
+        onkey(self.startGame, "s")
+        onkey(self.startGame, "S")
+        onkey(self.toggleHelpMenu, "h")
+        onkey(self.toggleHelpMenu, "H")
 
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
