@@ -32,6 +32,19 @@ def offset(point):
     index = int(x + y * 20)
     return index
 
+def load_map_from_file(filename):
+    new_tiles = []
+    try:
+        with open(filename, 'r') as file:
+            for line in file:
+                new_tiles.extend(map(int, line.split()))
+        if len(new_tiles) != 400:  
+            raise ValueError("Invalid map size. Map must have 400 tiles.")
+    except Exception as e:
+        print(f"Error loading map: {e}")
+        return None
+    return new_tiles
+
 
 class Tile(Enum):
     NO_TILE = 0
@@ -44,7 +57,7 @@ class Tile(Enum):
     MINE = 7
 
 
-tiles = [
+dafault_tiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 4,
@@ -78,8 +91,14 @@ tileColors = {
 
 
 class Game:
-    def __init__(self, initialTiles, initialTileColors):
-        self.initialTiles = initialTiles
+    def __init__(self, dafault_tiles, initialTileColors, map_file=None):
+        self.initialTiles = dafault_tiles
+        if map_file:
+            loaded_tiles = load_map_from_file(map_file)
+            if loaded_tiles:
+                self.initialTiles = loaded_tiles
+                print(f"Map successfully loaded from '{map_file}'!")
+        
         self.tiles = list(self.initialTiles)
         self.tileColors = initialTileColors
 
@@ -394,4 +413,4 @@ class Tank:
         self.game.bullets.append(bullet)
 
 
-Game(tiles, tileColors)
+Game(dafault_tiles, tileColors, "tanks_maps/map1.txt")
