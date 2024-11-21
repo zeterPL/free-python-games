@@ -104,11 +104,13 @@ class Game:
 
         self.mapTurtle = Turtle(visible=False)
         self.tankTurtle = Turtle(visible=False)
-        self.gameOverTurtle = Turtle(visible=False)
+        self.messageTurtle = Turtle(visible=False)
         self.minesTurtle = Turtle(visible=False)
 
         self.bullets = []
+
         self.gameRunning = False
+        self.gamePaused = False
 
         self.firstTank = None
         self.secondTank = None
@@ -131,12 +133,26 @@ class Game:
         setup(420, 420, 500, 100)
         hideturtle()
         tracer(False)
+
         for key in ["r", "R"]:
             onkey(self.startGame, key)
+        for key in ["p", "P"]:
+            onkey(self.togglePause, key)    
         listen()
 
         self.startGame()
         done()
+
+    def togglePause(self):
+        self.gamePaused = not self.gamePaused
+
+        if not self.gamePaused:
+            print("Game resumes!")
+            self.messageTurtle.clear()
+            self.roundOfMovement()
+        else:
+            print("Game paused!") 
+            self.drawPauseMessage()   
 
     def drawBoard(self):
         bgcolor('black')
@@ -177,30 +193,41 @@ class Game:
             ontimer(drawingTurtle.clear, 200)
 
     def drawModalBackground(self, x, y, modalWidth, modalHeight, backgroundColor="white", borderColor="black"):
-        self.gameOverTurtle.color(borderColor)
-        self.gameOverTurtle.fillcolor(backgroundColor)
-        self.gameOverTurtle.penup()
-        self.gameOverTurtle.goto(x - modalWidth / 2, y - modalHeight / 2)
-        self.gameOverTurtle.pendown()
-        self.gameOverTurtle.begin_fill()
+        self.messageTurtle.color(borderColor)
+        self.messageTurtle.fillcolor(backgroundColor)
+        self.messageTurtle.penup()
+        self.messageTurtle.goto(x - modalWidth / 2, y - modalHeight / 2)
+        self.messageTurtle.pendown()
+        self.messageTurtle.begin_fill()
         for _ in range(2):
-            self.gameOverTurtle.forward(modalWidth)
-            self.gameOverTurtle.left(90)
-            self.gameOverTurtle.forward(modalHeight)
-            self.gameOverTurtle.left(90)
+            self.messageTurtle.forward(modalWidth)
+            self.messageTurtle.left(90)
+            self.messageTurtle.forward(modalHeight)
+            self.messageTurtle.left(90)
 
-        self.gameOverTurtle.end_fill()
-        self.gameOverTurtle.penup()
+        self.messageTurtle.end_fill()
+        self.messageTurtle.penup()
 
     def drawEndMessage(self, reason):
+        message = f"Game Over!\n{reason}"
+        submessage = "Press 'R' to restart"
+
+        self.drawModalMessage(message, submessage)
+
+    def drawPauseMessage(self):
+        message = "Game Paused!"
+        submessage = "Press 'P' to play"   
+
+        self.drawModalMessage(message, submessage) 
+
+    def drawModalMessage(self, message, submessage):
         self.drawModalBackground(0, 0, 350, 120)
 
-        self.gameOverTurtle.goto(0, 0)
-        message = f"Game Over!\n{reason}"
-        self.gameOverTurtle.write(message, align="center", font=("Arial", 16, "bold"))
+        self.messageTurtle.goto(0, 0)
+        self.messageTurtle.write(message, align="center", font=("Arial", 16, "bold"))
 
-        self.gameOverTurtle.goto(0, -40)
-        self.gameOverTurtle.write("Press 'R' to restart", align="center", font=("Arial", 12, "normal"))
+        self.messageTurtle.goto(0, -40)
+        self.messageTurtle.write(submessage, align="center", font=("Arial", 12, "normal"))
 
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
@@ -210,7 +237,7 @@ class Game:
 
         self.tankTurtle.clear()
         self.mapTurtle.clear()
-        self.gameOverTurtle.clear()
+        self.messageTurtle.clear()
 
         self.bullets = []
         self.firstTank = Tank(self, 40 + self.tankCentralization, 0 + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
@@ -250,6 +277,9 @@ class Game:
             self.bullets.remove(bullet)
 
     def roundOfMovement(self):
+        if self.gamePaused or not self.gameRunning:
+            return
+
         self.tankTurtle.clear()
         self.firstTank.tankMovement()
         self.secondTank.tankMovement()
