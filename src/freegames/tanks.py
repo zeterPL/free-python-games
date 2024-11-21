@@ -46,13 +46,13 @@ class Tile(Enum):
 
 tiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 4,
+    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
+    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    4, 1, 1, 1, 1, 1, 1, 1, 1, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
+    4, 1, 1, 1, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
+    4, 1, 1, 1, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
     4, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 4,
@@ -86,6 +86,7 @@ class Game:
         self.mapTurtle = Turtle(visible=False)
         self.tankTurtle = Turtle(visible=False)
         self.gameOverTurtle = Turtle(visible=False)
+        self.minesTurtle = Turtle(visible=False)
 
         self.bullets = []
         self.gameRunning = False
@@ -127,8 +128,9 @@ class Game:
                 tileColor = self.tileColors[tile]
                 drawSquare(self.mapTurtle, x, y, squareColor=tileColor)
                 if tile == Tile.MINE.value:  # drawing mines
-                    goto(x+10, y+10)
-                    dot(10, "black")
+                    self.minesTurtle.up()
+                    self.minesTurtle.goto(x+10, y+10)
+                    self.minesTurtle.dot(10, "black")
 
     def valid(self, point):
         blockingTiles = [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]
@@ -196,6 +198,7 @@ class Game:
         self.secondTank = Tank(self, -100 + self.tankCentralization, 100 + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
 
         self.drawBoard()
+        ontimer(self.minesTurtle.clear, 2000)  # hiding mines after 2 seconds
         self.roundOfMovement()
 
     def stopGame(self, tanks, reason):
@@ -211,7 +214,7 @@ class Game:
         if distanceBetweenTanks < collisionThreshold:
             self.stopGame([tank1, tank2], "tanks collision. Everyone died")
 
-    def checkBulletCollision(self, bullet, tanks, tankSize=16):
+    def processBulletCollision(self, bullet, tanks, tankSize=16):
         for tank in tanks:
             if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
                 self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
@@ -231,13 +234,13 @@ class Game:
         self.tankTurtle.clear()
         self.firstTank.tankMovement()
         self.secondTank.tankMovement()
-        self.firstTank.move()
-        self.secondTank.move()
+        self.firstTank.moveTank()
+        self.secondTank.moveTank()
         self.tanksCollision(self.firstTank, self.secondTank)
 
         for bullet in self.bullets[:]:
-            bullet.move()
-            self.checkBulletCollision(bullet, [self.firstTank, self.secondTank])
+            bullet.moveBullet()
+            self.processBulletCollision(bullet, [self.firstTank, self.secondTank])
 
         update()
         if self.gameRunning:
@@ -252,7 +255,7 @@ class Bullet:
         self.shooter = shooter
         self.bulletTurtle = Turtle(visible=False)
 
-    def move(self):
+    def moveBullet(self):
         self.bulletTurtle.clear()
         bulletOffsets = {
             90: vector(self.bulletSpeed, 0),
@@ -309,7 +312,7 @@ class Tank:
         # if tank move in wrong direction, where he can't go
         return -1
 
-    def move(self):
+    def moveTank(self):
         if self.game.valid(self.position + self.speed):
             self.position.move(self.speed)
         if self.game.tiles[offset(self.position)] == Tile.MINE.value:
