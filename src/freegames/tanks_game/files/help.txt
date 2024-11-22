@@ -1,6 +1,12 @@
-Game Instructions:
-Player 1: Movement - Arrow keys, Shooting - Enter.
-Player 2: Movement - WASD keys, Shooting - Shift.
+Player controls:
+Player 1:
+    Movement - Arrow keys
+    Shooting - Enter
+    Stop - right Ctrl
+Player 2:
+    Movement - WASD keys
+    Shooting - Shift
+    Stop - left Ctrl
 
 Global controls:
 Pause: P
