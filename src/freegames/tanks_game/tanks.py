@@ -249,6 +249,8 @@ class Game:
             ontimer(self.roundOfMovement, 100)
 
     def endGame(self, tanks, reason):
+        if not self.gameRunning:
+            return
         self.gameRunning = False
 
         for tank in tanks:  # draw destroyed tanks
@@ -265,22 +267,24 @@ class Game:
             self.endGame([tank1, tank2], "tanks collision. Everyone died")
 
     def processBulletCollision(self, bullet, tanks, tankSize=None):
+        hit = False
         if not tankSize:
             tankSize = 0.8 * self.tileSize
         for tank in tanks:
             if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
                 self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
                 tank.takeDamage(f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
-                self.bullets.remove(bullet)
-                bullet.bulletTurtle.clear()
+                hit = True
         bulletTileValue = self.tiles[self.offset(bullet.position)]
         if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
-            bullet.bulletTurtle.clear()
             if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
                 self.tiles[self.offset(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
                 x, y = self.getTilePosition(self.offset(bullet.position))
                 self.drawSquare(self.mapTurtle, x, y, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
+            hit = True
+        if hit:
             self.bullets.remove(bullet)
+            bullet.bulletTurtle.clear()
 
     def togglePause(self):
         self.gamePaused = not self.gamePaused
@@ -453,9 +457,11 @@ class Tank:
         self.stoppingControl = stoppingControl
         self.shootingControl = shootingControl
         self.setControls()
-        self.hp = hp
         self.keysPressed = {key: False for key in moveControls}
+        self.hp = hp
         self.hpTurtle = Turtle(visible=False)
+        self.reloadingTime = 2000  # value in milliseconds
+        self.loaded = True
 
     def takeDamage(self, reason):
         if self.hp > 0:
@@ -566,8 +572,15 @@ class Tank:
                 break
 
     def shoot(self):
+        if not self.loaded:
+            return
         bullet = Bullet(self)
         self.game.bullets.append(bullet)
+        self.loaded = False
+        ontimer(self.reload, self.reloadingTime)
+
+    def reload(self):
+        self.loaded = True
 
 
 Game(tiles, tileColors, "files/tanksConfig.ini", "files/help.txt")

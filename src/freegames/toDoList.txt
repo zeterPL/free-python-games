@@ -5,7 +5,6 @@ tanks:
 	potencjalne:
 	    czas przeladowania pomiedzy strzelaniem
 		znikajace miny po czasie
-		wczytywanie mapy/ustawien z pliku
 		baza (trzeba chronic)
 		czolgi komputera
 		życia / punktacja
