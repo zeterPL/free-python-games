@@ -41,14 +41,11 @@ def loadSettingsAndMapFromFile(filePath):
     except ValueError as e:
         raise ValueError(f"Error reading settings: {e}")
     if rowsCount * columnsCount != len(flatTiles):
-        raise ValueError(
-            f"Invalid map size compare to settings. Map have {len(flatTiles)} tiles, but settings have {rowsCount}x{columnsCount}={rowsCount * columnsCount}.")
+        raise ValueError(f"Invalid map size compare to settings. Map have {len(flatTiles)} tiles, but settings have {rowsCount}x{columnsCount}={rowsCount * columnsCount}.")
     if firstTankIndex > len(flatTiles):
-        raise ValueError(
-            f"Invalid first tank spawn position. Tank index {firstTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
+        raise ValueError(f"Invalid first tank spawn position. Tank index {firstTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
     if secondTankIndex > len(flatTiles):
-        raise ValueError(
-            f"Invalid second tank spawn position. Tank index {secondTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
+        raise ValueError(f"Invalid second tank spawn position. Tank index {secondTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
     return flatTiles, rowsCount, columnsCount, tileSize, startGameX, startGameY, firstTankIndex, secondTankIndex
 
 
@@ -122,7 +119,6 @@ class Game:
 
         self.gameRunning = False
         self.gamePaused = False
-
         self.showingHelpFromGame = False
 
         self.firstTank = None
@@ -163,8 +159,7 @@ class Game:
         if not settingsFile:
             return
         try:
-            loadedTiles, rows, columns, tileSize, startGameX, startGameY, firstTankSpawnIndex, secondTankSpawnIndex = loadSettingsAndMapFromFile(
-                settingsFile)
+            loadedTiles, rows, columns, tileSize, startGameX, startGameY, firstTankSpawnIndex, secondTankSpawnIndex = loadSettingsAndMapFromFile(settingsFile)
             self.initialTiles = loadedTiles or self.initialTiles
             self.rows = rows or self.rows
             self.columns = columns or self.columns
@@ -184,16 +179,13 @@ class Game:
         return x, y
 
     def offset(self, point):
-        x = (floor(point.x, self.tileSize, self.tileSize * (self.columns // 2)) + (
-                    self.columns // 2) * self.tileSize) / self.tileSize
-        y = ((self.rows // 2 - 1) * self.tileSize - floor(point.y, self.tileSize,
-                                                          self.tileSize * (self.rows // 2))) / self.tileSize
+        x = (floor(point.x, self.tileSize, self.tileSize * (self.columns // 2)) + (self.columns // 2) * self.tileSize) / self.tileSize
+        y = ((self.rows // 2 - 1) * self.tileSize - floor(point.y, self.tileSize, self.tileSize * (self.rows // 2))) / self.tileSize
         index = int(x + y * self.columns)
         return index
 
     def valid(self, point):
-        blockingTiles = [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value,
-                         Tile.DESTRUCTIBLE_BLOCK.value]
+        blockingTiles = [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]
         index = self.offset(point)
         if self.tiles[index] in blockingTiles:
             return False
@@ -217,8 +209,7 @@ class Game:
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
             return
-        setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX,
-              self.startGameY)
+        setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
@@ -229,13 +220,10 @@ class Game:
 
         self.bullets = []
         firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
-        self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization,
-                              firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 1, self.controls1,
-                              "Control_R", "Return")
+        self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
         secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
         # self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
-        self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization,
-                                 secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
+        self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
 
         self.drawBoard()
         ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
@@ -271,7 +259,6 @@ class Game:
         def displayRestartModal():
             if not self.gameRunning:
                 self.drawModalMessage(f"Game Over!\n{reason}", "Press 'R' to restart")
-
         ontimer(displayRestartModal, 2500)
 
     def tanksCollision(self, tank1, tank2, collisionThreshold=20):
@@ -293,8 +280,7 @@ class Game:
             if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
                 self.tiles[self.offset(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
                 x, y = self.getTilePosition(self.offset(bullet.position))
-                self.drawSquare(self.mapTurtle, x, y,
-                                squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
+                self.drawSquare(self.mapTurtle, x, y, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
             hit = True
         if hit:
             self.bullets.remove(bullet)
@@ -363,14 +349,9 @@ class Game:
         explosionColors = ["red", "yellow", "orange"]
         explosionColor = explosionColors[explosionIteration % len(explosionColors)]
         t = self.tileSize // 20
-        offsets = [
-            (0, 0),
-            (2 * t, 2 * t), (-2 * t, -2 * t), (-2 * t, 2 * t), (2 * t, -2 * t),
-            (4 * t, 0), (0, 4 * t), (-4 * t, 0), (0, -4 * t),
-        ]
+        offsets = [(0, 0), (2 * t, 2 * t), (-2 * t, -2 * t), (-2 * t, 2 * t), (2 * t, -2 * t), (4 * t, 0), (0, 4 * t), (-4 * t, 0), (0, -4 * t)]
         for dx, dy in offsets:
-            self.drawSquare(drawingTurtle, x + dx * (explosionIteration + t), y + dy * (explosionIteration + t),
-                            2 * t + explosionIteration, explosionColor)
+            self.drawSquare(drawingTurtle, x + dx * (explosionIteration + t), y + dy * (explosionIteration + t), 2 * t + explosionIteration, explosionColor)
         if explosionIteration < maxIterations:
             ontimer(lambda: self.drawExplosion(drawingTurtle, x, y, explosionIteration + 1, maxIterations), 150)
         else:
@@ -388,7 +369,6 @@ class Game:
             self.messageTurtle.left(90)
             self.messageTurtle.forward(modalHeight)
             self.messageTurtle.left(90)
-
         self.messageTurtle.end_fill()
         self.messageTurtle.penup()
 
@@ -422,8 +402,7 @@ class Game:
         if self.showingHelpFromGame:
             self.messageTurtle.write("Press 'H' to return to the game", align="center", font=("Arial", 8, "italic"))
         else:
-            self.messageTurtle.write("Press 'H' to return to the start screen", align="center",
-                                     font=("Arial", 8, "italic"))
+            self.messageTurtle.write("Press 'H' to return to the start screen", align="center", font=("Arial", 8, "italic"))
 
     def drawStartMenu(self):
         self.messageTurtle.clear()
@@ -442,8 +421,7 @@ class Game:
 
 class Bullet:
     def __init__(self, shooter, bulletSpeed=None):
-        self.position = vector(shooter.position.x + int(0.35 * shooter.game.tileSize),
-                               shooter.position.y + int(0.35 * shooter.game.tileSize))
+        self.position = vector(shooter.position.x + int(0.35 * shooter.game.tileSize), shooter.position.y + int(0.35 * shooter.game.tileSize))
         self.direction = shooter.direction
         self.bulletSpeed = bulletSpeed if bulletSpeed else shooter.game.tileSize // 2
         self.shooter = shooter
@@ -458,8 +436,7 @@ class Bullet:
             0: vector(0, self.bulletSpeed)
         }
         self.position.move(bulletOffsets[self.direction])
-        self.shooter.game.drawSquare(self.bulletTurtle, self.position.x, self.position.y,
-                                     int(0.15 * self.shooter.game.tileSize), "red")
+        self.shooter.game.drawSquare(self.bulletTurtle, self.position.x, self.position.y, int(0.15 * self.shooter.game.tileSize), "red")
 
 
 class Tank:
@@ -538,14 +515,10 @@ class Tank:
         t = self.game.tileSize // 20
         """Draw tracks."""
         trackOffsets = {
-            0: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t),
-                (12 * t, 12 * t)],
-            90: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t),
-                 (12 * t, 12 * t)],
-            180: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t),
-                  (12 * t, 12 * t)],
-            270: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t),
-                  (12 * t, 12 * t)]
+            0: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t), (12 * t, 12 * t)],
+            90: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)],
+            180: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t), (12 * t, 12 * t)],
+            270: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)]
         }
         for index, (dx, dy) in enumerate(trackOffsets[angle]):
             self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 4 * t, self.tankColor)
@@ -553,19 +526,13 @@ class Tank:
                 self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 4 * t, "black")
         """Draw hull."""
         hullOffsets = {0: (4 * t, t), 90: (t, 4 * t), 180: (4 * t, 7 * t), 270: (7 * t, 4 * t)}
-        self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t,
-                             self.tankColor)
+        self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, self.tankColor)
         if tankDestroyed:
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t,
-                                 "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1],
-                                 2 * t, "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t,
-                                 2 * t, "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 2 * t,
-                                 y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 6 * t,
-                                 y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
+            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
+            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 2 * t, y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
+            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 6 * t, y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
         """Draw cannon."""
         cannonOffsets = {
             0: [(7 * t, 9 * t), (7 * t, 11 * t), (7 * t, 13 * t)],
@@ -576,8 +543,7 @@ class Tank:
         for dx, dy in cannonOffsets[angle]:
             self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 2 * t, self.tankColor)
         if tankDestroyed:
-            self.game.drawSquare(self.game.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1],
-                                 2 * t, "black")
+            self.game.drawSquare(self.game.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
         self.drawHP()
 
     def setControls(self):
