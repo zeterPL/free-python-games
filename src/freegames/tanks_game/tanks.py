@@ -19,8 +19,8 @@ def loadSettingsAndMapFromFile(filePath):
     config.read(filePath)
     if not os.path.exists(filePath):
         raise ValueError(f"The file '{filePath}' does not exist.")
-    if 'map' not in config or 'settings' not in config:
-        raise ValueError("The configuration file must have 'map' and 'settings' sections.")
+    if 'map' not in config or 'settings' not in config or 'positions' not in config:
+        raise ValueError("The configuration file must have 'map', 'settings' and 'positions' sections.")
     tilesUnprocessed = config['map']['tiles']
     if not tilesUnprocessed:
         raise ValueError("No tiles found in the 'map' section of the configuration file.")
@@ -31,16 +31,18 @@ def loadSettingsAndMapFromFile(filePath):
     except ValueError as e:
         raise ValueError(f"Error processing tile data: {e}")
     try:
-        rowsCountIni = int(config['settings'].get('rows', "20"))
-        columnsCountIni = int(config['settings'].get('columns', "20"))
-        tileSizeIni = int(config['settings'].get('tileSize', "20"))
-        startGameXIni = int(config['settings'].get('startGameX', "500"))
-        startGameYIni = int(config['settings'].get('startGameY', "100"))
+        rowsCount = int(config['settings'].get('rows', "20"))
+        columnsCount = int(config['settings'].get('columns', "20"))
+        tileSize = int(config['settings'].get('tileSize', "20"))
+        startGameX = int(config['settings'].get('startGameX', "500"))
+        startGameY = int(config['settings'].get('startGameY', "100"))
+        firstTankIndex = int(config['positions'].get('firstTankSpawnPosition', '187'))
+        secondTankIndex = int(config['positions'].get('secondTankSpawnPosition', '64'))
     except ValueError as e:
         raise ValueError(f"Error reading settings: {e}")
-    if rowsCountIni * columnsCountIni != len(flatTiles):
-        raise ValueError(f"Invalid map size compare to settings. Map have {len(flatTiles)} tiles, but settings have {rowsCountIni}x{columnsCountIni}={rowsCountIni*columnsCountIni}.")
-    return flatTiles, rowsCountIni, columnsCountIni, tileSizeIni, startGameXIni, startGameYIni
+    if rowsCount * columnsCount != len(flatTiles):
+        raise ValueError(f"Invalid map size compare to settings. Map have {len(flatTiles)} tiles, but settings have {rowsCount}x{columnsCount}={rowsCount*columnsCount}.")
+    return flatTiles, rowsCount, columnsCount, tileSize, startGameX, startGameY, firstTankIndex, secondTankIndex
 
 
 class Tile(Enum):
@@ -95,6 +97,8 @@ class Game:
         self.tileSize = 20
         self.startGameX = 500
         self.startGameY = 100
+        self.firstTankSpawnIndex = 187
+        self.secondTankSpawnIndex = 64
         self.assignSettingsFromFile(settingsFile)
 
         self.helpContent = loadFileAsArray(helpFile, "There was a problem loading help content.") if helpFile else None
@@ -133,7 +137,7 @@ class Game:
 
         self.tankCentralization = self.tileSize // 10  # minimal shift of tanks to make tanks stay in the center of the title
 
-        setup(420, 420, 750, 330)  # would center in resolution 1920x1080
+        setup(420, 420, 750, 330)  # would center in resolution 1920x1080 and tiles 20x20 tileSize 40
         hideturtle()
         tracer(False)
 
@@ -148,33 +152,32 @@ class Game:
         self.startScreen()
         done()
 
-        # print(f"Pole miny w lewym gornym rogu {self.tiles[21]} pozycja {self.getTilePosition(21)} {self.offset(vector(-360, 320))}")
-        # print(f"Pole murku w lewym gornym rogu {self.tiles[41]} pozycja {self.getTilePosition(41)} {self.offset(vector(-360, 280))}")
-
     def assignSettingsFromFile(self, settingsFile):
         if not settingsFile:
             return
         try:
-            loadedTiles, rows, columns, tileSize, startGameX, startGameY = loadSettingsAndMapFromFile(settingsFile)
+            loadedTiles, rows, columns, tileSize, startGameX, startGameY, firstTankSpawnIndex, secondTankSpawnIndex = loadSettingsAndMapFromFile(settingsFile)
             self.initialTiles = loadedTiles or self.initialTiles
             self.rows = rows or self.rows
             self.columns = columns or self.columns
             self.tileSize = tileSize or self.tileSize
             self.startGameX = startGameX or self.startGameX
             self.startGameY = startGameY or self.startGameY
+            self.firstTankSpawnIndex = firstTankSpawnIndex or self.firstTankSpawnIndex
+            self.secondTankSpawnIndex = secondTankSpawnIndex or self.secondTankSpawnIndex
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
             print(f"Error loading configuration: {e}")
             exit()
 
     def getTilePosition(self, index):
-        x = (index % self.columns) * self.tileSize - 10*self.tileSize
-        y = 9*self.tileSize - (index // self.columns) * self.tileSize
+        x = (index % self.columns) * self.tileSize - (self.columns//2)*self.tileSize
+        y = (self.rows//2-1)*self.tileSize - (index // self.columns) * self.tileSize
         return x, y
 
     def offset(self, point):
-        x = (floor(point.x, self.tileSize, self.tileSize*10) + 10*self.tileSize) / self.tileSize
-        y = (9*self.tileSize - floor(point.y, self.tileSize, self.tileSize*10)) / self.tileSize
+        x = (floor(point.x, self.tileSize, self.tileSize*(self.columns//2)) + (self.columns//2)*self.tileSize) / self.tileSize
+        y = ((self.rows//2-1)*self.tileSize - floor(point.y, self.tileSize, self.tileSize*(self.rows//2))) / self.tileSize
         index = int(x + y * self.columns)
         return index
 
@@ -202,7 +205,7 @@ class Game:
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
             return
-        setup(self.columns * (self.tileSize+1), self.rows * (self.tileSize+1), self.startGameX, self.startGameY)
+        setup(max((self.columns+1) * self.tileSize, 420), max((self.rows+1) * self.tileSize, 420), self.startGameX, self.startGameY)
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
@@ -212,8 +215,10 @@ class Game:
         self.messageTurtle.clear()
 
         self.bullets = []
-        self.firstTank = Tank(self, 2*self.tileSize + self.tankCentralization, 0 + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
-        self.secondTank = Tank(self, -5*self.tileSize + self.tankCentralization, 5*self.tileSize + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
+        firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
+        self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
+        secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
+        self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
 
         self.drawBoard()
         ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
