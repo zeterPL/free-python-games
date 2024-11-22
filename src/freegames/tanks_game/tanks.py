@@ -1,6 +1,8 @@
 from turtle import *
 from freegames import floor, vector
 from enum import Enum
+import configparser
+import os
 
 
 def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="black"):
@@ -42,18 +44,31 @@ def loadFileAsArray(filename, errorMessage="There was a problem loading file con
         return [errorMessage]
 
 
-def load_map_from_file(filename):
-    new_tiles = []
+def loadSettingsAndMapFromFile(filePath):
+    config = configparser.ConfigParser()
+    config.read(filePath)
+    if not os.path.exists(filePath):
+        raise ValueError(f"The file '{filePath}' does not exist.")
+    if 'map' not in config or 'settings' not in config:
+        raise ValueError("The configuration file must have 'map' and 'settings' sections.")
+    tilesUnprocessed = config['map']['tiles']
+    if not tilesUnprocessed:
+        raise ValueError("No tiles found in the 'map' section of the configuration file.")
     try:
-        with open(filename, 'r') as file:
-            for line in file:
-                new_tiles.extend(map(int, line.split()))
-        if len(new_tiles) != 400:  
-            raise ValueError("Invalid map size. Map must have 400 tiles.")
-    except Exception as e:
-        print(f"Error loading map: {e}")
-        return None
-    return new_tiles
+        tilesProcessed = tilesUnprocessed.replace(" ", "1")
+        tileRows = [list(map(int, row.split(','))) for row in tilesProcessed.strip().splitlines()]
+        flatTiles = [tile for row in tileRows for tile in row]
+    except ValueError as e:
+        raise ValueError(f"Error processing tile data: {e}")
+    try:
+        rowsCountIni = int(config['settings'].get('rows', "20"))
+        columnsCountIni = int(config['settings'].get('columns', "20"))
+        tileSizeIni = int(config['settings'].get('tileSize', "20"))
+    except ValueError as e:
+        raise ValueError(f"Error reading settings: {e}")
+    if rowsCountIni * columnsCountIni != len(flatTiles):
+        raise ValueError(f"Invalid map size compare to settings. Map have {len(flatTiles)} tiles, but settings have {rowsCountIni}x{columnsCountIni}={rowsCountIni*columnsCountIni}.")
+    return flatTiles, rowsCountIni, columnsCountIni, tileSizeIni
 
 
 class Tile(Enum):
@@ -67,7 +82,7 @@ class Tile(Enum):
     MINE = 7
 
 
-dafault_tiles = [
+tiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 4,
     4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 4,
@@ -101,20 +116,24 @@ tileColors = {
 
 
 class Game:
-    def __init__(self, dafault_tiles, initialTileColors, map_file=None, help_file=None):
-        self.initialTiles = dafault_tiles
+    def __init__(self, initialTiles, initialTileColors, settingsFile=None, helpFile=None):
+        self.initialTiles = initialTiles
+        self.rows = 20
+        self.columns = 20
+        self.tileSize = 20
+        if settingsFile:
+            try:
+                loadedTiles, rows, columns, tileSize = loadSettingsAndMapFromFile(settingsFile)
+                self.initialTiles = loadedTiles
+                self.rows = rows
+                self.columns = columns
+                self.tileSize = tileSize
+                print(f"Map successfully loaded from '{settingsFile}'!")
+            except ValueError as e:
+                print(f"Error loading configuration: {e}")
+                return
 
-        if map_file:
-            loaded_tiles = load_map_from_file(map_file)
-            if loaded_tiles:
-                self.initialTiles = loaded_tiles
-                print(f"Map successfully loaded from '{map_file}'!")
-
-        if help_file:
-            self.help_content = loadFileAsArray(help_file, "There was a problem loading help content.")
-        else: 
-            self.help_content = ["There was a problem loading help content."]
-            print("There was a problem loading help content. File help file id null.")
+        self.helpContent = loadFileAsArray(helpFile, "There was a problem loading help content.") if helpFile else None
      
         self.tiles = list(self.initialTiles)
         self.tileColors = initialTileColors
@@ -231,7 +250,7 @@ class Game:
         self.drawModalBackground(0, 0, 350, 330, backgroundColor="white", borderColor="black")
 
         y_offset = 100  
-        for line in self.help_content:
+        for line in self.helpContent:
             self.messageTurtle.goto(0, y_offset)
             self.messageTurtle.write(line.strip(), align="center", font=("Arial", 10, "normal"))
             y_offset -= 20
@@ -277,6 +296,9 @@ class Game:
             self.drawModalMessage("Game Paused!", "Press 'P' to play")
 
     def toggleHelpMenu(self):
+        if not self.helpContent:
+            print("Help menu was not loaded correctly, so you can't open menu.")
+            return
         if not self.gamePaused:
             self.showingHelpFromGame = self.gameRunning
             self.gamePaused = True
@@ -505,4 +527,5 @@ class Tank:
         self.game.bullets.append(bullet)
 
 
-Game(dafault_tiles, tileColors, "tanks_maps/map1.txt", "files/help.txt")
+Game(tiles, tileColors, "files/tanksConfig.ini", "files/help.txt")
+
