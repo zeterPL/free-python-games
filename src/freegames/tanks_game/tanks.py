@@ -42,6 +42,10 @@ def loadSettingsAndMapFromFile(filePath):
         raise ValueError(f"Error reading settings: {e}")
     if rowsCount * columnsCount != len(flatTiles):
         raise ValueError(f"Invalid map size compare to settings. Map have {len(flatTiles)} tiles, but settings have {rowsCount}x{columnsCount}={rowsCount*columnsCount}.")
+    if firstTankIndex > len(flatTiles):
+        raise ValueError(f"Invalid first tank spawn position. Tank index {firstTankIndex } out of range. Max possible {len(flatTiles)-1} index.")
+    if secondTankIndex > len(flatTiles):
+        raise ValueError(f"Invalid second tank spawn position. Tank index {secondTankIndex } out of range. Max possible {len(flatTiles)-1} index.")
     return flatTiles, rowsCount, columnsCount, tileSize, startGameX, startGameY, firstTankIndex, secondTankIndex
 
 
@@ -201,6 +205,7 @@ class Game:
         onkey(self.startGame, "S")
         onkey(self.toggleHelpMenu, "h")
         onkey(self.toggleHelpMenu, "H")
+        onkey(exit, "Escape")
 
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
@@ -249,7 +254,10 @@ class Game:
         for tank in tanks:  # draw destroyed tanks
             tank.drawTank(True)
 
-        ontimer(lambda m=f"Game Over!\n{reason}", sm="Press 'R' to restart": self.drawModalMessage(m, sm), 2500)
+        def displayRestartModal():
+            if not self.gameRunning:
+                self.drawModalMessage(f"Game Over!\n{reason}", "Press 'R' to restart")
+        ontimer(displayRestartModal, 2500)
 
     def tanksCollision(self, tank1, tank2, collisionThreshold=20):
         distanceBetweenTanks = abs(tank1.position - tank2.position)
@@ -378,8 +386,8 @@ class Game:
         self.messageTurtle.clear()
         self.drawModalBackground(0, 0, modalWidth, modalHeight, backgroundColor="white", borderColor="black")
 
-        yOffset = (modalHeight / 2) - 50
-        longestTextLineWidth = 312  # I checked how much pixels take to write longest line
+        yOffset = (modalHeight / 2) - 40
+        longestTextLineWidth = 312  # I checked how much pixels take to write the longest line
 
         for line in self.helpContent:
             strippedLine = line.lstrip()
@@ -400,15 +408,17 @@ class Game:
 
     def drawStartMenu(self):
         self.messageTurtle.clear()
-        self.drawModalBackground(0, 0, 350, 200, backgroundColor="white", borderColor="black")
+        self.drawModalBackground(0, 0, 350, 250, backgroundColor="white", borderColor="black")
 
-        self.messageTurtle.goto(0, 50)
-        self.messageTurtle.write("Tank Battle Game", align="center", font=("Arial", 16, "bold"))
+        self.messageTurtle.goto(0, 70)
+        self.messageTurtle.write("Tank Battle Game", align="center", font=("Arial", 20, "bold"))
 
         self.messageTurtle.goto(0, -20)
         self.messageTurtle.write("Press 'S' to Start", align="center", font=("Arial", 12, "normal"))
         self.messageTurtle.goto(0, -60)
         self.messageTurtle.write("Press 'H' for Help", align="center", font=("Arial", 12, "normal"))
+        self.messageTurtle.goto(0, -100)
+        self.messageTurtle.write("Press Escape for Exit", align="center", font=("Arial", 12, "normal"))
 
 
 class Bullet:

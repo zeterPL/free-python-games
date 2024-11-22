@@ -12,6 +12,7 @@ Global controls:
 Pause: P
 Help: H
 Restart: R
+Exit: Escape
 
 The objective of the game is to destroy your opponent.
 Avoid mines and obstacles on the map.
