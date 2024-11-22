@@ -223,7 +223,9 @@ class Game:
         firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
         secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
-        self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
+        #self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
+        self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
+
 
         self.drawBoard()
         ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
@@ -582,5 +584,60 @@ class Tank:
     def reload(self):
         self.loaded = True
 
+class AITank(Tank):
+    def __init__(self, game, x, y, tankColor, tankId, target, hp=3):
+        super().__init__(game, x, y, tankColor, tankId, {}, "", "", hp)
+        self.target = target
+        self.movementTimer = 0
+        self.shootTimer = 0
+
+    def moveTank(self):
+        super().moveTank()
+        self.makeDecision()    
+
+    def makeDecision(self):
+        if not self.target:
+            return
+
+        dx = self.target.position.x - self.position.x
+        dy = self.target.position.y - self.position.y
+
+        if self.movementTimer == 0:
+            if abs(dx) > abs(dy):
+                if dx > 0 and self.game.valid(self.position + vector(self.game.tileSize // 4, 0)):
+                    self.change(vector(self.game.tileSize // 4, 0), 90)
+                elif dx < 0 and self.game.valid(self.position + vector(-self.game.tileSize // 4, 0)):
+                    self.change(vector(-self.game.tileSize // 4, 0), 270)
+                else:  
+                    if dy > 0:
+                        self.change(vector(0, self.game.tileSize // 4), 0)
+                    elif dy < 0:
+                        self.change(vector(0, -self.game.tileSize // 4), 180)
+            else:  
+                if dy > 0 and self.game.valid(self.position + vector(0, self.game.tileSize // 4)):
+                    self.change(vector(0, self.game.tileSize // 4), 0)
+                elif dy < 0 and self.game.valid(self.position + vector(0, -self.game.tileSize // 4)):
+                    self.change(vector(0, -self.game.tileSize // 4), 180)
+                else:  
+                    if dx > 0:
+                        self.change(vector(self.game.tileSize // 4, 0), 90)
+                    elif dx < 0:
+                        self.change(vector(-self.game.tileSize // 4, 0), 270)
+            self.movementTimer = 7 
+        else:
+            self.movementTimer -= 1
+
+        if self.shootTimer == 0:
+            if (self.direction == 90 and dx > 0 and abs(dy) < self.game.tileSize) or \
+            (self.direction == 270 and dx < 0 and abs(dy) < self.game.tileSize) or \
+            (self.direction == 0 and dy > 0 and abs(dx) < self.game.tileSize) or \
+            (self.direction == 180 and dy < 0 and abs(dx) < self.game.tileSize):
+                self.shoot()
+                self.shootTimer = 15  
+        else:
+            self.shootTimer -= 1
+
+ 
+                
 
 Game(tiles, tileColors, "files/tanksConfig.ini", "files/help.txt")
