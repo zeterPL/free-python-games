@@ -3,7 +3,6 @@ tanks:
 	    znisczenie czogu jeśli nie kończy gry to albo czołg znika, albo staje się przeszkodą
 
 	potencjalne:
-	    czas przeladowania pomiedzy strzelaniem
 		znikajace miny po czasie
 		baza (trzeba chronic)
 		czolgi komputera
