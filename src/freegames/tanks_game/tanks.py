@@ -2,13 +2,6 @@ from turtle import *
 from freegames import floor, vector
 from enum import Enum
 
-def load_file_as_array(filename, errorMessage = "There was a problem loading file content"):
-    try:
-        with open(filename, "r", encoding="utf-8") as file:
-            return file.readlines()
-    except FileNotFoundError:
-        print(f"{errorMessage} File {filename} not found")
-        return [errorMessage]
 
 def drawSquare(turtleObject, x, y, size=20, squareColor=None, circuitColor="black"):
     """Draw drawSquare using path at (x, y)."""
@@ -38,6 +31,16 @@ def offset(point):
     y = (180 - floor(point.y, 20)) / 20
     index = int(x + y * 20)
     return index
+
+
+def loadFileAsArray(filename, errorMessage="There was a problem loading file content"):
+    try:
+        with open(filename, "r", encoding="utf-8") as file:
+            return file.readlines()
+    except FileNotFoundError:
+        print(f"{errorMessage} File {filename} not found")
+        return [errorMessage]
+
 
 def load_map_from_file(filename):
     new_tiles = []
@@ -108,7 +111,7 @@ class Game:
                 print(f"Map successfully loaded from '{map_file}'!")
 
         if help_file:
-            self.help_content = load_file_as_array(help_file, "There was a problem loading help content.")
+            self.help_content = loadFileAsArray(help_file, "There was a problem loading help content.")
         else: 
             self.help_content = ["There was a problem loading help content."]
             print("There was a problem loading help content. File help file id null.")
@@ -158,36 +161,8 @@ class Game:
             onkey(self.toggleHelpMenu, key)
  
         listen()
-
         self.startScreen()
         done()
-
-    def togglePause(self):
-        self.gamePaused = not self.gamePaused
-
-        if not self.gamePaused:
-            print("Game resumes!")
-            self.messageTurtle.clear()
-            self.roundOfMovement()
-        else:
-            print("Game paused!") 
-            self.drawPauseMessage()   
-
-    def toggleHelpMenu(self):
-        if not self.gamePaused:
-            self.showingHelpFromGame = self.gameRunning
-            self.gamePaused = True
-            self.drawHelpMenu()
-        else:
-            self.gamePaused = False
-            self.messageTurtle.clear()
-            if self.showingHelpFromGame:
-                self.showingHelpFromGame = False
-                self.roundOfMovement()
-            else:
-                self.drawStartModal()
-                self.awaitStart()
-        
 
     def drawBoard(self):
         bgcolor('black')
@@ -243,30 +218,13 @@ class Game:
         self.messageTurtle.end_fill()
         self.messageTurtle.penup()
 
-    def drawEndMessage(self, reason):
-        self.messageTurtle.clear() 
-
-        message = f"Game Over!\n{reason}"
-        submessage = "Press 'R' to restart"
-
-        self.drawModalMessage(message, submessage)
-
-    def drawPauseMessage(self):
-        self.messageTurtle.clear() 
-
-        message = "Game Paused!"
-        submessage = "Press 'P' to play"   
-
-        self.drawModalMessage(message, submessage) 
-
-    def drawModalMessage(self, message, submessage, x=0, y=0, width=250, heigh=120):
-        self.drawModalBackground(x, y, width, heigh)
-
+    def drawModalMessage(self, message, subMessage, x=0, y=0, modalWidth=350, modalHeight=120):
+        self.messageTurtle.clear()
+        self.drawModalBackground(x, y, modalWidth, modalHeight)
         self.messageTurtle.goto(0, 0)
         self.messageTurtle.write(message, align="center", font=("Arial", 16, "bold"))
-
         self.messageTurtle.goto(0, -40)
-        self.messageTurtle.write(submessage, align="center", font=("Arial", 12, "normal"))
+        self.messageTurtle.write(subMessage, align="center", font=("Arial", 12, "normal"))
 
     def drawHelpMenu(self):
         self.messageTurtle.clear()
@@ -284,8 +242,7 @@ class Game:
         else:
             self.messageTurtle.write("Press 'H' to return to the start screen", align="center", font=("Arial", 8, "italic"))
 
-    
-    def drawStartModal(self):
+    def drawStartMenu(self):
         self.messageTurtle.clear()
         self.drawModalBackground(0, 0, 350, 200, backgroundColor="white", borderColor="black")
 
@@ -299,7 +256,7 @@ class Game:
 
     def startScreen(self):
         self.gameRunning = False
-        self.drawStartModal()
+        self.drawStartMenu()
         self.awaitStart()
     
     def awaitStart(self):
@@ -307,6 +264,32 @@ class Game:
         onkey(self.startGame, "S")
         onkey(self.toggleHelpMenu, "h")
         onkey(self.toggleHelpMenu, "H")
+
+    def togglePause(self):
+        self.gamePaused = not self.gamePaused
+
+        if not self.gamePaused:
+            print("Game resumes!")
+            self.messageTurtle.clear()
+            self.roundOfMovement()
+        else:
+            print("Game paused!")
+            self.drawModalMessage("Game Paused!", "Press 'P' to play")
+
+    def toggleHelpMenu(self):
+        if not self.gamePaused:
+            self.showingHelpFromGame = self.gameRunning
+            self.gamePaused = True
+            self.drawHelpMenu()
+        else:
+            self.gamePaused = False
+            self.messageTurtle.clear()
+            if self.showingHelpFromGame:
+                self.showingHelpFromGame = False
+                self.roundOfMovement()
+            else:
+                self.drawStartMenu()
+                self.awaitStart()
 
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
@@ -332,7 +315,7 @@ class Game:
         for tank in tanks:  # draw destroyed tanks
             tank.drawTank(True)
 
-        ontimer(lambda r=reason: self.drawEndMessage(r), 2500)
+        ontimer(lambda m=f"Game Over!\n{reason}", sm="Press 'R' to restart": self.drawModalMessage(m, sm), 2500)
 
     def tanksCollision(self, tank1, tank2, collisionThreshold=20):
         distanceBetweenTanks = abs(tank1.position - tank2.position)
