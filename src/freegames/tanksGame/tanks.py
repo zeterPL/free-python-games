@@ -258,7 +258,6 @@ class Game:
     def roundOfMovement(self):
         if not self.gameRunning or self.gamePaused:
             return
-
         self.tankTurtle.clear()
         self.firstTank.tankMovement()
         self.secondTank.tankMovement()
@@ -266,11 +265,8 @@ class Game:
         self.secondTank.moveTank()
         for enemyTank in self.enemyTanks:
             enemyTank.moveTank()
-
         self.processBulletsMovementsAndCollisions()
-
         self.checkIfGameOver()
-
         update()
         if self.gameRunning:
             ontimer(self.roundOfMovement, 100)
@@ -278,8 +274,8 @@ class Game:
     def checkIfGameOver(self):
         if self.firstTank and self.firstTank.hp == 0:
             self.endGame(self.firstTank.deathReason)
-        # if self.secondTank and self.secondTank.hp == 0:
-        #     self.endGame(self.secondTank.deathReason)
+        if self.secondTank and self.secondTank.hp == 0:
+            self.endGame(self.secondTank.deathReason)
 
     def endGame(self, reason):
         if not self.gameRunning:
@@ -299,7 +295,6 @@ class Game:
             if otherTank != tankChecking and distanceBetweenTanks < collisionThreshold and tankChecking.speed != vector(0, 0):
                 tankChecking.takeDamage(f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
                 otherTank.takeDamage(f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
-                print(f"DISTANCE = {distanceBetweenTanks} between {tankChecking.tankId} and {otherTank.tankId}")
                 tankChecking.speed = vector(0, 0)
                 return True
         return False
@@ -654,40 +649,50 @@ class AITank(Tank):
         dx = self.target.position.x - self.position.x
         dy = self.target.position.y - self.position.y
 
-        if self.movementTimer == 0:
-            if abs(dx) > abs(dy):
-                if dx > 0 and self.game.valid(self.position + vector(self.game.tileSize // 4, 0)):
-                    self.change(vector(self.game.tileSize // 4, 0), 90)
-                elif dx < 0 and self.game.valid(self.position + vector(-self.game.tileSize // 4, 0)):
-                    self.change(vector(-self.game.tileSize // 4, 0), 270)
-                else:
-                    if dy > 0:
-                        self.change(vector(0, self.game.tileSize // 4), 0)
-                    elif dy < 0:
-                        self.change(vector(0, -self.game.tileSize // 4), 180)
+        if abs(dx) > abs(dy):
+            if dx > 0 and self.game.valid(self.position + vector(self.game.tileSize // 4, 0)):
+                self.change(vector(self.game.tileSize // 4, 0), 90)
+            elif dx < 0 and self.game.valid(self.position + vector(-self.game.tileSize // 4, 0)):
+                self.change(vector(-self.game.tileSize // 4, 0), 270)
             else:
-                if dy > 0 and self.game.valid(self.position + vector(0, self.game.tileSize // 4)):
+                if dy > 0:
                     self.change(vector(0, self.game.tileSize // 4), 0)
-                elif dy < 0 and self.game.valid(self.position + vector(0, -self.game.tileSize // 4)):
+                elif dy < 0:
                     self.change(vector(0, -self.game.tileSize // 4), 180)
-                else:
-                    if dx > 0:
-                        self.change(vector(self.game.tileSize // 4, 0), 90)
-                    elif dx < 0:
-                        self.change(vector(-self.game.tileSize // 4, 0), 270)
-            self.movementTimer = 7
         else:
-            self.movementTimer -= 1
+            if dy > 0 and self.game.valid(self.position + vector(0, self.game.tileSize // 4)):
+                self.change(vector(0, self.game.tileSize // 4), 0)
+            elif dy < 0 and self.game.valid(self.position + vector(0, -self.game.tileSize // 4)):
+                self.change(vector(0, -self.game.tileSize // 4), 180)
+            else:
+                if dx > 0:
+                    self.change(vector(self.game.tileSize // 4, 0), 90)
+                elif dx < 0:
+                    self.change(vector(-self.game.tileSize // 4, 0), 270)
 
-        if self.shootTimer == 0:
-            if ((self.direction == 90 and dx > 0 and abs(dy) < self.game.tileSize) or
-                    (self.direction == 270 and dx < 0 and abs(dy) < self.game.tileSize) or
-                    (self.direction == 0 and dy > 0 and abs(dx) < self.game.tileSize) or
-                    (self.direction == 180 and dy < 0 and abs(dx) < self.game.tileSize)):
-                self.shoot()
-                self.shootTimer = 15
-        else:
-            self.shootTimer -= 1
+        if (not self.checkIfAnyAllyTankBetweenSelfAndTarget() and
+                ((self.direction == 90 and dx > 0 and abs(dy) < self.game.tileSize) or
+                 (self.direction == 270 and dx < 0 and abs(dy) < self.game.tileSize) or
+                 (self.direction == 0 and dy > 0 and abs(dx) < self.game.tileSize) or
+                 (self.direction == 180 and dy < 0 and abs(dx) < self.game.tileSize))):
+            self.shoot()
+
+    def checkIfAnyAllyTankBetweenSelfAndTarget(self):
+        selfX, selfY = self.position
+        targetX, targetY = self.target.position
+        for allyTank in self.game.enemyTanks:
+            if allyTank == self:
+                continue
+            allyX, allyY = allyTank.position
+            dx = self.position.x - allyX
+            dy = self.position.y - allyY
+            if ((self.direction == 90 and abs(dy) < self.game.tileSize and selfX < allyX < targetX) or
+                    (self.direction == 270 and abs(dy) < self.game.tileSize and targetX < allyX < selfX) or
+                    (self.direction == 0 and abs(dx) < self.game.tileSize and selfY < allyY < targetY) or
+                    (self.direction == 180 and abs(dx) < self.game.tileSize and targetY < allyY < selfY)):
+                # print(f"Index={self.game.offset(self.position)} S{self.tankId}=({selfX};{selfY}) T=({targetX};{targetY}) A=({allyX};{allyY})")
+                return True
+        return False
 
 
 mixer.init()  # for playing sounds
