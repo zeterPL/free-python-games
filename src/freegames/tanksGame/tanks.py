@@ -111,6 +111,8 @@ class Game:
         self.firstTankSpawnIndex = 187
         self.secondTankSpawnIndex = 64
         self.assignSettingsFromFile(settingsFile)
+        self.gameWidth = self.columns * self.tileSize
+        self.gameHeight = self.rows * self.tileSize
 
         self.helpContent = loadFileAsArray(helpFile, "There was a problem loading help content.") if helpFile else None
 
@@ -201,7 +203,7 @@ class Game:
         index = self.offset(point)
         if self.tiles[index] in blockingTiles:
             return False
-        index = self.offset(point + (self.tileSize - 1) - self.tankCentralization)
+        index = self.offset(point + int(self.tileSize * 0.95) - self.tankCentralization)
         if self.tiles[index] in blockingTiles:
             return False
         return point.x % self.tileSize == self.tankCentralization or point.y % self.tileSize == self.tankCentralization
@@ -226,16 +228,14 @@ class Game:
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
 
-        self.tankTurtle.clear()
-        self.mapTurtle.clear()
-        self.messageTurtle.clear()
+        self.drawSquare(Turtle(visible=False), -self.gameWidth, -self.gameHeight, 2*(self.gameWidth+self.gameHeight), "black")
 
         self.bullets = []
         firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
         secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
-        self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
-        # self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
+        # self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
+        self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
 
         self.drawBoard()
         ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
@@ -500,14 +500,25 @@ class Tank:
         return -1
 
     def moveTank(self):
-        if self.game.valid(self.position + self.speed):
-            self.position.move(self.speed)
+        newPosition = self.position + self.speed  # wrapping map
+        if newPosition.y > self.game.gameHeight / 2:
+            newPosition.y -= self.game.gameHeight
+        elif newPosition.y < -self.game.gameHeight / 2:
+            newPosition.y += self.game.gameHeight
+        if newPosition.x > self.game.gameWidth / 2:
+            newPosition.x -= self.game.gameWidth
+        elif newPosition.x < -self.game.gameWidth / 2:
+            newPosition.x += self.game.gameWidth
+
+        if self.game.valid(newPosition):
+            self.position = newPosition
+
         if self.game.tiles[self.game.offset(self.position)] == Tile.MINE.value:
             x, y = self.game.getTilePosition(self.game.offset(self.position))
             self.game.tiles[self.game.offset(self.position)] = Tile.ROAD.value
             self.game.drawSquare(self.game.mapTurtle, x, y, squareColor=self.game.tileColors[Tile.ROAD.value])
             self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
-            self.takeDamage("tank ran over a mine")
+            self.takeDamage(f"tank {self.tankId} ran over a mine")
         elif self.game.tiles[self.game.offset(self.position)] == Tile.FOREST.value:
             self.hpTurtle.clear()  # tank hide in forest
         else:
@@ -575,7 +586,6 @@ class Tank:
                 if self.change(tankSpeed, angle) != -1:
                     for k in self.keysPressed:
                         self.keysPressed[k] = False
-                break
 
     def shoot(self):
         if not self.loaded:
