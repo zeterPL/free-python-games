@@ -4,6 +4,7 @@ from enum import Enum
 import configparser
 import os
 from pygame import mixer
+import heapq 
 
 
 def loadFileAsArray(filename, errorMessage="There was a problem loading file content"):
@@ -101,6 +102,17 @@ tileColors = {
     Tile.MINE.value: "light goldenrod",
 }
 
+class Node:
+    def __init__(self, position, parent=None, g=0, h=0):
+        self.position = position  
+        self.parent = parent
+        self.g = g  
+        self.h = h  
+        self.f = g + h 
+
+    def __lt__(self, other):
+        return self.f < other.f
+
 
 class Game:
     def __init__(self, initialTiles, initialTileColors, settingsFile=None, helpFile=None):
@@ -172,6 +184,16 @@ class Game:
         listen()
         self.startScreen()
         done()
+
+    def getTileCoordinates(self, point):
+        x = int((point.x + (self.columns // 2) * self.tileSize) / self.tileSize)
+        y = int(((self.rows // 2 - 1) * self.tileSize - point.y) / self.tileSize)
+        return x, y
+
+    def getPointFromTileCoordinates(self, x, y):
+        x = x * self.tileSize - (self.columns // 2) * self.tileSize
+        y = (self.rows // 2 - 1) * self.tileSize - y * self.tileSize
+        return vector(x, y)  
 
     def assignSettingsFromFile(self, settingsFile):
         if not settingsFile:
@@ -298,7 +320,7 @@ class Game:
         return False
 
     def processBulletsMovementsAndCollisions(self):
-        for bullet in self.bullets:
+        for bullet in self.bullets[:]:
             bullet.moveBullet()
             hit = False
             tankSize = 0.8 * self.tileSize
@@ -318,7 +340,7 @@ class Game:
                 self.bullets.remove(bullet)
                 bullet.bulletTurtle.clear()
                 self.explosionSound.play()
-
+                
     def togglePause(self):
         self.gamePaused = not self.gamePaused
 
@@ -635,13 +657,13 @@ class AITank(Tank):
     def __init__(self, game, x, y, tankColor, tankId, target, hp=3):
         super().__init__(game, x, y, tankColor, tankId, {}, "", "", hp)
         self.target = target
+        self.path = []
         self.movementTimer = 0
         self.shootTimer = 0
 
     def moveTank(self, wantMove=True):
         if self.destroyed:
             return
-        wantMove = self.checkIfWantMoveInThatDirection()
         super().moveTank(wantMove)
         self.makeDecision()
 
@@ -649,72 +671,149 @@ class AITank(Tank):
         if not self.target:
             return
 
-        dx = self.target.position.x - self.position.x
-        dy = self.target.position.y - self.position.y
+        if not self.path or self.positionReached(self.path[0]):
+            self.path = self.findPathToTarget()
 
-        if abs(dx) > abs(dy):
-            if dx > 0 and self.game.valid(self.position + vector(self.game.tileSize // 4, 0)):
-                self.change(vector(self.game.tileSize // 4, 0), 90)
-            elif dx < 0 and self.game.valid(self.position + vector(-self.game.tileSize // 4, 0)):
-                self.change(vector(-self.game.tileSize // 4, 0), 270)
+        if self.path:
+            next_tile = self.path[0]
+            tile_index = next_tile[0] + next_tile[1] * self.game.columns
+            tile_value = self.game.tiles[tile_index]
+
+            # Jeśli następny kafelek to zniszczalny blok, strzel do niego
+            if tile_value == Tile.DESTRUCTIBLE_BLOCK.value:
+                dx = next_tile[0] - self.game.getTileCoordinates(self.position)[0]
+                dy = next_tile[1] - self.game.getTileCoordinates(self.position)[1]
+                if dx == 1:
+                    self.change(vector(0, 0), 90)
+                elif dx == -1:
+                    self.change(vector(0, 0), 270)
+                elif dy == -1:
+                    self.change(vector(0, 0), 0)
+                elif dy == 1:
+                    self.change(vector(0, 0), 180)
+                self.shoot()
+                return
             else:
-                if dy > 0:
-                    self.change(vector(0, self.game.tileSize // 4), 0)
-                elif dy < 0:
-                    self.change(vector(0, -self.game.tileSize // 4), 180)
-        else:
-            if dy > 0 and self.game.valid(self.position + vector(0, self.game.tileSize // 4)):
-                self.change(vector(0, self.game.tileSize // 4), 0)
-            elif dy < 0 and self.game.valid(self.position + vector(0, -self.game.tileSize // 4)):
-                self.change(vector(0, -self.game.tileSize // 4), 180)
-            else:
-                if dx > 0:
+                # Poruszaj się w kierunku następnego kafelka
+                dx = next_tile[0] - self.game.getTileCoordinates(self.position)[0]
+                dy = next_tile[1] - self.game.getTileCoordinates(self.position)[1]
+
+                if dx == 1:
                     self.change(vector(self.game.tileSize // 4, 0), 90)
-                elif dx < 0:
+                elif dx == -1:
                     self.change(vector(-self.game.tileSize // 4, 0), 270)
+                elif dy == -1:
+                    self.change(vector(0, self.game.tileSize // 4), 0)
+                elif dy == 1:
+                    self.change(vector(0, -self.game.tileSize // 4), 180)
 
-        if (not self.checkIfAnyAllyTankBetweenSelfAndTarget() and
-                ((self.direction == 90 and dx > 0 and abs(dy) < self.game.tileSize) or
-                 (self.direction == 270 and dx < 0 and abs(dy) < self.game.tileSize) or
-                 (self.direction == 0 and dy > 0 and abs(dx) < self.game.tileSize) or
-                 (self.direction == 180 and dy < 0 and abs(dx) < self.game.tileSize))):
+                if self.positionReached(next_tile):
+                    self.path.pop(0)
+        else:
+            # Jeśli brak ścieżki, nic nie rób lub inna logika
+            pass
+
+        # Sprawdź, czy AI ma linię widzenia do gracza i strzelaj
+        if self.hasLineOfSight(self.target.position):
+            self.adjustDirectionTowards(self.target.position)
             self.shoot()
 
-    def checkIfWantMoveInThatDirection(self):
-        checkPosition = vector.copy(self.position)
-        if self.direction == 0:
-            checkPosition.y += self.game.tileSize
-        elif self.direction == 90:
-            checkPosition.x += self.game.tileSize
-        elif self.direction == 180:
-            checkPosition.y -= self.game.tileSize
-        elif self.direction == 270:
-            checkPosition.x -= self.game.tileSize
-        checkTileIndex = self.game.offset(checkPosition)
-        print(f"Kierunek={self.direction}  moje pole= {self.game.offset(self.position)} sprawdzam={checkTileIndex} wS={self.game.tiles[checkTileIndex]}")
-        if self.game.tiles[checkTileIndex] == Tile.MINE.value:
-            return False
-        for allyTank in self.game.enemyTanks:
-            if checkTileIndex == self.game.offset(allyTank.position):
-                return False
-        return True
+    def findPathToTarget(self):
+        start_pos = self.game.getTileCoordinates(self.position)
+        goal_pos = self.game.getTileCoordinates(self.target.position)
 
-    def checkIfAnyAllyTankBetweenSelfAndTarget(self):
-        selfX, selfY = self.position
-        targetX, targetY = self.target.position
-        for allyTank in self.game.enemyTanks:
-            if allyTank == self:
-                continue
-            allyX, allyY = allyTank.position
-            dx = self.position.x - allyX
-            dy = self.position.y - allyY
-            if ((self.direction == 90 and abs(dy) < self.game.tileSize and selfX < allyX < targetX) or
-                    (self.direction == 270 and abs(dy) < self.game.tileSize and targetX < allyX < selfX) or
-                    (self.direction == 0 and abs(dx) < self.game.tileSize and selfY < allyY < targetY) or
-                    (self.direction == 180 and abs(dx) < self.game.tileSize and targetY < allyY < selfY)):
-                # print(f"Index={self.game.offset(self.position)} S{self.tankId}=({selfX};{selfY}) T=({targetX};{targetY}) A=({allyX};{allyY})")
-                return True
-        return False
+        open_list = []
+        heapq.heappush(open_list, (0, Node(start_pos)))
+        closed_set = set()
+
+        while open_list:
+            current_f, current_node = heapq.heappop(open_list)
+            current_pos = current_node.position
+
+            if current_pos == goal_pos:
+                # Rekonstrukcja ścieżki
+                path = []
+                while current_node.parent is not None:
+                    path.append(current_node.position)
+                    current_node = current_node.parent
+                path.reverse()
+                return path
+
+            closed_set.add(current_pos)
+
+            # Sąsiedzi: góra, dół, lewo, prawo
+            neighbors = [
+                (current_pos[0] - 1, current_pos[1]),
+                (current_pos[0] + 1, current_pos[1]),
+                (current_pos[0], current_pos[1] - 1),
+                (current_pos[0], current_pos[1] + 1)
+            ]
+
+            for neighbor_pos in neighbors:
+                if neighbor_pos in closed_set:
+                    continue
+
+                x, y = neighbor_pos
+                if x < 0 or x >= self.game.columns or y < 0 or y >= self.game.rows:
+                    continue
+
+                index = x + y * self.game.columns
+                tile = self.game.tiles[index]
+
+                # Sprawdź, czy pole jest przejezdne
+                if tile in [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value, Tile.MINE.value]:
+                    continue  # Nieprzejezdne
+
+                g = current_node.g + (5 if tile == Tile.DESTRUCTIBLE_BLOCK.value else 1)
+                h = abs(goal_pos[0] - x) + abs(goal_pos[1] - y)
+                f = g + h
+
+                neighbor_node = Node(position=neighbor_pos, parent=current_node, g=g, h=h)
+                heapq.heappush(open_list, (f, neighbor_node))
+
+        return None  # Ścieżka nieznaleziona
+
+    def positionReached(self, tile_pos):
+        current_tile = self.game.getTileCoordinates(self.position)
+        return current_tile == tile_pos
+
+    def adjustDirectionTowards(self, target_position):
+        dx = target_position.x - self.position.x
+        dy = target_position.y - self.position.y
+        if abs(dx) > abs(dy):
+            if dx > 0:
+                desired_direction = 90
+            else:
+                desired_direction = 270
+        else:
+            if dy > 0:
+                desired_direction = 0
+            else:
+                desired_direction = 180
+        self.change(vector(0, 0), desired_direction)
+
+    def hasLineOfSight(self, target_pos):
+        x0, y0 = self.game.getTileCoordinates(self.position)
+        x1, y1 = self.game.getTileCoordinates(target_pos)
+
+        if x0 == x1:
+            step = 1 if y1 > y0 else -1
+            for y in range(y0 + step, y1, step):
+                index = x0 + y * self.game.columns
+                tile = self.game.tiles[index]
+                if tile in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
+                    return False
+            return True
+        elif y0 == y1:
+            step = 1 if x1 > x0 else -1
+            for x in range(x0 + step, x1, step):
+                index = x + y0 * self.game.columns
+                tile = self.game.tiles[index]
+                if tile in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
+                    return False
+            return True
+        else:
+            return False  # Brak linii prostej
 
 
 mixer.init()  # for playing sounds
