@@ -123,7 +123,6 @@ class Game:
         self.tileColors = initialTileColors
 
         self.mapTurtle = Turtle(visible=False)
-        self.tankTurtle = Turtle(visible=False)
         self.messageTurtle = Turtle(visible=False)
         self.minesTurtle = Turtle(visible=False)
 
@@ -258,7 +257,6 @@ class Game:
     def roundOfMovement(self):
         if not self.gameRunning or self.gamePaused:
             return
-        self.tankTurtle.clear()
         self.firstTank.tankMovement()
         self.secondTank.tankMovement()
         self.firstTank.moveTank()
@@ -488,6 +486,7 @@ class Tank:
         self.setControls()
         self.keysPressed = {key: False for key in moveControls}
         self.hp = hp
+        self.tankTurtle = Turtle(visible=False)
         self.hpTurtle = Turtle(visible=False)
         self.reloadingTime = 2000  # value in milliseconds
         self.loaded = True
@@ -501,6 +500,7 @@ class Tank:
             if self.hp == 0:
                 self.destroyed = True
                 self.deathReason = reason
+                self.drawTank()
         self.game.damageSound.play()
 
     def change(self, tankSpeedDirection, angle=None):
@@ -528,7 +528,8 @@ class Tank:
         # if tank move in wrong direction, where he can't go
         return -1
 
-    def moveTank(self):
+    def moveTank(self, wantMove=True):
+        self.tankTurtle.clear()
         newPosition = self.position + self.speed  # wrapping map
         if newPosition.y > self.game.gameHeight / 2:
             newPosition.y -= self.game.gameHeight
@@ -539,7 +540,7 @@ class Tank:
         elif newPosition.x < -self.game.gameWidth / 2:
             newPosition.x += self.game.gameWidth
 
-        if not self.destroyed and self.game.valid(newPosition) and not self.game.tanksCollision(self, newPosition, self.game.tileSize):
+        if not self.destroyed and self.game.valid(newPosition) and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize*0.8)) and wantMove:
             self.position = newPosition
 
         if self.game.tiles[self.game.offset(self.position)] == Tile.MINE.value:
@@ -574,18 +575,18 @@ class Tank:
             270: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)]
         }
         for index, (dx, dy) in enumerate(trackOffsets[angle]):
-            self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 4 * t, self.tankColor)
+            self.game.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, self.tankColor)
             if self.destroyed and index in [0, t, 5, t]:
-                self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 4 * t, "black")
+                self.game.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, "black")
         """Draw hull."""
         hullOffsets = {0: (4 * t, t), 90: (t, 4 * t), 180: (4 * t, 7 * t), 270: (7 * t, 4 * t)}
-        self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, self.tankColor)
+        self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, self.tankColor)
         if self.destroyed:
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 2 * t, y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
-            self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 6 * t, y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
+            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
+            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 2 * t, y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
+            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 6 * t, y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
         """Draw cannon."""
         cannonOffsets = {
             0: [(7 * t, 9 * t), (7 * t, 11 * t), (7 * t, 13 * t)],
@@ -594,9 +595,9 @@ class Tank:
             270: [(5 * t, 7 * t), (3 * t, 7 * t), (t, 7 * t)]
         }
         for dx, dy in cannonOffsets[angle]:
-            self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 2 * t, self.tankColor)
+            self.game.drawSquare(self.tankTurtle, x + dx, y + dy, 2 * t, self.tankColor)
         if self.destroyed:
-            self.game.drawSquare(self.game.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
+            self.game.drawSquare(self.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
         self.drawHP()
 
     def setControls(self):
@@ -637,10 +638,12 @@ class AITank(Tank):
         self.movementTimer = 0
         self.shootTimer = 0
 
-    def moveTank(self):
-        super().moveTank()
-        if not self.destroyed:
-            self.makeDecision()
+    def moveTank(self, wantMove=True):
+        if self.destroyed:
+            return
+        wantMove = self.checkIfWantMoveInThatDirection()
+        super().moveTank(wantMove)
+        self.makeDecision()
 
     def makeDecision(self):
         if not self.target:
@@ -676,6 +679,25 @@ class AITank(Tank):
                  (self.direction == 0 and dy > 0 and abs(dx) < self.game.tileSize) or
                  (self.direction == 180 and dy < 0 and abs(dx) < self.game.tileSize))):
             self.shoot()
+
+    def checkIfWantMoveInThatDirection(self):
+        checkPosition = vector.copy(self.position)
+        if self.direction == 0:
+            checkPosition.y += self.game.tileSize
+        elif self.direction == 90:
+            checkPosition.x += self.game.tileSize
+        elif self.direction == 180:
+            checkPosition.y -= self.game.tileSize
+        elif self.direction == 270:
+            checkPosition.x -= self.game.tileSize
+        checkTileIndex = self.game.offset(checkPosition)
+        print(f"Kierunek={self.direction}  moje pole= {self.game.offset(self.position)} sprawdzam={checkTileIndex} wS={self.game.tiles[checkTileIndex]}")
+        if self.game.tiles[checkTileIndex] == Tile.MINE.value:
+            return False
+        for allyTank in self.game.enemyTanks:
+            if checkTileIndex == self.game.offset(allyTank.position):
+                return False
+        return True
 
     def checkIfAnyAllyTankBetweenSelfAndTarget(self):
         selfX, selfY = self.position
