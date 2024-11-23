@@ -551,7 +551,6 @@ class Tank:
         return -1
 
     def moveTank(self, wantMove=True):
-        self.tankTurtle.clear()
         newPosition = self.position + self.speed  # wrapping map
         if newPosition.y > self.game.gameHeight / 2:
             newPosition.y -= self.game.gameHeight
@@ -562,7 +561,7 @@ class Tank:
         elif newPosition.x < -self.game.gameWidth / 2:
             newPosition.x += self.game.gameWidth
 
-        if not self.destroyed and self.game.valid(newPosition) and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize*0.8)) and wantMove:
+        if not self.destroyed and self.game.valid(newPosition) and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize * 0.8)) and wantMove:
             self.position = newPosition
 
         if self.game.tiles[self.game.offset(self.position)] == Tile.MINE.value:
@@ -572,6 +571,7 @@ class Tank:
             self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
             self.takeDamage(f"tank {self.tankId} ran over a mine")
         elif self.game.tiles[self.game.offset(self.position)] == Tile.FOREST.value:
+            self.tankTurtle.clear()
             self.hpTurtle.clear()  # tank hide in forest
         else:
             self.drawTank()
@@ -586,6 +586,7 @@ class Tank:
             self.hpTurtle.write(f"HP: {self.hp}", align="center", font=("Arial", self.game.tileSize // 2, "bold"))
 
     def drawTank(self):
+        self.tankTurtle.clear()
         x, y = self.position
         angle = self.direction
         t = self.game.tileSize // 20
