@@ -16,12 +16,13 @@ def loadFileAsArray(filename, errorMessage="There was a problem loading file con
 
 
 def loadSettingsAndMapFromFile(filePath):
-    config = configparser.ConfigParser()
-    config.read(filePath)
     if not os.path.exists(filePath):
         raise ValueError(f"The file '{filePath}' does not exist.")
-    if 'map' not in config or 'settings' not in config or 'positions' not in config:
-        raise ValueError("The configuration file must have 'map', 'settings' and 'positions' sections.")
+    config = configparser.ConfigParser()
+    config.read(filePath)
+    requiredSections = ['map', 'settings', 'positions']
+    if not all(section in config for section in requiredSections):
+        raise ValueError(f"The configuration file must have {requiredSections} sections.")
     tilesUnprocessed = config['map']['tiles']
     if not tilesUnprocessed:
         raise ValueError("No tiles found in the 'map' section of the configuration file.")
@@ -39,6 +40,7 @@ def loadSettingsAndMapFromFile(filePath):
         startGameY = int(config['settings'].get('startGameY', "100"))
         firstTankIndex = int(config['positions'].get('firstTankSpawnPosition', '187'))
         secondTankIndex = int(config['positions'].get('secondTankSpawnPosition', '64'))
+        enemies = list(map(int, config['enemies']['enemyTanksPositions'].split(','))) if 'enemies' in config and 'enemyTanksPositions' in config['enemies'] else []
     except ValueError as e:
         raise ValueError(f"Error reading settings: {e}")
     if rowsCount * columnsCount != len(flatTiles):
@@ -47,7 +49,7 @@ def loadSettingsAndMapFromFile(filePath):
         raise ValueError(f"Invalid first tank spawn position. Tank index {firstTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
     if secondTankIndex > len(flatTiles):
         raise ValueError(f"Invalid second tank spawn position. Tank index {secondTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
-    return flatTiles, rowsCount, columnsCount, tileSize, startGameX, startGameY, firstTankIndex, secondTankIndex
+    return flatTiles, rowsCount, columnsCount, tileSize, startGameX, startGameY, firstTankIndex, secondTankIndex, enemies
 
 
 def conditionalExecution(condition, function, *args, **kwargs):
@@ -110,6 +112,7 @@ class Game:
         self.startGameY = 100
         self.firstTankSpawnIndex = 187
         self.secondTankSpawnIndex = 64
+        self.enemyTanksSpawnIndexes = []
         self.assignSettingsFromFile(settingsFile)
         self.gameWidth = self.columns * self.tileSize
         self.gameHeight = self.rows * self.tileSize
@@ -132,6 +135,8 @@ class Game:
 
         self.firstTank = None
         self.secondTank = None
+        self.enemyTanks = []
+        self.allTanks = []
 
         tankSpeed = self.tileSize // 4
         self.controls1 = {
@@ -173,7 +178,7 @@ class Game:
         if not settingsFile:
             return
         try:
-            loadedTiles, rows, columns, tileSize, startGameX, startGameY, firstTankSpawnIndex, secondTankSpawnIndex = loadSettingsAndMapFromFile(settingsFile)
+            loadedTiles, rows, columns, tileSize, startGameX, startGameY, firstTankSpawnIndex, secondTankSpawnIndex, enemyTanksSpawnIndexes = loadSettingsAndMapFromFile(settingsFile)
             self.initialTiles = loadedTiles or self.initialTiles
             self.rows = rows or self.rows
             self.columns = columns or self.columns
@@ -182,6 +187,7 @@ class Game:
             self.startGameY = startGameY or self.startGameY
             self.firstTankSpawnIndex = firstTankSpawnIndex or self.firstTankSpawnIndex
             self.secondTankSpawnIndex = secondTankSpawnIndex or self.secondTankSpawnIndex
+            self.enemyTanksSpawnIndexes = enemyTanksSpawnIndexes or self.enemyTanksSpawnIndexes
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
             print(f"Error loading configuration: {e}")
@@ -231,11 +237,19 @@ class Game:
         self.drawSquare(Turtle(visible=False), -self.gameWidth, -self.gameHeight, 2*(self.gameWidth+self.gameHeight), "black")
 
         self.bullets = []
+        self.enemyTanks = []
+        self.allTanks = []
+
         firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
-        self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
+        self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return")
         secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
-        # self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
-        self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
+        self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
+        # self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
+        for enemyId, enemyTankSpawnIndex in enumerate(self.enemyTanksSpawnIndexes, 2):
+            enemyTankPosition = self.getTilePosition(enemyTankSpawnIndex)
+            enemyTank = AITank(self, enemyTankPosition[0] + self.tankCentralization, enemyTankPosition[1] + self.tankCentralization, "gold", enemyId, self.firstTank)
+            self.enemyTanks.append(enemyTank)
+        self.allTanks = [self.firstTank, self.secondTank] + self.enemyTanks
 
         self.drawBoard()
         ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
@@ -250,52 +264,67 @@ class Game:
         self.secondTank.tankMovement()
         self.firstTank.moveTank()
         self.secondTank.moveTank()
-        self.tanksCollision(self.firstTank, self.secondTank)
+        for enemyTank in self.enemyTanks:
+            enemyTank.moveTank()
 
-        for bullet in self.bullets[:]:
-            bullet.moveBullet()
-            self.processBulletCollision(bullet, [self.firstTank, self.secondTank])
+        self.processBulletsMovementsAndCollisions()
+
+        self.checkIfGameOver()
 
         update()
         if self.gameRunning:
             ontimer(self.roundOfMovement, 100)
 
-    def endGame(self, tanks, reason):
+    def checkIfGameOver(self):
+        if self.firstTank and self.firstTank.hp == 0:
+            self.endGame(self.firstTank.deathReason)
+        # if self.secondTank and self.secondTank.hp == 0:
+        #     self.endGame(self.secondTank.deathReason)
+
+    def endGame(self, reason):
         if not self.gameRunning:
             return
         self.gameRunning = False
 
-        for tank in tanks:  # draw destroyed tanks
-            tank.drawTank(True)
+        for tank in self.allTanks:  # draw destroyed tanks
+            tank.drawTank()
 
         ontimer(lambda: conditionalExecution(not self.gameRunning, self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
         ontimer(lambda: conditionalExecution(not self.gameRunning, self.gameOverSound.play), 1000)
 
-    def tanksCollision(self, tank1, tank2, collisionThreshold=20):
-        distanceBetweenTanks = abs(tank1.position - tank2.position)
-        if distanceBetweenTanks < collisionThreshold:
-            self.endGame([tank1, tank2], "tanks collision. Everyone died")
+    def tanksCollision(self, tankChecking, tankCheckingPosition=None, collisionThreshold=20):
+        tankCheckingPosition = tankCheckingPosition or tankChecking.position
+        for otherTank in self.allTanks:
+            distanceBetweenTanks = abs(tankCheckingPosition - otherTank.position)
+            if otherTank != tankChecking and distanceBetweenTanks < collisionThreshold and tankChecking.speed != vector(0, 0):
+                tankChecking.takeDamage(f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
+                otherTank.takeDamage(f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
+                print(f"DISTANCE = {distanceBetweenTanks} between {tankChecking.tankId} and {otherTank.tankId}")
+                tankChecking.speed = vector(0, 0)
+                return True
+        return False
 
-    def processBulletCollision(self, bullet, tanks, tankSize=None):
-        hit = False
-        if not tankSize:
+    def processBulletsMovementsAndCollisions(self):
+        for bullet in self.bullets:
+            bullet.moveBullet()
+            hit = False
             tankSize = 0.8 * self.tileSize
-        for tank in tanks:
-            if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
-                self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
-                tank.takeDamage(f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
+            for tank in self.allTanks:
+                if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
+                    self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
+                    tank.takeDamage(f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
+                    hit = True
+            bulletTileValue = self.tiles[self.offset(bullet.position)]
+            if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
+                if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
+                    self.tiles[self.offset(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
+                    x, y = self.getTilePosition(self.offset(bullet.position))
+                    self.drawSquare(self.mapTurtle, x, y, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
                 hit = True
-        bulletTileValue = self.tiles[self.offset(bullet.position)]
-        if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
-            if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
-                self.tiles[self.offset(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
-                x, y = self.getTilePosition(self.offset(bullet.position))
-                self.drawSquare(self.mapTurtle, x, y, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
-            hit = True
-        if hit:
-            self.bullets.remove(bullet)
-            bullet.bulletTurtle.clear()
-            self.explosionSound.play()
+            if hit:
+                self.bullets.remove(bullet)
+                bullet.bulletTurtle.clear()
+                self.explosionSound.play()
 
     def togglePause(self):
         self.gamePaused = not self.gamePaused
@@ -467,16 +496,21 @@ class Tank:
         self.hpTurtle = Turtle(visible=False)
         self.reloadingTime = 2000  # value in milliseconds
         self.loaded = True
+        self.destroyed = False
+        self.deathReason = ""
 
     def takeDamage(self, reason):
         if self.hp > 0:
             self.hp -= 1
             print(f"Tank {self.tankId} HP: {self.hp}")
             if self.hp == 0:
-                self.game.endGame([self], reason)
+                self.destroyed = True
+                self.deathReason = reason
         self.game.damageSound.play()
 
     def change(self, tankSpeedDirection, angle=None):
+        if self.destroyed:
+            return
         tankSpeed = self.game.tileSize // 4
         offsets = {
             90: vector(tankSpeed, 0),  # right
@@ -510,7 +544,7 @@ class Tank:
         elif newPosition.x < -self.game.gameWidth / 2:
             newPosition.x += self.game.gameWidth
 
-        if self.game.valid(newPosition):
+        if not self.destroyed and self.game.valid(newPosition) and not self.game.tanksCollision(self, newPosition, self.game.tileSize):
             self.position = newPosition
 
         if self.game.tiles[self.game.offset(self.position)] == Tile.MINE.value:
@@ -526,13 +560,14 @@ class Tank:
 
     def drawHP(self, hpColor="red"):
         self.hpTurtle.clear()
-        x, y = self.position
-        self.hpTurtle.up()
-        self.hpTurtle.goto(x + self.game.tileSize // 2, y + int(self.game.tileSize * 1.25))
-        self.hpTurtle.color(hpColor)
-        self.hpTurtle.write(f"HP: {self.hp}", align="center", font=("Arial", self.game.tileSize // 2, "bold"))
+        if self.hp > 0:
+            x, y = self.position
+            self.hpTurtle.up()
+            self.hpTurtle.goto(x + self.game.tileSize // 2, y + int(self.game.tileSize * 1.25))
+            self.hpTurtle.color(hpColor)
+            self.hpTurtle.write(f"HP: {self.hp}", align="center", font=("Arial", self.game.tileSize // 2, "bold"))
 
-    def drawTank(self, tankDestroyed=False):
+    def drawTank(self):
         x, y = self.position
         angle = self.direction
         t = self.game.tileSize // 20
@@ -545,12 +580,12 @@ class Tank:
         }
         for index, (dx, dy) in enumerate(trackOffsets[angle]):
             self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 4 * t, self.tankColor)
-            if tankDestroyed and index in [0, t, 5, t]:
+            if self.destroyed and index in [0, t, 5, t]:
                 self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 4 * t, "black")
         """Draw hull."""
         hullOffsets = {0: (4 * t, t), 90: (t, 4 * t), 180: (4 * t, 7 * t), 270: (7 * t, 4 * t)}
         self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, self.tankColor)
-        if tankDestroyed:
+        if self.destroyed:
             self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
             self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
             self.game.drawSquare(self.game.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
@@ -565,7 +600,7 @@ class Tank:
         }
         for dx, dy in cannonOffsets[angle]:
             self.game.drawSquare(self.game.tankTurtle, x + dx, y + dy, 2 * t, self.tankColor)
-        if tankDestroyed:
+        if self.destroyed:
             self.game.drawSquare(self.game.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
         self.drawHP()
 
@@ -588,7 +623,7 @@ class Tank:
                         self.keysPressed[k] = False
 
     def shoot(self):
-        if not self.loaded:
+        if not self.loaded or self.destroyed:
             return
         bullet = Bullet(self)
         self.game.bullets.append(bullet)
@@ -609,7 +644,8 @@ class AITank(Tank):
 
     def moveTank(self):
         super().moveTank()
-        self.makeDecision()
+        if not self.destroyed:
+            self.makeDecision()
 
     def makeDecision(self):
         if not self.target:
