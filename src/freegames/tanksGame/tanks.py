@@ -233,7 +233,9 @@ class Game:
         index = self.offset(point + int(self.tileSize * 0.95) - self.tankCentralization)
         if self.tiles[index] in blockingTiles:
             return False
-        return point.x % self.tileSize == self.tankCentralization or point.y % self.tileSize == self.tankCentralization
+        return True  # Remove alignment check
+
+
 
     def startScreen(self):
         self.gameRunning = False
