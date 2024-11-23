@@ -549,6 +549,7 @@ class Tank:
             self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
             self.takeDamage(f"tank {self.tankId} ran over a mine")
         elif self.game.tiles[self.game.offset(self.position)] == Tile.FOREST.value:
+            self.tankTurtle.clear()
             self.hpTurtle.clear()  # tank hide in forest
         else:
             self.drawTank()
@@ -652,26 +653,27 @@ class AITank(Tank):
         dx = self.target.position.x - self.position.x
         dy = self.target.position.y - self.position.y
 
+        tankSpeed = self.game.tileSize // 20
         if abs(dx) > abs(dy):
-            if dx > 0 and self.game.valid(self.position + vector(self.game.tileSize // 4, 0)):
-                self.change(vector(self.game.tileSize // 4, 0), 90)
-            elif dx < 0 and self.game.valid(self.position + vector(-self.game.tileSize // 4, 0)):
-                self.change(vector(-self.game.tileSize // 4, 0), 270)
+            if dx > 0 and self.game.valid(self.position + vector(tankSpeed, 0)):
+                self.change(vector(tankSpeed, 0), 90)
+            elif dx < 0 and self.game.valid(self.position + vector(-tankSpeed, 0)):
+                self.change(vector(-tankSpeed, 0), 270)
             else:
                 if dy > 0:
-                    self.change(vector(0, self.game.tileSize // 4), 0)
+                    self.change(vector(0, tankSpeed), 0)
                 elif dy < 0:
-                    self.change(vector(0, -self.game.tileSize // 4), 180)
+                    self.change(vector(0, -tankSpeed), 180)
         else:
-            if dy > 0 and self.game.valid(self.position + vector(0, self.game.tileSize // 4)):
-                self.change(vector(0, self.game.tileSize // 4), 0)
-            elif dy < 0 and self.game.valid(self.position + vector(0, -self.game.tileSize // 4)):
-                self.change(vector(0, -self.game.tileSize // 4), 180)
+            if dy > 0 and self.game.valid(self.position + vector(0, tankSpeed)):
+                self.change(vector(0, tankSpeed), 0)
+            elif dy < 0 and self.game.valid(self.position + vector(0, -tankSpeed)):
+                self.change(vector(0, -tankSpeed), 180)
             else:
                 if dx > 0:
-                    self.change(vector(self.game.tileSize // 4, 0), 90)
+                    self.change(vector(tankSpeed, 0), 90)
                 elif dx < 0:
-                    self.change(vector(-self.game.tileSize // 4, 0), 270)
+                    self.change(vector(-tankSpeed, 0), 270)
 
         if (not self.checkIfAnyAllyTankBetweenSelfAndTarget() and
                 ((self.direction == 90 and dx > 0 and abs(dy) < self.game.tileSize) or
@@ -680,22 +682,22 @@ class AITank(Tank):
                  (self.direction == 180 and dy < 0 and abs(dx) < self.game.tileSize))):
             self.shoot()
 
+        # targetTileIndex = self.game.offset(self.target.position)
+        # myTileIndex = self.game.offset(self.position)
+        #
+        # targetRow, targetColumn = divmod(targetTileIndex, self.game.columns)
+        # myRow, myColumn = divmod(myTileIndex, self.game.columns)
+        # print(f"Tank {self.tankId}:\nM {myRow}x{myColumn}\nT {targetRow}x{targetColumn}")
+
     def checkIfWantMoveInThatDirection(self):
         checkPosition = vector.copy(self.position)
-        if self.direction == 0:
-            checkPosition.y += self.game.tileSize
-        elif self.direction == 90:
-            checkPosition.x += self.game.tileSize
-        elif self.direction == 180:
-            checkPosition.y -= self.game.tileSize
-        elif self.direction == 270:
-            checkPosition.x -= self.game.tileSize
+        checkPosition.move(self.speed)
         checkTileIndex = self.game.offset(checkPosition)
-        print(f"Kierunek={self.direction}  moje pole= {self.game.offset(self.position)} sprawdzam={checkTileIndex} wS={self.game.tiles[checkTileIndex]}")
+        print(f"Speed={self.speed} Kierunek={self.direction}  moje pole= {self.game.offset(self.position)} sprawdzam={checkTileIndex} wS={self.game.tiles[checkTileIndex]}")
         if self.game.tiles[checkTileIndex] == Tile.MINE.value:
             return False
         for allyTank in self.game.enemyTanks:
-            if checkTileIndex == self.game.offset(allyTank.position):
+            if allyTank != self and checkTileIndex == self.game.offset(allyTank.position):
                 return False
         return True
 
