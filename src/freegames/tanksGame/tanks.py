@@ -3,6 +3,7 @@ from freegames import floor, vector
 from enum import Enum
 import configparser
 import os
+from pygame import mixer
 
 
 def loadFileAsArray(filename, errorMessage="There was a problem loading file content"):
@@ -47,6 +48,12 @@ def loadSettingsAndMapFromFile(filePath):
     if secondTankIndex > len(flatTiles):
         raise ValueError(f"Invalid second tank spawn position. Tank index {secondTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
     return flatTiles, rowsCount, columnsCount, tileSize, startGameX, startGameY, firstTankIndex, secondTankIndex
+
+
+def conditionalExecution(condition, function, *args, **kwargs):
+    conditionResult = condition() if callable(condition) else condition
+    if conditionResult:
+        return function(*args, **kwargs)
 
 
 class Tile(Enum):
@@ -140,6 +147,11 @@ class Game:
 
         self.tankCentralization = self.tileSize // 10  # minimal shift of tanks to make tanks stay in the center of the title
 
+        self.laserShootSound = mixer.Sound("files/sounds/laserShoot.wav")
+        self.explosionSound = mixer.Sound("files/sounds/explosion.wav")
+        self.damageSound = mixer.Sound("files/sounds/damage.wav")
+        self.gameOverSound = mixer.Sound("files/sounds/game-over.mp3")
+
         setup(420, 420, 750, 330)  # would center in resolution 1920x1080 and tiles 20x20 tileSize 40
         hideturtle()
         tracer(False)
@@ -222,8 +234,8 @@ class Game:
         firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 1, self.controls1, "Control_R", "Return")
         secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
-        # self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
-        self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
+        self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.controls2, "Control_L", "Shift_L")
+        # self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
 
         self.drawBoard()
         ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
@@ -256,10 +268,8 @@ class Game:
         for tank in tanks:  # draw destroyed tanks
             tank.drawTank(True)
 
-        def displayRestartModal():
-            if not self.gameRunning:
-                self.drawModalMessage(f"Game Over!\n{reason}", "Press 'R' to restart")
-        ontimer(displayRestartModal, 2500)
+        ontimer(lambda: conditionalExecution(not self.gameRunning, self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
+        ontimer(lambda: conditionalExecution(not self.gameRunning, self.gameOverSound.play), 1000)
 
     def tanksCollision(self, tank1, tank2, collisionThreshold=20):
         distanceBetweenTanks = abs(tank1.position - tank2.position)
@@ -285,6 +295,7 @@ class Game:
         if hit:
             self.bullets.remove(bullet)
             bullet.bulletTurtle.clear()
+            self.explosionSound.play()
 
     def togglePause(self):
         self.gamePaused = not self.gamePaused
@@ -463,6 +474,7 @@ class Tank:
             print(f"Tank {self.tankId} HP: {self.hp}")
             if self.hp == 0:
                 self.game.endGame([self], reason)
+        self.game.damageSound.play()
 
     def change(self, tankSpeedDirection, angle=None):
         tankSpeed = self.game.tileSize // 4
@@ -572,6 +584,7 @@ class Tank:
         self.game.bullets.append(bullet)
         self.loaded = False
         ontimer(self.reload, self.reloadingTime)
+        self.game.laserShootSound.play()
 
     def reload(self):
         self.loaded = True
@@ -631,4 +644,5 @@ class AITank(Tank):
             self.shootTimer -= 1
 
 
+mixer.init()  # for playing sounds
 Game(tiles, tileColors, "files/tanksConfig.ini", "files/help.txt")
