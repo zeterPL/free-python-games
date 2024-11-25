@@ -40,7 +40,7 @@ def loadSettingsAndMapFromFile(filePath):
         startGameX = int(config['settings'].get('startGameX', "500"))
         startGameY = int(config['settings'].get('startGameY', "100"))
         firstTankIndex = int(config['positions'].get('firstTankSpawnPosition', '187'))
-        secondTankIndex = int(config['positions'].get('secondTankSpawnPosition', '64'))
+        secondTankIndex = int(config['positions'].get('secondTankSpawnPosition', '-1'))
         enemies = list(map(int, config['enemies']['enemyTanksPositions'].split(','))) if 'enemies' in config and 'enemyTanksPositions' in config['enemies'] else []
     except ValueError as e:
         raise ValueError(f"Error reading settings: {e}")
@@ -112,7 +112,7 @@ class Game:
         self.startGameX = 500
         self.startGameY = 100
         self.firstTankSpawnIndex = 187
-        self.secondTankSpawnIndex = 64
+        self.secondTankSpawnIndex = None
         self.enemyTanksSpawnIndexes = []
         self.assignSettingsFromFile(settingsFile)
         self.tiles = list(self.initialTiles)
@@ -186,7 +186,7 @@ class Game:
             self.startGameX = startGameX or self.startGameX
             self.startGameY = startGameY or self.startGameY
             self.firstTankSpawnIndex = firstTankSpawnIndex or self.firstTankSpawnIndex
-            self.secondTankSpawnIndex = secondTankSpawnIndex or self.secondTankSpawnIndex
+            self.secondTankSpawnIndex = secondTankSpawnIndex if secondTankSpawnIndex != -1 else None
             self.enemyTanksSpawnIndexes = enemyTanksSpawnIndexes or self.enemyTanksSpawnIndexes
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
@@ -242,14 +242,17 @@ class Game:
 
         firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return", 3)
-        secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
-        self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
+        self.allTanks = [self.firstTank]
+        if self.secondTankSpawnIndex:
+            secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
+            self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
+            self.allTanks.append(self.secondTank)
         # self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
         for enemyId, enemyTankSpawnIndex in enumerate(self.enemyTanksSpawnIndexes, 2):
             enemyTankPosition = self.getTilePosition(enemyTankSpawnIndex)
             enemyTank = AITank(self, enemyTankPosition[0] + self.tankCentralization, enemyTankPosition[1] + self.tankCentralization, "gold", enemyId, self.firstTank, 3)
             self.enemyTanks.append(enemyTank)
-        self.allTanks = [self.firstTank, self.secondTank] + self.enemyTanks
+        self.allTanks.extend(self.enemyTanks)
 
         self.drawBoard()
         # ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
@@ -258,10 +261,9 @@ class Game:
     def roundOfMovement(self):
         if not self.gameRunning or self.gamePaused:
             return
-        self.firstTank.tankMovement()
-        self.secondTank.tankMovement()
-        self.firstTank.moveTank()
-        self.secondTank.moveTank()
+        for playerTank in list(set(self.allTanks) - set(self.enemyTanks)):
+            playerTank.tankMovement()
+            playerTank.moveTank()
         for enemyTank in self.enemyTanks:
             enemyTank.moveTank()
         self.processBulletsMovementsAndCollisions()
@@ -295,7 +297,6 @@ class Game:
                 tankChecking.takeDamage(f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
                 otherTank.takeDamage(f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
                 tankChecking.speed = vector(0, 0)
-                # print(f"Bot {tankChecking.tankId} sprawdzal\nZajete pola:\n{self.occupiedTilesByEnemies}\n")
                 return True
         return False
 
@@ -728,8 +729,8 @@ class AITank(Tank):
                 nextTiles = self.getTilesInRange(nextPosition, int(0.8 * self.game.tileSize))
                 # 4*movementVector=tileSize speed because we want to know in advance before the tank passes half the tile, then it won't be able to change direction
                 if self.isValidPointForBot(nextPosition) and not self.isCollidingWithOtherTank(nextTiles) and not self.game.tiles[self.game.offset(self.position + 4*movementVector)] == Tile.MINE.value:
-                    c = self.change(movementVector, direction)
-                    # print(f"Valid={self.game.tiles[self.game.offset(nextPosition)]} Dir={direction} Pos={self.position} change={c}")
+                    self.change(movementVector, direction)
+                    # print(f"Valid={self.game.tiles[self.game.offset(nextPosition)]} Dir={direction} Pos={self.position} changeReturn={c}")
                     return
         self.change(vector(0, 0))  # If no valid movement is found, stop the tank
         # print(f"Bot {self.tankId} cannot move closer\nOccupied tiles:\n{self.game.occupiedTilesByEnemies}\n")
