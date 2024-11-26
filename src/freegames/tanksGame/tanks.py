@@ -247,7 +247,6 @@ class Game:
             secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
             self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
             self.allTanks.append(self.secondTank)
-        # self.secondTank = AITank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 2, self.firstTank)
         for enemyId, enemyTankSpawnIndex in enumerate(self.enemyTanksSpawnIndexes, 2):
             enemyTankPosition = self.getTilePosition(enemyTankSpawnIndex)
             enemyTank = AITank(self, enemyTankPosition[0] + self.tankCentralization, enemyTankPosition[1] + self.tankCentralization, "gold", enemyId, self.firstTank, 3)
@@ -255,7 +254,7 @@ class Game:
         self.allTanks.extend(self.enemyTanks)
 
         self.drawBoard()
-        # ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
+        ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
         self.roundOfMovement()
 
     def roundOfMovement(self):
@@ -647,6 +646,7 @@ class AITank(Tank):
         self.path = []
         self.tryAppointNewPath()
         self.game.occupiedTilesByEnemies[self.tankId] = {self.game.offset(self.position)}  # at start occupy tile where spawn
+        self.stuckRounds = 0
 
         self.pathTurtle = Turtle(visible=False)
 
@@ -696,21 +696,12 @@ class AITank(Tank):
     def setPath(self, newPath):
         self.path = newPath
 
-    # def drawPath(self, drawPath):
-    #     for index in drawPath:
-    #         x, y = self.game.getTilePosition(index)
-    #         pathColor = "lawn green" if self.tankId == 2 else "blue" if self.tankId == 3 else "black"
-    #         self.game.drawSquare(self.pathTurtle, x+self.game.tileSize//4, y+self.game.tileSize//4, 10, pathColor)
-
     def tryAppointNewPath(self):
         if not self.target:
             return
         newPath = self.findPath(self.game.offset(self.position), self.game.offset(self.target.position))
         if newPath:
             self.setPath(newPath)
-        #     print(f"Tank {self.tankId} recalculated path to target at {self.target.position}")
-        # else:
-        #     print(f"Tank {self.tankId} could not find a new path to target at {self.target.position}")
 
     def simpleDirectionToBeCloserToTarget(self):
         dx = self.target.position.x - self.position.x
@@ -725,15 +716,12 @@ class AITank(Tank):
         for movementVector, direction, condition, absValue in movements:
             if condition:
                 nextPosition = self.position + movementVector
-                # print(f"Tile={self.game.tiles[self.game.offset(nextPosition)]} Dir={direction} Pos={self.position}")
                 nextTiles = self.getTilesInRange(nextPosition, int(0.8 * self.game.tileSize))
-                # 4*movementVector=tileSize speed because we want to know in advance before the tank passes half the tile, then it won't be able to change direction
-                if self.isValidPointForBot(nextPosition) and not self.isCollidingWithOtherTank(nextTiles) and not self.game.tiles[self.game.offset(self.position + 4*movementVector)] == Tile.MINE.value:
+                if (self.isValidPointForBot(nextPosition) and not self.isCollidingWithOtherTank(nextTiles)
+                        and not self.game.tiles[self.game.offset(self.position + self.game.tileSize/10*movementVector)] == Tile.MINE.value):
                     self.change(movementVector, direction)
-                    # print(f"Valid={self.game.tiles[self.game.offset(nextPosition)]} Dir={direction} Pos={self.position} changeReturn={c}")
                     return
         self.change(vector(0, 0))  # If no valid movement is found, stop the tank
-        # print(f"Bot {self.tankId} cannot move closer\nOccupied tiles:\n{self.game.occupiedTilesByEnemies}\n")
 
     def updateDirectionPath(self):
         if not self.path:
@@ -763,6 +751,20 @@ class AITank(Tank):
         occupiedIndices = {self.game.offset(point + offset) for offset in cornerOffsets}
         return occupiedIndices
 
+    def getStuckTankOut(self):
+        tileIndex = self.game.offset(self.position)
+        # centerTilePosition = vector(*self.game.getTilePosition(tileIndex)) + self.game.tankCentralization
+        # self.position = centerTilePosition
+        dx = (self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization) - self.position.x
+        dy = (self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization) - self.position.y
+        if dx == 0 and dy == 0:
+            return  # tank is in the middle of the tile he can go itself don't need of getting it out
+        elif abs(dx) > abs(dy):
+            self.position.move(vector(self.tankSpeedValue * (dx // abs(dx)), 0))
+        else:
+            self.position.move(vector(0, self.tankSpeedValue * (dy // abs(dy))))
+        print(f"Tank was stuck at pos={self.position} center={self.game.getTilePosition(tileIndex)} dx={dx} dy={dy}")
+
     def moveTank(self, wantMove=True):
         if not self.target or self.destroyed:
             return
@@ -786,8 +788,12 @@ class AITank(Tank):
 
         if self.position != originalPosition:
             self.game.occupiedTilesByEnemies[self.tankId] = nextTiles
+            self.stuckRounds = 0
         else:
             self.game.occupiedTilesByEnemies[self.tankId] = currentTiles
+            self.stuckRounds += 1
+            if self.stuckRounds > 10:
+                self.getStuckTankOut()
 
         self.pathTurtle.clear()
         # self.drawPath(self.path)
