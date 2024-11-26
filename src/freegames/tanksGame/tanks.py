@@ -198,7 +198,7 @@ class Game:
         y = (self.rows // 2 - 1) * self.tileSize - (index // self.columns) * self.tileSize
         return x, y
 
-    def offset(self, point):
+    def getTileIndexFromPoint(self, point):
         x = (floor(point.x, self.tileSize, self.tileSize * (self.columns // 2)) + (self.columns // 2) * self.tileSize) / self.tileSize
         y = ((self.rows // 2 - 1) * self.tileSize - floor(point.y, self.tileSize, self.tileSize * (self.rows // 2))) / self.tileSize
         index = int(x + y * self.columns)
@@ -206,10 +206,10 @@ class Game:
 
     def valid(self, point):
         blockingTiles = [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]
-        index = self.offset(point)
+        index = self.getTileIndexFromPoint(point)
         if self.tiles[index] in blockingTiles:
             return False
-        index = self.offset(point + int(self.tileSize * 0.95) - self.tankCentralization)
+        index = self.getTileIndexFromPoint(point + int(self.tileSize * 0.95) - self.tankCentralization)
         if self.tiles[index] in blockingTiles:
             return False
         return point.x % self.tileSize == self.tankCentralization or point.y % self.tileSize == self.tankCentralization
@@ -240,12 +240,12 @@ class Game:
         self.enemyTanks = []
         self.allTanks = []
 
-        firstTankSpawnPosition = self.getTilePosition(self.firstTankSpawnIndex)
-        self.firstTank = Tank(self, firstTankSpawnPosition[0] + self.tankCentralization, firstTankSpawnPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return", 3)
+        firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
+        self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return", 3)
         self.allTanks = [self.firstTank]
         if self.secondTankSpawnIndex:
-            secondTankSpawnPosition = self.getTilePosition(self.secondTankSpawnIndex)
-            self.secondTank = Tank(self, secondTankSpawnPosition[0] + self.tankCentralization, secondTankSpawnPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
+            secondTankPosition = self.getTilePosition(self.secondTankSpawnIndex)
+            self.secondTank = Tank(self, secondTankPosition[0] + self.tankCentralization, secondTankPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
             self.allTanks.append(self.secondTank)
         for enemyId, enemyTankSpawnIndex in enumerate(self.enemyTanksSpawnIndexes, 2):
             enemyTankPosition = self.getTilePosition(enemyTankSpawnIndex)
@@ -304,7 +304,7 @@ class Game:
             bullet.moveBullet()
             hit = False
             tankSize = 0.8 * self.tileSize
-            if self.offset(bullet.position) > len(self.tiles) or self.offset(bullet.position) < 0:
+            if self.getTileIndexFromPoint(bullet.position) > len(self.tiles) or self.getTileIndexFromPoint(bullet.position) < 0:
                 self.bullets.remove(bullet)
                 return
             for tank in self.allTanks:
@@ -312,11 +312,11 @@ class Game:
                     self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
                     tank.takeDamage(f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
                     hit = True
-            bulletTileValue = self.tiles[self.offset(bullet.position)]
+            bulletTileValue = self.tiles[self.getTileIndexFromPoint(bullet.position)]
             if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
                 if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
-                    self.tiles[self.offset(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
-                    x, y = self.getTilePosition(self.offset(bullet.position))
+                    self.tiles[self.getTileIndexFromPoint(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
+                    x, y = self.getTilePosition(self.getTileIndexFromPoint(bullet.position))
                     self.drawSquare(self.mapTurtle, x, y, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
                 hit = True
             if hit:
@@ -429,10 +429,10 @@ class Game:
             strippedLine = line.lstrip()
             leadingSpaces = len(line) - len(strippedLine)
 
-            x_offset = -modalWidth / 2 + (modalWidth - longestTextLineWidth) / 2
-            x_offset += leadingSpaces * 10
+            xOffset = -modalWidth / 2 + (modalWidth - longestTextLineWidth) / 2
+            xOffset += leadingSpaces * 10
 
-            self.messageTurtle.goto(x_offset, yOffset)
+            self.messageTurtle.goto(xOffset, yOffset)
             self.messageTurtle.write(line, align="left", font=("Arial", 10, "normal"))
             yOffset -= 20
 
@@ -467,13 +467,13 @@ class Bullet:
 
     def moveBullet(self):
         self.bulletTurtle.clear()
-        bulletOffsets = {
+        bulletDirectionMovements = {
             90: vector(self.bulletSpeed, 0),
             180: vector(0, -self.bulletSpeed),
             270: vector(-self.bulletSpeed, 0),
             0: vector(0, self.bulletSpeed)
         }
-        self.position.move(bulletOffsets[self.direction])
+        self.position.move(bulletDirectionMovements[self.direction])
         self.shooter.game.drawSquare(self.bulletTurtle, self.position.x, self.position.y, int(0.15 * self.shooter.game.tileSize), "red")
 
 
@@ -548,14 +548,14 @@ class Tank:
         if not self.destroyed and self.game.valid(newPosition) and wantMove and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize * 0.8)):
             self.position = newPosition
 
-        if self.game.tiles[self.game.offset(self.position)] == Tile.MINE.value:
-            x, y = self.game.getTilePosition(self.game.offset(self.position))
-            self.game.tiles[self.game.offset(self.position)] = Tile.ROAD.value
+        if self.game.tiles[self.game.getTileIndexFromPoint(self.position)] == Tile.MINE.value:
+            x, y = self.game.getTilePosition(self.game.getTileIndexFromPoint(self.position))
+            self.game.tiles[self.game.getTileIndexFromPoint(self.position)] = Tile.ROAD.value
             self.game.drawSquare(self.game.mapTurtle, x, y, squareColor=self.game.tileColors[Tile.ROAD.value])
             self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
             self.takeDamage(f"tank {self.tankId} ran over a mine")
             print(f"tank {self.tankId} ran over a mine\nd={self.direction} s={self.speed}\nZajete pola:\n{self.game.occupiedTilesByEnemies}\n")
-        elif self.game.tiles[self.game.offset(self.position)] == Tile.FOREST.value:
+        elif self.game.tiles[self.game.getTileIndexFromPoint(self.position)] == Tile.FOREST.value:
             self.tankTurtle.clear()
             self.hpTurtle.clear()  # tank hide in forest
         else:
@@ -645,7 +645,7 @@ class AITank(Tank):
         self.target = target
         self.path = []
         self.tryAppointNewPath()
-        self.game.occupiedTilesByEnemies[self.tankId] = {self.game.offset(self.position)}  # at start occupy tile where spawn
+        self.game.occupiedTilesByEnemies[self.tankId] = {self.game.getTileIndexFromPoint(self.position)}  # at start occupy tile where spawn
         self.stuckRounds = 0
 
         self.pathTurtle = Turtle(visible=False)
@@ -657,7 +657,7 @@ class AITank(Tank):
         return False
 
     def isValidPointForBot(self, point):
-        return self.isValidIndexForBot(self.game.offset(point))
+        return self.isValidIndexForBot(self.game.getTileIndexFromPoint(point))
 
     def isValidIndexForBot(self, index):
         if 0 <= index < len(self.game.tiles) and not self.isCollidingWithOtherTank({index}):
@@ -699,7 +699,7 @@ class AITank(Tank):
     def tryAppointNewPath(self):
         if not self.target:
             return
-        newPath = self.findPath(self.game.offset(self.position), self.game.offset(self.target.position))
+        newPath = self.findPath(self.game.getTileIndexFromPoint(self.position), self.game.getTileIndexFromPoint(self.target.position))
         if newPath:
             self.setPath(newPath)
 
@@ -718,7 +718,7 @@ class AITank(Tank):
                 nextPosition = self.position + movementVector
                 nextTiles = self.getTilesInRange(nextPosition, int(0.8 * self.game.tileSize))
                 if (self.isValidPointForBot(nextPosition) and not self.isCollidingWithOtherTank(nextTiles)
-                        and not self.game.tiles[self.game.offset(self.position + self.game.tileSize/10*movementVector)] == Tile.MINE.value):
+                        and not self.game.tiles[self.game.getTileIndexFromPoint(self.position + self.game.tileSize / 10 * movementVector)] == Tile.MINE.value):
                     self.change(movementVector, direction)
                     return
         self.change(vector(0, 0))  # If no valid movement is found, stop the tank
@@ -739,7 +739,7 @@ class AITank(Tank):
         elif nextPathTarget.y < self.position.y:
             self.change(vector(0, -self.tankSpeedValue), 180)
 
-        if self.game.offset(self.position + self.speed) not in {self.game.offset(self.position), nextIndex}:
+        if self.game.getTileIndexFromPoint(self.position + self.speed) not in {self.game.getTileIndexFromPoint(self.position), nextIndex}:
             self.change(vector(0, 0), None)
             self.tryAppointNewPath()
 
@@ -748,13 +748,11 @@ class AITank(Tank):
 
     def getTilesInRange(self, point, tankRange):
         cornerOffsets = [vector(0, 0), vector(tankRange, 0), vector(0, tankRange), vector(tankRange, tankRange)]
-        occupiedIndices = {self.game.offset(point + offset) for offset in cornerOffsets}
+        occupiedIndices = {self.game.getTileIndexFromPoint(point + offset) for offset in cornerOffsets}
         return occupiedIndices
 
     def getStuckTankOut(self):
-        tileIndex = self.game.offset(self.position)
-        # centerTilePosition = vector(*self.game.getTilePosition(tileIndex)) + self.game.tankCentralization
-        # self.position = centerTilePosition
+        tileIndex = self.game.getTileIndexFromPoint(self.position)
         dx = (self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization) - self.position.x
         dy = (self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization) - self.position.y
         if dx == 0 and dy == 0:
@@ -796,7 +794,6 @@ class AITank(Tank):
                 self.getStuckTankOut()
 
         self.pathTurtle.clear()
-        # self.drawPath(self.path)
 
     def decideToShoot(self):
         targetPosition = self.target.position
@@ -820,8 +817,8 @@ class AITank(Tank):
         self.shoot()
 
     def hasLineOfSight(self, targetPosition):
-        rowBot, columnBot = divmod(self.game.offset(self.position), self.game.columns)
-        rowTarget, columnTarget = divmod(self.game.offset(targetPosition), self.game.columns)
+        rowBot, columnBot = divmod(self.game.getTileIndexFromPoint(self.position), self.game.columns)
+        rowTarget, columnTarget = divmod(self.game.getTileIndexFromPoint(targetPosition), self.game.columns)
         if rowBot == rowTarget:  # Horizontal line of sight
             startColumn, endColumn = sorted((columnBot, columnTarget))
             tileIndices = {rowBot * self.game.columns + column for column in range(startColumn, endColumn + 1)}
