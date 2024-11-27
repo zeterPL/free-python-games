@@ -36,9 +36,9 @@ def loadSettingsAndMapFromFile(filePath):
     try:
         rowsCount = int(config['settings'].get('rows', "20"))
         columnsCount = int(config['settings'].get('columns', "20"))
-        tileSize = int(config['settings'].get('tileSize', "20"))
-        startGameX = int(config['settings'].get('startGameX', "500"))
-        startGameY = int(config['settings'].get('startGameY', "100"))
+        tileSize = int(config['settings'].get('tileSize'))
+        startGameX = int(config['settings'].get('startGameX'))
+        startGameY = int(config['settings'].get('startGameY'))
         firstTankIndex = int(config['positions'].get('firstTankSpawnPosition', '187'))
         secondTankIndex = int(config['positions'].get('secondTankSpawnPosition', '-1'))
         enemies = list(map(int, config['enemies']['enemyTanksPositions'].split(','))) if 'enemies' in config and 'enemyTanksPositions' in config['enemies'] else []
@@ -159,7 +159,7 @@ class Game:
         self.damageSound = mixer.Sound("files/sounds/damage.wav")
         self.gameOverSound = mixer.Sound("files/sounds/game-over.mp3")
 
-        setup(420, 420, 750, 330)  # would center in resolution 1920x1080 and tiles 20x20 tileSize 40
+        setup(420, 420, 540, 200)
         hideturtle()
         tracer(False)
 
@@ -183,9 +183,9 @@ class Game:
             self.rows = rows or self.rows
             self.columns = columns or self.columns
             self.tileSize = tileSize or self.tileSize
-            self.startGameX = startGameX or self.startGameX
-            self.startGameY = startGameY or self.startGameY
-            self.firstTankSpawnIndex = firstTankSpawnIndex or self.firstTankSpawnIndex
+            self.startGameX = startGameX if startGameX is not None else self.startGameX
+            self.startGameY = startGameY if startGameY is not None else self.startGameY
+            self.firstTankSpawnIndex = firstTankSpawnIndex if firstTankSpawnIndex is not None else self.firstTankSpawnIndex
             self.secondTankSpawnIndex = secondTankSpawnIndex if secondTankSpawnIndex != -1 else None
             self.enemyTanksSpawnIndexes = enemyTanksSpawnIndexes or self.enemyTanksSpawnIndexes
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
