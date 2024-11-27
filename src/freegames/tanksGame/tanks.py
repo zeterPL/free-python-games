@@ -229,7 +229,9 @@ class Game:
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
             return
-        setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
+        setupWidth = max((self.columns + 1) * self.tileSize, 420)
+        setupHeight = max((self.rows + 1) * self.tileSize, 420)
+        setup(setupWidth, setupHeight, self.startGameX, self.startGameY)
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
@@ -293,20 +295,21 @@ class Game:
         for otherTank in self.allTanks:
             distanceBetweenTanks = abs(tankCheckingPosition - otherTank.position)
             if otherTank != tankChecking and distanceBetweenTanks < collisionThreshold and tankChecking.speed != vector(0, 0):
-                tankChecking.takeDamage(f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
-                otherTank.takeDamage(f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
+                if not otherTank.destroyed:  # to improve gameplay collision with destroyed tank won't take damage
+                    tankChecking.takeDamage(f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
+                    otherTank.takeDamage(f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
                 tankChecking.speed = vector(0, 0)
                 return True
         return False
 
     def processBulletsMovementsAndCollisions(self):
-        for bullet in self.bullets:
+        for bullet in self.bullets[:]:
             bullet.moveBullet()
             hit = False
             tankSize = 0.8 * self.tileSize
             if self.getTileIndexFromPoint(bullet.position) > len(self.tiles) or self.getTileIndexFromPoint(bullet.position) < 0:
                 self.bullets.remove(bullet)
-                return
+                continue
             for tank in self.allTanks:
                 if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
                     self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
