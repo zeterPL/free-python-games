@@ -243,7 +243,7 @@ class Game:
         self.allTanks = []
 
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
-        self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return", 3)
+        self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return", 20)
         self.allTanks = [self.firstTank]
         if self.secondTankSpawnIndex:
             secondTankPosition = self.getTilePosition(self.secondTankSpawnIndex)
@@ -495,6 +495,7 @@ class Tank:
         self.setControls()
         self.keysPressed = {key: False for key in moveControls}
         self.hp = hp
+        self.maxHp = hp
         self.tankTurtle = Turtle(visible=False)
         self.hpTurtle = Turtle(visible=False)
         self.reloadingTime = 2000  # value in milliseconds
@@ -564,14 +565,39 @@ class Tank:
         else:
             self.drawTank()
 
-    def drawHP(self, hpColor="red"):
+    def drawHP(self, hpColor="red", bgColor="black"):
         self.hpTurtle.clear()
         if self.hp > 0:
             x, y = self.position
+            barWidth = self.game.tileSize
+            barHeight = self.game.tileSize // 5
+
+            hpRatio = self.hp / self.maxHp 
+
             self.hpTurtle.up()
-            self.hpTurtle.goto(x + self.game.tileSize // 2, y + int(self.game.tileSize * 1.25))
+            self.hpTurtle.goto(x, y + self.game.tileSize)
+            self.hpTurtle.down()
+            self.hpTurtle.color(bgColor)
+            self.hpTurtle.begin_fill()
+            for _ in range(2):
+                self.hpTurtle.forward(barWidth)
+                self.hpTurtle.left(90)
+                self.hpTurtle.forward(barHeight)
+                self.hpTurtle.left(90)
+            self.hpTurtle.end_fill()
+
+            self.hpTurtle.up()
+            self.hpTurtle.goto(x, y + self.game.tileSize)
+            self.hpTurtle.down()
             self.hpTurtle.color(hpColor)
-            self.hpTurtle.write(f"HP: {self.hp}", align="center", font=("Arial", self.game.tileSize // 2, "bold"))
+            self.hpTurtle.begin_fill()
+            for _ in range(2):
+                self.hpTurtle.forward(barWidth * hpRatio)
+                self.hpTurtle.left(90)
+                self.hpTurtle.forward(barHeight)
+                self.hpTurtle.left(90)
+            self.hpTurtle.end_fill()
+
 
     def drawTank(self):
         self.tankTurtle.clear()
