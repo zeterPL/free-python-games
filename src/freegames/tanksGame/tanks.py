@@ -5,6 +5,7 @@ import configparser
 import os
 from pygame import mixer
 from collections import deque
+import random
 
 
 def loadFileAsArray(filename, errorMessage="There was a problem loading file content"):
@@ -34,11 +35,15 @@ def loadSettingsAndMapFromFile(filePath):
     except ValueError as e:
         raise ValueError(f"Error processing tile data: {e}")
     try:
-        rowsCount = int(config['settings'].get('rows', "20"))
-        columnsCount = int(config['settings'].get('columns', "20"))
+        rowsCount = int(config['settings'].get('rows', '20'))
+        columnsCount = int(config['settings'].get('columns', '20'))
         tileSize = int(config['settings'].get('tileSize'))
         startGameX = int(config['settings'].get('startGameX'))
         startGameY = int(config['settings'].get('startGameY'))
+        basicHp = int(config['settings'].get('basicHp', '3'))
+        basicAttack = int(config['settings'].get('basicAttack', '1'))
+        numberOfRandomMines = int(config['settings'].get('numberOfRandomMines', '0'))
+        timeAfterWhichMinesHide = int(config['settings'].get('timeAfterWhichMinesHide', '10'))
         firstTankIndex = int(config['positions'].get('firstTankSpawnPosition', '187'))
         secondTankIndex = int(config['positions'].get('secondTankSpawnPosition', '-1'))
         enemies = list(map(int, config['enemies']['enemyTanksPositions'].split(','))) if 'enemies' in config and 'enemyTanksPositions' in config['enemies'] else []
@@ -50,7 +55,21 @@ def loadSettingsAndMapFromFile(filePath):
         raise ValueError(f"Invalid first tank spawn position. Tank index {firstTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
     if secondTankIndex > len(flatTiles):
         raise ValueError(f"Invalid second tank spawn position. Tank index {secondTankIndex} out of range. Max possible {len(flatTiles) - 1} index.")
-    return flatTiles, rowsCount, columnsCount, tileSize, startGameX, startGameY, firstTankIndex, secondTankIndex, enemies
+    return {
+        "map": flatTiles,
+        "rows": rowsCount,
+        "columns": columnsCount,
+        "tileSize": tileSize,
+        "startGameX": startGameX,
+        "startGameY": startGameY,
+        "basicHp": basicHp,
+        "basicAttack": basicAttack,
+        "firstTankIndex": firstTankIndex,
+        "numberOfRandomMines": numberOfRandomMines,
+        "timeAfterWhichMinesHide": timeAfterWhichMinesHide,
+        "secondTankIndex": secondTankIndex,
+        "enemies": enemies
+    }
 
 
 def conditionalExecution(condition, function, *args, **kwargs):
@@ -111,6 +130,10 @@ class Game:
         self.tileSize = 20
         self.startGameX = 500
         self.startGameY = 100
+        self.basicHp = 3
+        self.basicAttack = 1
+        self.numberOfRandomMines = 0
+        self.timeAfterWhichMinesHide = 10
         self.firstTankSpawnIndex = 187
         self.secondTankSpawnIndex = None
         self.enemyTanksSpawnIndexes = []
@@ -178,16 +201,20 @@ class Game:
         if not settingsFile:
             return
         try:
-            loadedTiles, rows, columns, tileSize, startGameX, startGameY, firstTankSpawnIndex, secondTankSpawnIndex, enemyTanksSpawnIndexes = loadSettingsAndMapFromFile(settingsFile)
-            self.initialTiles = loadedTiles or self.initialTiles
-            self.rows = rows or self.rows
-            self.columns = columns or self.columns
-            self.tileSize = tileSize or self.tileSize
-            self.startGameX = startGameX if startGameX is not None else self.startGameX
-            self.startGameY = startGameY if startGameY is not None else self.startGameY
-            self.firstTankSpawnIndex = firstTankSpawnIndex if firstTankSpawnIndex is not None else self.firstTankSpawnIndex
-            self.secondTankSpawnIndex = secondTankSpawnIndex if secondTankSpawnIndex != -1 else None
-            self.enemyTanksSpawnIndexes = enemyTanksSpawnIndexes or self.enemyTanksSpawnIndexes
+            loadedData = loadSettingsAndMapFromFile(settingsFile)
+            self.initialTiles = loadedData['map'] or self.initialTiles
+            self.rows = loadedData['rows'] or self.rows
+            self.columns = loadedData['columns'] or self.columns
+            self.tileSize = loadedData['tileSize'] or self.tileSize
+            self.startGameX = loadedData['startGameX'] if loadedData['startGameX'] is not None else self.startGameX
+            self.startGameY = loadedData['startGameY'] if loadedData['startGameY'] is not None else self.startGameY
+            self.basicHp = loadedData['basicHp'] or self.basicHp
+            self.basicAttack = loadedData['basicAttack'] or self.basicAttack
+            self.numberOfRandomMines = loadedData['numberOfRandomMines'] if loadedData['numberOfRandomMines'] is not None else self.numberOfRandomMines
+            self.timeAfterWhichMinesHide = loadedData['timeAfterWhichMinesHide'] if loadedData['timeAfterWhichMinesHide'] is not None else self.timeAfterWhichMinesHide
+            self.firstTankSpawnIndex = loadedData['firstTankIndex'] if loadedData['firstTankIndex'] is not None else self.firstTankSpawnIndex
+            self.secondTankSpawnIndex = loadedData['secondTankIndex'] if loadedData['secondTankIndex'] != -1 else None
+            self.enemyTanksSpawnIndexes = loadedData['enemies'] or self.enemyTanksSpawnIndexes
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
             print(f"Error loading configuration: {e}")
@@ -203,6 +230,22 @@ class Game:
         y = ((self.rows // 2 - 1) * self.tileSize - floor(point.y, self.tileSize, self.tileSize * (self.rows // 2))) / self.tileSize
         index = int(x + y * self.columns)
         return index
+
+    def getNeighbors(self, index, validationFunction=lambda x: True):
+        if index is None or not (0 <= index < self.rows * self.columns):
+            return []
+        neighbors = []
+        row = index // self.columns
+        column = index % self.columns
+        if column > 0 and validationFunction(index - 1):
+            neighbors.append(index - 1)
+        if column < self.columns-1 and validationFunction(index + 1):
+            neighbors.append(index + 1)
+        if row > 0 and validationFunction(index - self.columns):
+            neighbors.append(index - self.columns)
+        if row < self.rows-1 and validationFunction(index + self.columns):
+            neighbors.append(index + self.columns)
+        return neighbors
 
     def valid(self, point):
         blockingTiles = [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]
@@ -226,6 +269,26 @@ class Game:
         onkey(self.toggleHelpMenu, "H")
         onkey(exit, "Escape")
 
+    def spawnRandomMines(self):
+        # get all occupied indexes by tanks
+        occupiedIndexes = set(index for indexes in self.occupiedTilesByEnemies.values() for index in indexes)
+        occupiedIndexes.update({self.firstTankSpawnIndex})
+        if self.secondTankSpawnIndex is not None:
+            occupiedIndexes.add(self.secondTankSpawnIndex)
+        # add to occupiedIndexes theirs neighbors
+        neighborsToOccupiedIndexes = set()
+        for index in occupiedIndexes:
+            neighborsToOccupiedIndexes.update(self.getNeighbors(index))
+        occupiedIndexes.update(neighborsToOccupiedIndexes)
+        # spawn mines in possible indexes
+        possibleIndexes = [index for index, value in enumerate(self.tiles) if value == 1 and index not in occupiedIndexes]
+        for _ in range(self.numberOfRandomMines):
+            if not possibleIndexes:  # Break if there are no valid positions left
+                break
+            randomIndex = random.choice(possibleIndexes)
+            self.tiles[randomIndex] = 7
+            possibleIndexes.remove(randomIndex)  # Prevent duplicate selection
+
     def startGame(self):
         if self.gameRunning:  # don't start game if it's already started
             return
@@ -235,15 +298,12 @@ class Game:
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
-
         self.drawSquare(Turtle(visible=False), -self.gameWidth, -self.gameHeight, 2 * (self.gameWidth + self.gameHeight), "black")
-
         self.bullets = []
         self.enemyTanks = []
         self.allTanks = []
-
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
-        self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return", 20)
+        self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return")
         self.allTanks = [self.firstTank]
         if self.secondTankSpawnIndex:
             secondTankPosition = self.getTilePosition(self.secondTankSpawnIndex)
@@ -251,12 +311,12 @@ class Game:
             self.allTanks.append(self.secondTank)
         for enemyId, enemyTankSpawnIndex in enumerate(self.enemyTanksSpawnIndexes, 2):
             enemyTankPosition = self.getTilePosition(enemyTankSpawnIndex)
-            enemyTank = AITank(self, enemyTankPosition[0] + self.tankCentralization, enemyTankPosition[1] + self.tankCentralization, "gold", enemyId, self.firstTank, 3)
+            enemyTank = AITank(self, enemyTankPosition[0] + self.tankCentralization, enemyTankPosition[1] + self.tankCentralization, "gold", enemyId, self.firstTank)
             self.enemyTanks.append(enemyTank)
         self.allTanks.extend(self.enemyTanks)
-
+        self.spawnRandomMines()
         self.drawBoard()
-        ontimer(self.minesTurtle.clear, 10000)  # hiding mines after 10 seconds
+        ontimer(self.minesTurtle.clear, self.timeAfterWhichMinesHide*1000)
         self.roundOfMovement()
 
     def roundOfMovement(self):
@@ -274,19 +334,17 @@ class Game:
             ontimer(self.roundOfMovement, 100)
 
     def checkIfGameOver(self):
-        if self.firstTank and self.firstTank.hp == 0:
+        if self.firstTank and self.firstTank.destroyed:
             self.endGame(self.firstTank.deathReason)
-        if self.secondTank and self.secondTank.hp == 0:
+        if self.secondTank and self.secondTank.destroyed:
             self.endGame(self.secondTank.deathReason)
 
     def endGame(self, reason):
         if not self.gameRunning:
             return
         self.gameRunning = False
-
         for tank in self.allTanks:  # draw destroyed tanks
             tank.drawTank()
-
         ontimer(lambda: conditionalExecution(not self.gameRunning, self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
         ontimer(lambda: conditionalExecution(not self.gameRunning, self.gameOverSound.play), 1000)
 
@@ -296,8 +354,8 @@ class Game:
             distanceBetweenTanks = abs(tankCheckingPosition - otherTank.position)
             if otherTank != tankChecking and distanceBetweenTanks < collisionThreshold and tankChecking.speed != vector(0, 0):
                 if not otherTank.destroyed:  # to improve gameplay collision with destroyed tank won't take damage
-                    tankChecking.takeDamage(f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
-                    otherTank.takeDamage(f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
+                    tankChecking.takeDamage(1, f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
+                    otherTank.takeDamage(1, f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
                 tankChecking.speed = vector(0, 0)
                 return True
         return False
@@ -313,7 +371,7 @@ class Game:
             for tank in self.allTanks:
                 if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
                     self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
-                    tank.takeDamage(f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
+                    tank.takeDamage(bullet.shooter.attack, f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
                     hit = True
             bulletTileValue = self.tiles[self.getTileIndexFromPoint(bullet.position)]
             if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
@@ -329,7 +387,6 @@ class Game:
 
     def togglePause(self):
         self.gamePaused = not self.gamePaused
-
         if not self.gamePaused:
             print("Game resumes!")
             self.messageTurtle.clear()
@@ -431,20 +488,15 @@ class Game:
     def drawHelpMenu(self, modalWidth=420, modalHeight=420):
         self.messageTurtle.clear()
         self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
-
         yOffset = (modalHeight / 2) - 40
-        longestTextLineWidth = 312  # I checked how much pixels take to write the longest line
-
+        longestTextLineWidth = 312  # I checked manually how many pixels take to write the longest line
         for line in self.helpContent:
             strippedLine = line.lstrip()
             leadingSpaces = len(line) - len(strippedLine)
-
             xOffset = -modalWidth / 2 + (modalWidth - longestTextLineWidth) / 2
             xOffset += leadingSpaces * 10
-
             self.writeText(self.messageTurtle, xOffset, yOffset, line, "left", ("Arial", 10, "normal"))
             yOffset -= 20
-
         if self.showingHelpFromGame:
             self.writeText(self.messageTurtle, 0, yOffset-10, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
         else:
@@ -454,7 +506,6 @@ class Game:
         self.messageTurtle.clear()
         modalWidth, modalHeight = 350, 250
         self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
-
         self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 20, "bold"))
         self.writeText(self.messageTurtle, 0, -20, "Press 'S' to Start", textFont=("Arial", 12, "normal"))
         self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 12, "normal"))
@@ -482,7 +533,7 @@ class Bullet:
 
 
 class Tank:
-    def __init__(self, game, x, y, tankColor, tankId, moveControls, stoppingControl, shootingControl, hp=3):
+    def __init__(self, game, x, y, tankColor, tankId, moveControls, stoppingControl, shootingControl, hp=None, attack=None):
         self.game = game
         self.position = vector(x, y)
         self.speed = vector(0, 0)
@@ -495,8 +546,9 @@ class Tank:
         self.shootingControl = shootingControl
         self.setControls()
         self.keysPressed = {key: False for key in moveControls}
-        self.hp = hp
-        self.maxHp = hp
+        self.hp = hp or self.game.basicHp
+        self.maxHp = hp or self.game.basicHp
+        self.attack = attack or self.game.basicAttack
         self.tankTurtle = Turtle(visible=False)
         self.hpTurtle = Turtle(visible=False)
         self.reloadingTime = 2000  # value in milliseconds
@@ -504,11 +556,11 @@ class Tank:
         self.destroyed = False
         self.deathReason = ""
 
-    def takeDamage(self, reason):
+    def takeDamage(self, amount, reason):
         if self.hp > 0:
-            self.hp -= 1
-            print(f"Tank {self.tankId} HP: {self.hp}")
-            if self.hp == 0:
+            self.hp -= amount
+            print(f"Tank {self.tankId} receive {amount} damage remaining HP: {self.hp}")
+            if self.hp <= 0:
                 self.destroyed = True
                 self.deathReason = reason
                 self.drawTank()
@@ -558,8 +610,7 @@ class Tank:
             self.game.tiles[self.game.getTileIndexFromPoint(self.position)] = Tile.ROAD.value
             self.game.drawSquare(self.game.mapTurtle, x, y, squareColor=self.game.tileColors[Tile.ROAD.value])
             self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
-            self.takeDamage(f"tank {self.tankId} ran over a mine")
-            print(f"tank {self.tankId} ran over a mine\nd={self.direction} s={self.speed}\nZajete pola:\n{self.game.occupiedTilesByEnemies}\n")
+            self.takeDamage(random.randint(self.game.basicAttack//2, self.game.basicAttack*2), f"tank {self.tankId} ran over a mine")
         elif self.game.tiles[self.game.getTileIndexFromPoint(self.position)] == Tile.FOREST.value:
             self.tankTurtle.clear()
             self.hpTurtle.clear()  # tank hide in forest
@@ -646,8 +697,8 @@ class Tank:
 
 
 class AITank(Tank):
-    def __init__(self, game, x, y, tankColor, tankId, target, hp=3):
-        super().__init__(game, x, y, tankColor, tankId, {}, "", "", hp)
+    def __init__(self, game, x, y, tankColor, tankId, target, hp=None, attack=None):
+        super().__init__(game, x, y, tankColor, tankId, {}, "", "", hp, attack)
         self.target = target
         self.path = []
         self.tryAppointNewPath()
@@ -670,20 +721,6 @@ class AITank(Tank):
             return self.game.tiles[index] in [Tile.ROAD.value, Tile.FOREST.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value]
         return False
 
-    def getNeighbors(self, index):
-        neighbors = []
-        row = index // 20
-        column = index % 20
-        if column > 0 and self.isValidIndexForBot(index - 1):
-            neighbors.append(index - 1)
-        if column < 19 and self.isValidIndexForBot(index + 1):
-            neighbors.append(index + 1)
-        if row > 0 and self.isValidIndexForBot(index - 20):
-            neighbors.append(index - 20)
-        if row < 19 and self.isValidIndexForBot(index + 20):
-            neighbors.append(index + 20)
-        return neighbors
-
     def findPath(self, startIndex, endIndex):
         queue = deque([(startIndex, [startIndex])])
         visited = set()
@@ -694,7 +731,7 @@ class AITank(Tank):
             if current in visited:
                 continue
             visited.add(current)
-            for neighbor in self.getNeighbors(current):
+            for neighbor in self.game.getNeighbors(current, self.isValidIndexForBot):
                 if neighbor not in visited:
                     queue.append((neighbor, correctPath + [neighbor]))
         return []  # No path found
