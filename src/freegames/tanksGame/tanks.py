@@ -129,6 +129,7 @@ tileColors = {
 
 class Game:
     def __init__(self, initialTiles, initialTileColors, settingsFile=None, helpFile=None):
+        self.gameMode = None
         self.hallOfFameStoragePath = "files/hall_of_fame.txt"
         self.initialTiles = initialTiles
         self.rows = 20
@@ -203,6 +204,24 @@ class Game:
         self.startScreen()
         done()
 
+    def showGameModeMenu(self):
+        self.messageTurtle.clear()
+        self.drawRectangle(self.messageTurtle, 0, 0, 400, 300, "white", "black", True)
+        self.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 20, "bold"))
+        self.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 12, "normal"))
+        self.writeText(self.messageTurtle, 0, 0, "Press '2' for Multiplayer", textFont=("Arial", 12, "normal"))
+        self.writeText(self.messageTurtle, 0, -40, "Press 'H' for Help", textFont=("Arial", 12, "normal"))
+        self.writeText(self.messageTurtle, 0, -70, "Press 'Escape' to Exit", textFont=("Arial", 12, "italic"))
+
+        onkey(lambda: self.setGameMode("SinglePlayer"), "1")
+        onkey(lambda: self.setGameMode("Multiplayer"), "2")
+
+
+    def setGameMode(self, mode):
+        self.gameMode = mode
+        self.startGame()
+
+    onkey(exit, "Escape")
     def save_to_hall_of_fame(self, name, score):
         scores = self.load_hall_of_fame()
         scores.append((name, score))
@@ -319,7 +338,8 @@ class Game:
 
     def startScreen(self):
         self.gameRunning = False
-        self.drawStartMenu()
+        self.showGameModeMenu()
+        #self.drawStartMenu()
         self.awaitStart()
 
     def awaitStart(self):
@@ -354,7 +374,9 @@ class Game:
             return
         setupWidth = max((self.columns + 1) * self.tileSize, 420)
         setupHeight = max((self.rows + 1) * self.tileSize, 420)
+
         setup(setupWidth, setupHeight, self.startGameX, self.startGameY)
+
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
@@ -362,18 +384,26 @@ class Game:
         self.bullets = []
         self.enemyTanks = []
         self.allTanks = []
+
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return")
         self.allTanks = [self.firstTank]
-        if self.secondTankSpawnIndex:
-            secondTankPosition = self.getTilePosition(self.secondTankSpawnIndex)
-            self.secondTank = Tank(self, secondTankPosition[0] + self.tankCentralization, secondTankPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
-            self.allTanks.append(self.secondTank)
+        
+        if self.gameMode == "Multiplayer":
+            if self.secondTankSpawnIndex:
+                secondTankPosition = self.getTilePosition(self.secondTankSpawnIndex)
+                self.secondTank = Tank(self, secondTankPosition[0] + self.tankCentralization, secondTankPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
+            
+                self.allTanks.append(self.secondTank)
+        else:
+            self.secondTank = None
+
         for enemyId, enemyTankSpawnIndex in enumerate(self.enemyTanksSpawnIndexes, 2):
             enemyTankPosition = self.getTilePosition(enemyTankSpawnIndex)
             enemyTank = AITank(self, enemyTankPosition[0] + self.tankCentralization, enemyTankPosition[1] + self.tankCentralization, "gold", enemyId, self.firstTank)
             self.enemyTanks.append(enemyTank)
         self.allTanks.extend(self.enemyTanks)
+
         self.replaceBordersWithTeleport()
         self.spawnRandomMines()
         self.drawBoard()
@@ -406,8 +436,8 @@ class Game:
         self.gameRunning = False
         for tank in self.allTanks:  # draw destroyed tanks
             tank.drawTank()
-        #ontimer(lambda: conditionalExecution(not self.gameRunning, self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
-        ontimer(lambda: conditionalExecution(not self.gameRunning, self.init_hall_of_fame), 2000)
+        ontimer(lambda: conditionalExecution(not self.gameRunning and self.gameMode == "Multiplayer", self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
+        ontimer(lambda: conditionalExecution(not self.gameRunning and self.gameMode != "Multiplayer", self.init_hall_of_fame), 2000)
         ontimer(lambda: conditionalExecution(not self.gameRunning, self.gameOverSound.play), 1000)
 
     def init_hall_of_fame(self):
@@ -486,7 +516,7 @@ class Game:
                 self.showingHelpFromGame = False
                 self.roundOfMovement()
             else:
-                self.drawStartMenu()
+                self.showGameModeMenu()
                 self.awaitStart()
 
     def drawSquare(self, turtleObject, x, y, size=None, squareColor=None, circuitColor="black"):
@@ -787,11 +817,16 @@ class Tank:
 class AITank(Tank):
     def __init__(self, game, x, y, tankColor, tankId, target, hp=None, attack=None):
         super().__init__(game, x, y, tankColor, tankId, {}, "", "", hp, attack)
-        self.target = target
+        self.target = target #default
         self.path = []
         self.tryAppointNewPath()
         self.game.occupiedTilesByEnemies[self.tankId] = {self.game.getTileIndexFromPoint(self.position)}  # at start occupy tile where spawn
         self.stuckRounds = 0
+
+
+    def decideTarget(self):
+        if self.game.gameMode == "Multiplayer" and self.game.secondTank and not self.game.secondTank.destroyed:
+            self.target = random.choice([self.game.firstTank, self.game.secondTank])
 
     def isCollidingWithOtherTank(self, nextTiles):
         for otherTankId, occupiedTiles in self.game.occupiedTilesByEnemies.items():
@@ -890,6 +925,7 @@ class AITank(Tank):
         print(f"Tank was stuck at pos={self.position} center={self.game.getTilePosition(tileIndex)} dx={dx} dy={dy}")
 
     def moveTank(self, wantMove=True):
+        self.decideTarget()
         if not self.target or self.destroyed:
             return
         if self.path:
