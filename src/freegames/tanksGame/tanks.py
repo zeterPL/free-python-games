@@ -35,6 +35,7 @@ def loadSettingsAndMapFromFile(filePath):
     except ValueError as e:
         raise ValueError(f"Error processing tile data: {e}")
     try:
+        hallOfFameStoragePath = config['settings'].get('hallOfFameStoragePath', 'hall_of_fame.txt')
         rowsCount = int(config['settings'].get('rows', '20'))
         columnsCount = int(config['settings'].get('columns', '20'))
         tileSize = int(config['settings'].get('tileSize'))
@@ -68,7 +69,8 @@ def loadSettingsAndMapFromFile(filePath):
         "numberOfRandomMines": numberOfRandomMines,
         "timeAfterWhichMinesHide": timeAfterWhichMinesHide,
         "secondTankIndex": secondTankIndex,
-        "enemies": enemies
+        "enemies": enemies,
+        "hallOfFameStoragePath": hallOfFameStoragePath,
     }
 
 
@@ -127,6 +129,7 @@ tileColors = {
 
 class Game:
     def __init__(self, initialTiles, initialTileColors, settingsFile=None, helpFile=None):
+        self.hallOfFameStoragePath = "files/hall_of_fame.txt"
         self.initialTiles = initialTiles
         self.rows = 20
         self.columns = 20
@@ -200,6 +203,43 @@ class Game:
         self.startScreen()
         done()
 
+    def save_to_hall_of_fame(self, name, score):
+        scores = self.load_hall_of_fame()
+        scores.append((name, score))
+
+        scores.sort(key=lambda x: x[1], reverse=True)
+        scores = scores[:10]
+
+        with open(self.hallOfFameStoragePath, "w", encoding="utf-8") as file:
+            for player_name, player_score in scores:
+                file.write(f"{player_name}:{player_score}\n")
+
+    def load_hall_of_fame(self):
+        if not os.path.exists(self.hallOfFameStoragePath):
+            return []
+        with open(self.hallOfFameStoragePath, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+        scores = []
+        for line in lines:
+            try:
+                name, score = line.strip().split(":")
+                scores.append((name, int(score)))
+            except ValueError:
+                continue  
+        return scores
+
+    def show_hall_of_fame(self):
+        scores = self.load_hall_of_fame()
+        self.messageTurtle.clear()
+        self.drawRectangle(self.messageTurtle, 0, 0, 400, 300, "white", "black", True)
+        self.writeText(self.messageTurtle, 0, 120, "🏆 Hall of Fame 🏆", textFont=("Arial", 18, "bold"))
+        
+        y_offset = 80
+        for index, (name, score) in enumerate(scores):
+            self.writeText(self.messageTurtle, -150, y_offset, f"{index + 1}. {name} - {score}", "left", textFont=("Arial", 12, "normal"))
+            y_offset -= 30
+        self.writeText(self.messageTurtle, 0, y_offset - 30, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
+
     def assignSettingsFromFile(self, settingsFile):
         if not settingsFile:
             return
@@ -218,6 +258,7 @@ class Game:
             self.firstTankSpawnIndex = loadedData['firstTankIndex'] if loadedData['firstTankIndex'] is not None else self.firstTankSpawnIndex
             self.secondTankSpawnIndex = loadedData['secondTankIndex'] if loadedData['secondTankIndex'] != -1 else None
             self.enemyTanksSpawnIndexes = loadedData['enemies'] or self.enemyTanksSpawnIndexes
+            self.hallOfFameStoragePath = loadedData.get("hallOfFameStoragePath", self.hallOfFameStoragePath)
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
             print(f"Error loading configuration: {e}")
@@ -365,8 +406,22 @@ class Game:
         self.gameRunning = False
         for tank in self.allTanks:  # draw destroyed tanks
             tank.drawTank()
-        ontimer(lambda: conditionalExecution(not self.gameRunning, self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
+        #ontimer(lambda: conditionalExecution(not self.gameRunning, self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
+        ontimer(lambda: conditionalExecution(not self.gameRunning, self.init_hall_of_fame), 2000)
         ontimer(lambda: conditionalExecution(not self.gameRunning, self.gameOverSound.play), 1000)
+
+    def init_hall_of_fame(self):
+        score = len([tank for tank in self.enemyTanks if tank.destroyed])
+        player_name = self.get_player_name()
+
+        self.save_to_hall_of_fame(player_name, score)
+        self.show_hall_of_fame()
+
+        self.show_hall_of_fame()
+
+    def get_player_name(self):
+        from tkinter.simpledialog import askstring
+        return askstring("Hall of Fame", "Enter your name:") or "Anonymous"
 
     def tanksCollision(self, tankChecking, tankCheckingPosition=None, collisionThreshold=20):
         tankCheckingPosition = tankCheckingPosition or tankChecking.position
