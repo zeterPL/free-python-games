@@ -222,10 +222,20 @@ class Game:
         self.startGame()
 
     onkey(exit, "Escape")
+
     def save_to_hall_of_fame(self, name, score):
         scores = self.load_hall_of_fame()
-        scores.append((name, score))
-
+        
+        found = False
+        for i, (player_name, player_score) in enumerate(scores):
+            if player_name == name:
+                scores[i] = (name, max(score, player_score))
+                found = True
+                break
+        
+        if not found:
+            scores.append((name, score))
+        
         scores.sort(key=lambda x: x[1], reverse=True)
         scores = scores[:10]
 
