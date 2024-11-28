@@ -91,6 +91,9 @@ class Tile(Enum):
     MINE = 7
     TELEPORT = 8
 
+class BonusType(Enum):
+    HEALTH = 1
+    SHOOTING_SPEED = 2
 
 defaultTiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -126,6 +129,31 @@ tileColors = {
     Tile.TELEPORT.value: "black"
 }
 
+class Bonus:
+    def __init__(self, game, bonus_type, position):
+        self.game = game
+        self.bonus_type = bonus_type
+        self.position = position 
+        self.turtle = Turtle(visible=False)
+        self.draw_bonus()
+
+    def draw_bonus(self):
+        x, y = self.position.x + self.game.tileSize // 2, self.position.y + self.game.tileSize // 2
+        if self.bonus_type == BonusType.HEALTH:
+            color = "red"
+            shape = "circle"
+        elif self.bonus_type == BonusType.SHOOTING_SPEED:
+            color = "blue"
+            shape = "square"
+        else:
+            color = "white"
+            shape = "circle"
+        self.turtle.up()
+        self.turtle.goto(x, y)
+        self.turtle.shape(shape)
+        self.turtle.color(color)
+        self.turtle.shapesize(self.game.tileSize / 20)
+        self.turtle.showturtle()
 
 class Game:
     def __init__(self, initialTiles, initialTileColors, settingsFile=None, helpFile=None):
@@ -156,6 +184,7 @@ class Game:
         self.minesTurtle = Turtle(visible=False)
 
         self.bullets = []
+        self.bonuses = []
 
         self.gameRunning = False
         self.gamePaused = False
@@ -216,6 +245,30 @@ class Game:
         onkey(lambda: self.setGameMode("SinglePlayer"), "1")
         onkey(lambda: self.setGameMode("Multiplayer"), "2")
 
+    def spawn_bonus(self):
+        if not self.gameRunning:
+            return
+        bonus_type = random.choice([BonusType.HEALTH, BonusType.SHOOTING_SPEED])
+        possible_indexes = [index for index, value in enumerate(self.tiles) if value == Tile.ROAD.value]
+        occupied_indexes = set()
+        for tank in self.allTanks:
+            occupied_indexes.add(self.getTileIndexFromPoint(tank.position))
+        for bonus in self.bonuses:
+            occupied_indexes.add(self.getTileIndexFromPoint(bonus.position))
+        possible_indexes = [idx for idx in possible_indexes if idx not in occupied_indexes]
+        if not possible_indexes:
+            return
+        random_index = random.choice(possible_indexes)
+        x, y = self.getTilePosition(random_index)
+        position = vector(x, y)
+        bonus = Bonus(self, bonus_type, position)
+        self.bonuses.append(bonus)
+
+    def spawn_bonus_timer(self):
+        if not self.gameRunning:
+            return
+        self.spawn_bonus()
+        ontimer(self.spawn_bonus_timer, 30000)  # Spawn a bonus every 30 seconds
 
     def setGameMode(self, mode):
         self.gameMode = mode
@@ -260,7 +313,7 @@ class Game:
     def show_hall_of_fame(self):
         scores = self.load_hall_of_fame()
         self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, 400, 300, "white", "black", True)
+        self.drawRectangle(self.messageTurtle, 0, 0, 400, 500, "white", "black", True)
         self.writeText(self.messageTurtle, 0, 120, "🏆 Hall of Fame 🏆", textFont=("Arial", 18, "bold"))
         
         y_offset = 80
@@ -395,6 +448,15 @@ class Game:
         self.enemyTanks = []
         self.allTanks = []
 
+        self.bonuses = []
+        self.spawn_bonus()
+        self.spawn_bonus_timer()
+        self.update_bonuses()
+
+        for tank in self.allTanks:
+            if hasattr(tank, 'bonusDisplayTurtle'):
+                tank.bonusDisplayTurtle.clear()
+
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return")
         self.allTanks = [self.firstTank]
@@ -419,6 +481,13 @@ class Game:
         self.drawBoard()
         ontimer(self.minesTurtle.clear, self.timeAfterWhichMinesHide*1000)
         self.roundOfMovement()
+
+    def update_bonuses(self):
+        if not self.gameRunning:
+            return
+        for tank in self.allTanks:
+            tank.update_active_bonuses()
+        ontimer(self.update_bonuses, 1000)
 
     def roundOfMovement(self):
         if not self.gameRunning or self.gamePaused:
@@ -680,10 +749,12 @@ class Tank:
         self.attack = attack or self.game.basicAttack
         self.tankTurtle = Turtle(visible=False)
         self.hpTurtle = Turtle(visible=False)
+        self.bonusDisplayTurtle = Turtle(visible=False) 
         self.reloadingTime = 2000  # value in milliseconds
         self.loaded = True
         self.destroyed = False
         self.deathReason = ""
+        self.active_bonuses = {}
 
     def takeDamage(self, amount, reason):
         if self.hp > 0:
@@ -720,10 +791,55 @@ class Tank:
         # if tank move in wrong direction, where he can't go
         return -1
 
+    def is_on_bonus(self, bonus):
+        tank_rect = (self.position.x, self.position.y, self.game.tileSize, self.game.tileSize)
+        bonus_rect = (bonus.position.x, bonus.position.y, self.game.tileSize, self.game.tileSize)
+        return self.rect_overlap(tank_rect, bonus_rect)
+
+    def rect_overlap(self, rect1, rect2):
+        x1, y1, w1, h1 = rect1
+        x2, y2, w2, h2 = rect2
+        return not (x1 + w1 <= x2 or x1 >= x2 + w2 or y1 + h1 <= y2 or y1 >= y2 + h2)
+
+    def collect_bonus(self, bonus):
+        if bonus.bonus_type == BonusType.HEALTH:
+            self.active_bonuses[BonusType.HEALTH] = 5000 
+        elif bonus.bonus_type == BonusType.SHOOTING_SPEED:
+            self.active_bonuses[BonusType.SHOOTING_SPEED] = 10000  
+            self.reloadingTime = max(500, self.reloadingTime - 500)
+
+    def update_active_bonuses(self):
+        to_remove = []
+        for bonus_type in list(self.active_bonuses.keys()):
+            self.active_bonuses[bonus_type] -= 1000 
+            if self.active_bonuses[bonus_type] <= 0:
+                to_remove.append(bonus_type)
+            else:
+                if bonus_type == BonusType.HEALTH:
+                    self.hp = min(self.maxHp, self.hp + 1)
+                    self.drawHP()
+        for bonus_type in to_remove:
+            self.remove_bonus(bonus_type)
+        self.display_active_bonuses() 
+
+    def remove_bonus(self, bonus_type):
+        if bonus_type == BonusType.SHOOTING_SPEED:
+            self.reloadingTime += 500  
+            if self.reloadingTime > 2000:  
+                self.reloadingTime = 2000
+        del self.active_bonuses[bonus_type]
+
     def moveTank(self, wantMove=True):
         newPosition = self.position + self.speed
         if not self.destroyed and self.game.valid(newPosition) and wantMove and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize * 0.8)):
             self.position = newPosition
+
+        for bonus in self.game.bonuses[:]:
+            if self.is_on_bonus(bonus):
+                self.collect_bonus(bonus)
+                self.game.bonuses.remove(bonus)
+                bonus.turtle.clear()
+                bonus.turtle.hideturtle()
 
         centralizedPosition = self.position + int(self.game.tileSize * 0.4)
         tileIndex = self.game.getTileIndexFromPoint(centralizedPosition)
@@ -792,6 +908,25 @@ class Tank:
         if self.destroyed:
             self.game.drawSquare(self.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
         self.drawHP()
+        self.display_active_bonuses()
+
+    def display_active_bonuses(self):
+        self.bonusDisplayTurtle.clear()
+        x, y = self.position.x, self.position.y + self.game.tileSize + 10
+        self.bonusDisplayTurtle.up()
+        self.bonusDisplayTurtle.goto(x, y)
+        bonus_texts = []
+        for bonus_type, remaining_time in self.active_bonuses.items():
+            if bonus_type == BonusType.SHOOTING_SPEED:
+                bonus_name = "Shooting Speed"
+            elif bonus_type == BonusType.HEALTH:
+                bonus_name = "Health Regen"
+            else:
+                bonus_name = "Unknown"
+            seconds_left = remaining_time // 1000
+            bonus_texts.append(f"{bonus_name}: {seconds_left}s")
+        if bonus_texts:
+            self.bonusDisplayTurtle.write('\n'.join(bonus_texts), align="left", font=("Arial", 8, "normal"))
 
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
