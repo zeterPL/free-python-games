@@ -365,7 +365,8 @@ class Game:
             bullet.moveBullet()
             hit = False
             tankSize = 0.8 * self.tileSize
-            if self.getTileIndexFromPoint(bullet.position) > len(self.tiles) or self.getTileIndexFromPoint(bullet.position) < 0:
+            if bullet.position.x < -self.gameWidth//2 or bullet.position.x > self.gameWidth//2 or bullet.position.y < -self.gameHeight//2 or bullet.position.y > self.gameHeight//2:
+                bullet.bulletTurtle.clear()
                 self.bullets.remove(bullet)
                 continue
             for tank in self.allTanks:
@@ -381,8 +382,8 @@ class Game:
                     self.drawSquare(self.mapTurtle, x, y, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
                 hit = True
             if hit:
-                self.bullets.remove(bullet)
                 bullet.bulletTurtle.clear()
+                self.bullets.remove(bullet)
                 self.explosionSound.play()
 
     def togglePause(self):
@@ -705,8 +706,6 @@ class AITank(Tank):
         self.game.occupiedTilesByEnemies[self.tankId] = {self.game.getTileIndexFromPoint(self.position)}  # at start occupy tile where spawn
         self.stuckRounds = 0
 
-        self.pathTurtle = Turtle(visible=False)
-
     def isCollidingWithOtherTank(self, nextTiles):
         for otherTankId, occupiedTiles in self.game.occupiedTilesByEnemies.items():
             if otherTankId != self.tankId and not nextTiles.isdisjoint(occupiedTiles):
@@ -736,15 +735,12 @@ class AITank(Tank):
                     queue.append((neighbor, correctPath + [neighbor]))
         return []  # No path found
 
-    def setPath(self, newPath):
-        self.path = newPath
-
     def tryAppointNewPath(self):
         if not self.target:
             return
         newPath = self.findPath(self.game.getTileIndexFromPoint(self.position), self.game.getTileIndexFromPoint(self.target.position))
         if newPath:
-            self.setPath(newPath)
+            self.path = newPath
 
     def simpleDirectionToBeCloserToTarget(self):
         dx = self.target.position.x - self.position.x
@@ -836,8 +832,6 @@ class AITank(Tank):
             if self.stuckRounds > 10:
                 self.getStuckTankOut()
 
-        self.pathTurtle.clear()
-
     def decideToShoot(self):
         targetPosition = self.target.position
         if not self.loaded or not self.hasLineOfSight(targetPosition):
@@ -855,7 +849,6 @@ class AITank(Tank):
                 direction = 0
             elif dy < 0:
                 direction = 180
-
         self.change(vector(0, 0), direction)
         self.shoot()
 
