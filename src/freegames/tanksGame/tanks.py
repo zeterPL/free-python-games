@@ -373,6 +373,30 @@ class Game:
             turtleObject.left(90)
         turtleObject.end_fill()
 
+    @staticmethod
+    def drawRectangle(turtleObject, x, y, rectangleWidth, rectangleHeight, fillColor="white", borderColor="black", startDrawingFromMiddle=False):
+        turtleObject.color(borderColor)
+        turtleObject.fillcolor(fillColor)
+        turtleObject.up()
+        if startDrawingFromMiddle:
+            turtleObject.goto(x - rectangleWidth // 2, y - rectangleHeight // 2)
+        else:
+            turtleObject.goto(x, y)
+        turtleObject.down()
+        turtleObject.begin_fill()
+        for _ in range(2):
+            turtleObject.forward(rectangleWidth)
+            turtleObject.left(90)
+            turtleObject.forward(rectangleHeight)
+            turtleObject.left(90)
+        turtleObject.end_fill()
+        turtleObject.up()
+
+    @staticmethod
+    def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold")):
+        turtleObject.goto(x, y)
+        turtleObject.write(message, align=textAlign, font=textFont)
+
     def drawBoard(self):
         bgcolor('black')
         for index in range(len(self.tiles)):
@@ -398,32 +422,15 @@ class Game:
         else:
             ontimer(drawingTurtle.clear, 200)
 
-    def drawModalBackground(self, x, y, modalWidth, modalHeight, backgroundColor="white", borderColor="black"):
-        self.messageTurtle.color(borderColor)
-        self.messageTurtle.fillcolor(backgroundColor)
-        self.messageTurtle.penup()
-        self.messageTurtle.goto(x - modalWidth / 2, y - modalHeight / 2)
-        self.messageTurtle.pendown()
-        self.messageTurtle.begin_fill()
-        for _ in range(2):
-            self.messageTurtle.forward(modalWidth)
-            self.messageTurtle.left(90)
-            self.messageTurtle.forward(modalHeight)
-            self.messageTurtle.left(90)
-        self.messageTurtle.end_fill()
-        self.messageTurtle.penup()
-
     def drawModalMessage(self, message, subMessage, x=0, y=0, modalWidth=350, modalHeight=120):
         self.messageTurtle.clear()
-        self.drawModalBackground(x, y, modalWidth, modalHeight)
-        self.messageTurtle.goto(0, 0)
-        self.messageTurtle.write(message, align="center", font=("Arial", 16, "bold"))
-        self.messageTurtle.goto(0, -40)
-        self.messageTurtle.write(subMessage, align="center", font=("Arial", 12, "normal"))
+        self.drawRectangle(self.messageTurtle, x, y, modalWidth, modalHeight, "white", "black", True)
+        self.writeText(self.messageTurtle, 0, 0, message)
+        self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
     def drawHelpMenu(self, modalWidth=420, modalHeight=420):
         self.messageTurtle.clear()
-        self.drawModalBackground(0, 0, modalWidth, modalHeight, backgroundColor="white", borderColor="black")
+        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
 
         yOffset = (modalHeight / 2) - 40
         longestTextLineWidth = 312  # I checked how much pixels take to write the longest line
@@ -435,29 +442,23 @@ class Game:
             xOffset = -modalWidth / 2 + (modalWidth - longestTextLineWidth) / 2
             xOffset += leadingSpaces * 10
 
-            self.messageTurtle.goto(xOffset, yOffset)
-            self.messageTurtle.write(line, align="left", font=("Arial", 10, "normal"))
+            self.writeText(self.messageTurtle, xOffset, yOffset, line, "left", ("Arial", 10, "normal"))
             yOffset -= 20
 
-        self.messageTurtle.goto(0, yOffset - 10)
         if self.showingHelpFromGame:
-            self.messageTurtle.write("Press 'H' to return to the game", align="center", font=("Arial", 8, "italic"))
+            self.writeText(self.messageTurtle, 0, yOffset-10, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
         else:
-            self.messageTurtle.write("Press 'H' to return to the start screen", align="center", font=("Arial", 8, "italic"))
+            self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start screen", textFont=("Arial", 8, "italic"))
 
     def drawStartMenu(self):
         self.messageTurtle.clear()
-        self.drawModalBackground(0, 0, 350, 250, backgroundColor="white", borderColor="black")
+        modalWidth, modalHeight = 350, 250
+        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
 
-        self.messageTurtle.goto(0, 70)
-        self.messageTurtle.write("Tank Battle Game", align="center", font=("Arial", 20, "bold"))
-
-        self.messageTurtle.goto(0, -20)
-        self.messageTurtle.write("Press 'S' to Start", align="center", font=("Arial", 12, "normal"))
-        self.messageTurtle.goto(0, -60)
-        self.messageTurtle.write("Press 'H' for Help", align="center", font=("Arial", 12, "normal"))
-        self.messageTurtle.goto(0, -100)
-        self.messageTurtle.write("Press Escape for Exit", align="center", font=("Arial", 12, "normal"))
+        self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 20, "bold"))
+        self.writeText(self.messageTurtle, 0, -20, "Press 'S' to Start", textFont=("Arial", 12, "normal"))
+        self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 12, "normal"))
+        self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 12, "normal"))
 
 
 class Bullet:
@@ -568,36 +569,12 @@ class Tank:
     def drawHP(self, hpColor="red", bgColor="black"):
         self.hpTurtle.clear()
         if self.hp > 0:
-            x, y = self.position
+            x, y = self.position - self.game.tankCentralization
             barWidth = self.game.tileSize
             barHeight = self.game.tileSize // 5
-
-            hpRatio = self.hp / self.maxHp 
-
-            self.hpTurtle.up()
-            self.hpTurtle.goto(x, y + self.game.tileSize)
-            self.hpTurtle.down()
-            self.hpTurtle.color(bgColor)
-            self.hpTurtle.begin_fill()
-            for _ in range(2):
-                self.hpTurtle.forward(barWidth)
-                self.hpTurtle.left(90)
-                self.hpTurtle.forward(barHeight)
-                self.hpTurtle.left(90)
-            self.hpTurtle.end_fill()
-
-            self.hpTurtle.up()
-            self.hpTurtle.goto(x, y + self.game.tileSize)
-            self.hpTurtle.down()
-            self.hpTurtle.color(hpColor)
-            self.hpTurtle.begin_fill()
-            for _ in range(2):
-                self.hpTurtle.forward(barWidth * hpRatio)
-                self.hpTurtle.left(90)
-                self.hpTurtle.forward(barHeight)
-                self.hpTurtle.left(90)
-            self.hpTurtle.end_fill()
-
+            hpRatio = self.hp / self.maxHp
+            Game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
+            Game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize, barWidth*hpRatio, barHeight, hpColor)
 
     def drawTank(self):
         self.tankTurtle.clear()
