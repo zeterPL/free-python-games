@@ -87,6 +87,7 @@ class Tile(Enum):
     DESTRUCTIBLE_BLOCK = 5
     DESTROYED_DESTRUCTIBLE_BLOCK = 6
     MINE = 7
+    TELEPORT = 8
 
 
 defaultTiles = [
@@ -112,6 +113,7 @@ defaultTiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
 ]
 tileColors = {
+    Tile.NO_TILE.value: "black",
     Tile.ROAD.value: "light goldenrod",
     Tile.RIVER.value: "navy",
     Tile.FOREST.value: "forest green",
@@ -119,6 +121,7 @@ tileColors = {
     Tile.DESTRUCTIBLE_BLOCK.value: "dark orange",
     Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value: "tan1",
     Tile.MINE.value: "light goldenrod",
+    Tile.TELEPORT.value: "black"
 }
 
 
@@ -220,6 +223,19 @@ class Game:
             print(f"Error loading configuration: {e}")
             exit()
 
+    def replaceBordersWithTeleport(self):
+        replaceValues = [Tile.NO_TILE.value, Tile.ROAD.value, Tile.FOREST.value, Tile.DESTRUCTIBLE_BLOCK.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK, Tile.MINE.value]
+        for col in range(self.columns):
+            if self.tiles[col] in replaceValues:  # 1 row
+                self.tiles[col] = Tile.TELEPORT.value
+            if self.tiles[(self.rows-1) * self.columns + col] in replaceValues:  # last row
+                self.tiles[(self.rows - 1) * self.columns + col] = Tile.TELEPORT.value
+        for row in range(self.rows):
+            if self.tiles[row*self.columns] in replaceValues:  # 1 column
+                self.tiles[row*self.columns] = Tile.TELEPORT.value
+            if self.tiles[row*self.columns + self.columns-1] in replaceValues:  # last column
+                self.tiles[row*self.columns + self.columns-1] = Tile.TELEPORT.value
+
     def getTilePosition(self, index):
         x = (index % self.columns) * self.tileSize - (self.columns // 2) * self.tileSize
         y = (self.rows // 2 - 1) * self.tileSize - (index // self.columns) * self.tileSize
@@ -250,6 +266,9 @@ class Game:
     def valid(self, point):
         blockingTiles = [Tile.NO_TILE.value, Tile.RIVER.value, Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]
         index = self.getTileIndexFromPoint(point)
+        if index >= len(self.tiles) or index < 0:
+            print(f"Index out of range {index=} {point=}")
+            return False
         if self.tiles[index] in blockingTiles:
             return False
         index = self.getTileIndexFromPoint(point + int(self.tileSize * 0.95) - self.tankCentralization)
@@ -314,6 +333,7 @@ class Game:
             enemyTank = AITank(self, enemyTankPosition[0] + self.tankCentralization, enemyTankPosition[1] + self.tankCentralization, "gold", enemyId, self.firstTank)
             self.enemyTanks.append(enemyTank)
         self.allTanks.extend(self.enemyTanks)
+        self.replaceBordersWithTeleport()
         self.spawnRandomMines()
         self.drawBoard()
         ontimer(self.minesTurtle.clear, self.timeAfterWhichMinesHide*1000)
@@ -451,6 +471,18 @@ class Game:
         turtleObject.up()
 
     @staticmethod
+    def drawCircle(turtleObject, x, y, circleSize, circleColor):
+        turtleObject.up()
+        turtleObject.goto(x, y)
+        turtleObject.dot(circleSize, circleColor)
+
+    def drawPortal(self, turtleObject, x, y, portalSize, numberOfLayers, portalColor, backgroundColor):
+        for layer in range(numberOfLayers):
+            self.drawCircle(turtleObject, x, y, portalSize, portalColor)
+            self.drawCircle(turtleObject, x, y, int(portalSize-2), backgroundColor)
+            portalSize = max(int(0.5 * portalSize), 4)
+
+    @staticmethod
     def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold")):
         turtleObject.goto(x, y)
         turtleObject.write(message, align=textAlign, font=textFont)
@@ -464,9 +496,10 @@ class Game:
                 tileColor = self.tileColors[tile]
                 self.drawSquare(self.mapTurtle, x, y, squareColor=tileColor)
                 if tile == Tile.MINE.value:  # drawing mines
-                    self.minesTurtle.up()
-                    self.minesTurtle.goto(x + self.tileSize // 2, y + self.tileSize // 2)
-                    self.minesTurtle.dot(self.tileSize // 2, "black")
+                    self.drawCircle(self.minesTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize // 2, "black")
+                if tile == Tile.TELEPORT.value:  # drawing portals
+                    self.drawPortal(self.mapTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize*0.8, 5, "purple", "black")
+        self.drawRectangle(self.mapTurtle, 0, 0, self.rows*self.tileSize, self.columns*self.tileSize, "", "white", True)  # drawing white circuit around board
 
     def drawExplosion(self, drawingTurtle, x, y, explosionIteration=0, maxIterations=3):
         explosionColors = ["red", "yellow", "orange"]
@@ -593,26 +626,25 @@ class Tank:
         return -1
 
     def moveTank(self, wantMove=True):
-        newPosition = self.position + self.speed  # wrapping map
-        if newPosition.y > self.game.gameHeight / 2:
-            newPosition.y -= self.game.gameHeight
-        elif newPosition.y < -self.game.gameHeight / 2:
-            newPosition.y += self.game.gameHeight
-        if newPosition.x > self.game.gameWidth / 2:
-            newPosition.x -= self.game.gameWidth
-        elif newPosition.x < -self.game.gameWidth / 2:
-            newPosition.x += self.game.gameWidth
-
+        newPosition = self.position + self.speed
         if not self.destroyed and self.game.valid(newPosition) and wantMove and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize * 0.8)):
             self.position = newPosition
 
-        if self.game.tiles[self.game.getTileIndexFromPoint(self.position)] == Tile.MINE.value:
-            x, y = self.game.getTilePosition(self.game.getTileIndexFromPoint(self.position))
-            self.game.tiles[self.game.getTileIndexFromPoint(self.position)] = Tile.ROAD.value
+        centralizedPosition = self.position + int(self.game.tileSize * 0.4)
+        tileIndex = self.game.getTileIndexFromPoint(centralizedPosition)
+        tileValue = self.game.tiles[tileIndex]
+        if tileValue == Tile.MINE.value:
+            x, y = self.game.getTilePosition(tileIndex)
+            self.game.tiles[tileIndex] = Tile.ROAD.value
             self.game.drawSquare(self.game.mapTurtle, x, y, squareColor=self.game.tileColors[Tile.ROAD.value])
             self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
             self.takeDamage(random.randint(self.game.basicAttack//2, self.game.basicAttack*2), f"tank {self.tankId} ran over a mine")
-        elif self.game.tiles[self.game.getTileIndexFromPoint(self.position)] == Tile.FOREST.value:
+        elif tileValue == Tile.TELEPORT.value:
+            if self.speed.x:
+                self.position -= vector(self.speed.x//abs(self.speed.x)*self.game.tileSize*(self.game.columns-2), 0)
+            else:
+                self.position -= vector(0, self.speed.y//abs(self.speed.y)*self.game.tileSize*(self.game.rows-2))
+        elif tileValue == Tile.FOREST.value:
             self.tankTurtle.clear()
             self.hpTurtle.clear()  # tank hide in forest
         else:
