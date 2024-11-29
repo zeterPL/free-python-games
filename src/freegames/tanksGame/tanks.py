@@ -6,6 +6,7 @@ import os
 from pygame import mixer
 from collections import deque
 import random
+from tkinter.simpledialog import askstring
 
 
 def loadFileAsArray(filename, errorMessage="There was a problem loading file content"):
@@ -17,12 +18,20 @@ def loadFileAsArray(filename, errorMessage="There was a problem loading file con
         return [errorMessage]
 
 
+def parseControls(control_string):
+    controls = {}
+    for mapping in control_string.split(","):
+        action, key = mapping.split(":")
+        controls[action.strip()] = key.strip()
+    return controls
+
+
 def loadSettingsAndMapFromFile(filePath):
     if not os.path.exists(filePath):
         raise ValueError(f"The file '{filePath}' does not exist.")
     config = configparser.ConfigParser()
     config.read(filePath)
-    requiredSections = ['map', 'settings', 'positions']
+    requiredSections = ['map', 'settings', 'controls', 'positions']
     if not all(section in config for section in requiredSections):
         raise ValueError(f"The configuration file must have {requiredSections} sections.")
     tilesUnprocessed = config['map']['tiles']
@@ -35,7 +44,6 @@ def loadSettingsAndMapFromFile(filePath):
     except ValueError as e:
         raise ValueError(f"Error processing tile data: {e}")
     try:
-        hallOfFameStoragePath = config['settings'].get('hallOfFameStoragePath', 'hall_of_fame.txt')
         rowsCount = int(config['settings'].get('rows', '20'))
         columnsCount = int(config['settings'].get('columns', '20'))
         tileSize = int(config['settings'].get('tileSize'))
@@ -48,6 +56,10 @@ def loadSettingsAndMapFromFile(filePath):
         firstTankIndex = int(config['positions'].get('firstTankSpawnPosition', '187'))
         secondTankIndex = int(config['positions'].get('secondTankSpawnPosition', '-1'))
         enemies = list(map(int, config['enemies']['enemyTanksPositions'].split(','))) if 'enemies' in config and 'enemyTanksPositions' in config['enemies'] else []
+        hallOfFameStoragePath = config['filePaths']['hallOfFameStoragePath'] if 'filePaths' in config and 'hallOfFameStoragePath' in config['filePaths'] else 'files/hallOfFame.txt'
+        helpFilePath = config['filePaths']['helpFilePath'] if 'filePaths' in config and 'helpFilePath' in config['filePaths'] else 'files/help.txt'
+        firstTankControls = parseControls(config['controls'].get('firstTankControls', ''))
+        secondTankControls = parseControls(config['controls'].get('secondTankControls', ''))
     except ValueError as e:
         raise ValueError(f"Error reading settings: {e}")
     if rowsCount * columnsCount != len(flatTiles):
@@ -71,6 +83,9 @@ def loadSettingsAndMapFromFile(filePath):
         "secondTankIndex": secondTankIndex,
         "enemies": enemies,
         "hallOfFameStoragePath": hallOfFameStoragePath,
+        "helpFilePath": helpFilePath,
+        "firstTankControls": firstTankControls,
+        "secondTankControls": secondTankControls
     }
 
 
@@ -91,9 +106,11 @@ class Tile(Enum):
     MINE = 7
     TELEPORT = 8
 
+
 class BonusType(Enum):
     HEALTH = 1
     SHOOTING_SPEED = 2
+
 
 defaultTiles = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -129,6 +146,7 @@ tileColors = {
     Tile.TELEPORT.value: "black"
 }
 
+
 class Bonus:
     def __init__(self, game, bonus_type, position):
         self.game = game
@@ -155,10 +173,12 @@ class Bonus:
         self.turtle.shapesize(self.game.tileSize / 20)
         self.turtle.showturtle()
 
+
 class Game:
-    def __init__(self, initialTiles, initialTileColors, settingsFile=None, helpFile=None):
+    def __init__(self, initialTiles, initialTileColors, settingsFile=None):
         self.gameMode = None
         self.hallOfFameStoragePath = "files/hall_of_fame.txt"
+        self.helpFilePath = "files/help.txt"
         self.initialTiles = initialTiles
         self.rows = 20
         self.columns = 20
@@ -172,12 +192,14 @@ class Game:
         self.firstTankSpawnIndex = 187
         self.secondTankSpawnIndex = None
         self.enemyTanksSpawnIndexes = []
+        self.firstTankControls = {"Up": (vector(0, 5), 0), "Down": (vector(0, -5), 180), "Left": (vector(-5, 0), 270), "Right": (vector(5, 0), 90), "Stop": "Control_R", "Shoot": "Return"}
+        self.secondTankControls = {"w": (vector(0, 5), 0), "s": (vector(0, -5), 180), "a": (vector(-5, 0), 270), "d": (vector(5, 0), 90), "Stop": "Control_L", "Shoot": "Shift_L"}
         self.assignSettingsFromFile(settingsFile)
         self.tiles = list(self.initialTiles)
         self.tileColors = initialTileColors
         self.gameWidth = self.columns * self.tileSize
         self.gameHeight = self.rows * self.tileSize
-        self.helpContent = loadFileAsArray(helpFile, "There was a problem loading help content.") if helpFile else None
+        self.helpContent = loadFileAsArray(self.helpFilePath, "There was a problem loading help content.") if self.helpFilePath else None
 
         self.mapTurtle = Turtle(visible=False)
         self.messageTurtle = Turtle(visible=False)
@@ -198,16 +220,16 @@ class Game:
 
         self.tankSpeedValue = self.tileSize // 4
         self.controls1 = {
-            "Up": (vector(0, self.tankSpeedValue), 0),
-            "Down": (vector(0, -self.tankSpeedValue), 180),
-            "Left": (vector(-self.tankSpeedValue, 0), 270),
-            "Right": (vector(self.tankSpeedValue, 0), 90)
+            self.firstTankControls['Up']: (vector(0, self.tankSpeedValue), 0),
+            self.firstTankControls['Down']: (vector(0, -self.tankSpeedValue), 180),
+            self.firstTankControls['Left']: (vector(-self.tankSpeedValue, 0), 270),
+            self.firstTankControls['Right']: (vector(self.tankSpeedValue, 0), 90)
         }
         self.controls2 = {
-            "w": (vector(0, self.tankSpeedValue), 0),
-            "s": (vector(0, -self.tankSpeedValue), 180),
-            "a": (vector(-self.tankSpeedValue, 0), 270),
-            "d": (vector(self.tankSpeedValue, 0), 90)
+            self.secondTankControls['Up']: (vector(0, self.tankSpeedValue), 0),
+            self.secondTankControls['Down']: (vector(0, -self.tankSpeedValue), 180),
+            self.secondTankControls['Left']: (vector(-self.tankSpeedValue, 0), 270),
+            self.secondTankControls['Right']: (vector(self.tankSpeedValue, 0), 90)
         }
 
         self.tankCentralization = self.tileSize // 10  # minimal shift of tanks to make tanks stay in the center of the title
@@ -341,6 +363,9 @@ class Game:
             self.secondTankSpawnIndex = loadedData['secondTankIndex'] if loadedData['secondTankIndex'] != -1 else None
             self.enemyTanksSpawnIndexes = loadedData['enemies'] or self.enemyTanksSpawnIndexes
             self.hallOfFameStoragePath = loadedData.get("hallOfFameStoragePath", self.hallOfFameStoragePath)
+            self.helpFilePath = loadedData.get('helpFilePath', self.helpFilePath)
+            self.firstTankControls = loadedData['firstTankControls']
+            self.secondTankControls = loadedData['secondTankControls']
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
             print(f"Error loading configuration: {e}")
@@ -458,14 +483,15 @@ class Game:
                 tank.bonusDisplayTurtle.clear()
 
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
-        self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0, self.controls1, "Control_R", "Return")
+        self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0,
+                              self.controls1, self.firstTankControls['Stop'], self.firstTankControls['Shoot'])
         self.allTanks = [self.firstTank]
         
         if self.gameMode == "Multiplayer":
             if self.secondTankSpawnIndex:
                 secondTankPosition = self.getTilePosition(self.secondTankSpawnIndex)
-                self.secondTank = Tank(self, secondTankPosition[0] + self.tankCentralization, secondTankPosition[1] + self.tankCentralization, "slate gray", 1, self.controls2, "Control_L", "Shift_L")
-            
+                self.secondTank = Tank(self, secondTankPosition[0] + self.tankCentralization, secondTankPosition[1] + self.tankCentralization, "slate gray", 1,
+                                       self.controls2, self.secondTankControls['Stop'], self.secondTankControls['Shoot'])
                 self.allTanks.append(self.secondTank)
         else:
             self.secondTank = None
@@ -529,7 +555,6 @@ class Game:
         self.show_hall_of_fame()
 
     def get_player_name(self):
-        from tkinter.simpledialog import askstring
         return askstring("Hall of Fame", "Enter your name:") or "Anonymous"
 
     def tanksCollision(self, tankChecking, tankCheckingPosition=None, collisionThreshold=20):
@@ -962,12 +987,11 @@ class Tank:
 class AITank(Tank):
     def __init__(self, game, x, y, tankColor, tankId, target, hp=None, attack=None):
         super().__init__(game, x, y, tankColor, tankId, {}, "", "", hp, attack)
-        self.target = target #default
+        self.target = target  # default
         self.path = []
         self.tryAppointNewPath()
         self.game.occupiedTilesByEnemies[self.tankId] = {self.game.getTileIndexFromPoint(self.position)}  # at start occupy tile where spawn
         self.stuckRounds = 0
-
 
     def decideTarget(self):
         if self.game.gameMode == "Multiplayer" and self.game.secondTank and not self.game.secondTank.destroyed:
@@ -1138,4 +1162,4 @@ class AITank(Tank):
         return not self.isCollidingWithOtherTank(tileIndices)
 
 
-Game(defaultTiles, tileColors, "files/tanksConfig.ini", "files/help.txt")
+Game(defaultTiles, tileColors, "files/tanksConfig.ini")
