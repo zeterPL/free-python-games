@@ -25,8 +25,10 @@ class Tank:
         self.attack = attack or self.game.basicAttack
         self.tankTurtle = Turtle(visible=False)
         self.hpTurtle = Turtle(visible=False)
+        self.reloadTurtle = Turtle(visible=False)
         self.bonusDisplayTurtle = Turtle(visible=False)
         self.reloadingTime = 2000  # value in milliseconds
+        self.reloadingRemainingTime = 0
         self.loaded = True
         self.destroyed = False
         self.deathReason = ""
@@ -152,6 +154,7 @@ class Tank:
         elif tileValue == Tile.FOREST.value:
             self.tankTurtle.clear()
             self.hpTurtle.clear()  # tank hide in forest
+            self.reloadTurtle.clear()
         else:
             self.drawTank()
 
@@ -160,10 +163,21 @@ class Tank:
         if self.hp > 0:
             x, y = self.position - self.game.tankCentralization
             barWidth = self.game.tileSize
-            barHeight = self.game.tileSize // 5
+            barHeight = self.game.tileSize // 20 * 3
             hpRatio = self.hp / self.maxHp
-            self.game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
-            self.game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize, barWidth*hpRatio, barHeight, hpColor)
+            self.game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth, barHeight, bgColor)
+            self.game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth*hpRatio, barHeight, hpColor)
+
+    def drawReloadBar(self, reloadColor="gold", bgColor="black"):
+        self.reloadTurtle.clear()
+        if self.hp <= 0 or self.game.tiles[self.game.getTileIndexFromPoint(self.position + int(self.game.tileSize * 0.4))] == Tile.FOREST.value:
+            return
+        x, y = self.position - self.game.tankCentralization
+        barWidth = self.game.tileSize
+        barHeight = self.game.tileSize // 20 * 3
+        reloadRatio = 1 - (self.reloadingRemainingTime / self.reloadingTime) if self.reloadingTime > 0 else 1
+        self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
+        self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
 
     def drawTank(self):
         self.tankTurtle.clear()
@@ -202,6 +216,7 @@ class Tank:
         if self.destroyed:
             self.game.drawSquare(self.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
         self.drawHP()
+        self.drawReloadBar()
         self.displayActiveBonuses()
 
     def setControls(self):
@@ -228,8 +243,15 @@ class Tank:
         bullet = Bullet(self)
         self.game.bullets.append(bullet)
         self.loaded = False
-        ontimer(self.reload, self.reloadingTime)
+        self.reloadingRemainingTime = self.reloadingTime
+        self.updateReload()  # Start updating the reload bar
         self.game.laserShootSound.play()
 
-    def reload(self):
-        self.loaded = True
+    def updateReload(self):
+        if self.reloadingRemainingTime > 0:
+            self.drawReloadBar()
+            self.reloadingRemainingTime -= 100  # Decrease remaining time
+            ontimer(self.updateReload, 100)  # Update every 100ms
+        else:
+            self.loaded = True
+            self.drawReloadBar()  # Fully loaded
