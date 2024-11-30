@@ -347,18 +347,21 @@ class Game:
             ontimer(self.roundOfMovement, 100)
 
     def checkIfGameOver(self):
-        if self.gameMode == GameMode.SINGLE and self.firstTank.destroyed:
-            self.endGame(False, self.firstTank.deathReason)
-        elif self.gameMode == GameMode.SINGLE and all(tank.destroyed for tank in self.enemyTanks):
-            self.endGame(True, "All enemy tanks destroyed")
-        elif self.gameMode == GameMode.PVP and self.firstTank.destroyed:
-            self.endGame(False, self.firstTank.deathReason)
-        elif self.gameMode == GameMode.PVP and self.secondTank.destroyed:
-            self.endGame(False, self.secondTank.deathReason)
-        elif self.gameMode == GameMode.PVE and (self.firstTank.destroyed and self.secondTank.destroyed):
-            self.endGame(False, "All players tanks destroyed")
-        elif self.gameMode == GameMode.PVE and all(tank.destroyed for tank in self.enemyTanks):
-            self.endGame(True, "All enemy tanks destroyed")
+        if self.gameMode == GameMode.SINGLE:
+            if self.firstTank.destroyed:
+                self.endGame(False, self.firstTank.deathReason)
+            elif all(tank.destroyed for tank in self.enemyTanks):
+                self.endGame(True, "All enemy tanks destroyed")
+        elif self.gameMode == GameMode.PVP:
+            if self.firstTank.destroyed:
+                self.endGame(False, self.firstTank.deathReason)
+            elif self.secondTank.destroyed:
+                self.endGame(False, self.secondTank.deathReason)
+        elif self.gameMode == GameMode.PVE:
+            if self.firstTank.destroyed and self.secondTank.destroyed:
+                self.endGame(False, "All players tanks destroyed")
+            elif all(tank.destroyed for tank in self.enemyTanks):
+                self.endGame(True, "All enemy tanks destroyed")
 
     def endGame(self, victory, announcement):
         self.gameRunning = False
