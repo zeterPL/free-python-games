@@ -9,10 +9,6 @@ class Bullet:
         self.bulletSpeed = bulletSpeed if bulletSpeed else shooter.game.tileSize // 2
         self.shooter = shooter
         self.bulletTurtle = Turtle(visible=False)
-    #
-    # def __del__(self):
-    #     self.bulletTurtle.clear()
-    #     del self.bulletTurtle
 
     def moveBullet(self):
         self.bulletTurtle.clear()

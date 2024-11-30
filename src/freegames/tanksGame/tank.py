@@ -31,12 +31,6 @@ class Tank:
         self.destroyed = False
         self.deathReason = ""
         self.active_bonuses = {}
-    #
-    # def __del__(self):
-    #     self.tankTurtle.clear()
-    #     self.hpTurtle.clear()
-    #     del self.tankTurtle
-    #     del self.hpTurtle
 
     def takeDamage(self, amount, reason):
         if self.hp > 0:

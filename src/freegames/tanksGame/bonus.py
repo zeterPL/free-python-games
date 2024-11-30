@@ -14,10 +14,6 @@ class Bonus:
         self.position = position
         self.bonusTurtle = Turtle(visible=False)
         self.drawBonus()
-    #
-    # def __del__(self):
-    #     self.bonusTurtle.clear()
-    #     del self.bonusTurtle
 
     def drawBonus(self):
         x, y = self.position.x + self.game.tileSize // 2, self.position.y + self.game.tileSize // 2

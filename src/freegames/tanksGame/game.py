@@ -395,6 +395,7 @@ class Game:
             turtleObject.forward(size)
             turtleObject.left(90)
         turtleObject.end_fill()
+        turtleObject.up()
 
     @staticmethod
     def drawRectangle(turtleObject, x, y, rectangleWidth, rectangleHeight, fillColor="white", borderColor="black", startDrawingFromMiddle=False, borderThickness=1):
