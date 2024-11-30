@@ -12,8 +12,12 @@ class Bonus:
         self.game = game
         self.bonus_type = bonus_type
         self.position = position
-        self.turtle = Turtle(visible=False)
+        self.bonusTurtle = Turtle(visible=False)
         self.drawBonus()
+    #
+    # def __del__(self):
+    #     self.bonusTurtle.clear()
+    #     del self.bonusTurtle
 
     def drawBonus(self):
         x, y = self.position.x + self.game.tileSize // 2, self.position.y + self.game.tileSize // 2
@@ -26,9 +30,9 @@ class Bonus:
         else:
             color = "white"
             shape = "circle"
-        self.turtle.up()
-        self.turtle.goto(x, y)
-        self.turtle.shape(shape)
-        self.turtle.color(color)
-        self.turtle.shapesize(self.game.tileSize / 20)
-        self.turtle.showturtle()
+        self.bonusTurtle.up()
+        self.bonusTurtle.goto(x, y)
+        self.bonusTurtle.shape(shape)
+        self.bonusTurtle.color(color)
+        self.bonusTurtle.shapesize(self.game.tileSize / 20)
+        self.bonusTurtle.showturtle()

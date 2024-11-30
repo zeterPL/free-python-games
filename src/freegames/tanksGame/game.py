@@ -1,4 +1,4 @@
-from turtle import Turtle, setup, hideturtle, listen, update, done, tracer, onkey, ontimer, bgcolor
+from turtle import Turtle, setup, hideturtle, listen, update, done, tracer, onkey, ontimer, bgcolor, clearscreen, resetscreen
 from freegames import floor, vector
 import os
 from pygame import mixer
@@ -21,7 +21,7 @@ class GameMode(Enum):
 class Game:
     def __init__(self, initialTiles, initialTileColors, settingsFile=None):
         self.gameMode = None
-        self.hallOfFameStoragePath = "files/hall_of_fame.txt"
+        self.hallOfFameStoragePath = "files/hallOfFame.txt"
         self.helpFilePath = "files/help.txt"
         self.initialTiles = initialTiles
         self.rows = 20
@@ -49,9 +49,6 @@ class Game:
         self.messageTurtle = Turtle(visible=False)
         self.minesTurtle = Turtle(visible=False)
 
-        self.bullets = []
-        self.bonuses = []
-
         self.gameRunning = False
         self.gamePaused = False
 
@@ -60,7 +57,10 @@ class Game:
         self.enemyTanks = []
         self.occupiedTilesByEnemies = {}
         self.allTanks = []
+        self.bullets = []
+        self.bonuses = []
 
+        self.tankCentralization = self.tileSize // 10  # minimal shift of tanks to make tanks stay in the center of the title
         self.tankSpeedValue = self.tileSize // 4
         self.controls1 = {
             self.firstTankControls['Up']: (vector(0, self.tankSpeedValue), 0),
@@ -75,8 +75,6 @@ class Game:
             self.secondTankControls['Right']: (vector(self.tankSpeedValue, 0), 90)
         }
 
-        self.tankCentralization = self.tileSize // 10  # minimal shift of tanks to make tanks stay in the center of the title
-
         mixer.init()  # for playing sounds
         self.laserShootSound = mixer.Sound("files/sounds/laserShoot.wav")
         self.explosionSound = mixer.Sound("files/sounds/explosion.wav")
@@ -84,10 +82,7 @@ class Game:
         self.gameOverSound = mixer.Sound("files/sounds/game-over.mp3")
         self.victorySound = mixer.Sound("files/sounds/victory.mp3")
 
-        setup(420, 420, 540, 200)
-        hideturtle()
-        tracer(False)
-        listen()
+        self.modalWidth, self.modalHeight = 400, 300
         self.showStartMenu()
         done()
 
@@ -231,15 +226,12 @@ class Game:
     def startGame(self):
         if self.gameRunning:
             return
-        setupWidth = max((self.columns + 1) * self.tileSize, 420)
-        setupHeight = max((self.rows + 1) * self.tileSize, 420)
 
-        setup(setupWidth, setupHeight, self.startGameX, self.startGameY)
+        setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
 
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
-        self.drawSquare(Turtle(visible=False), -self.gameWidth, -self.gameHeight, 2 * (self.gameWidth + self.gameHeight), "black")
         self.bullets = []
         self.enemyTanks = []
         self.allTanks = []
@@ -275,7 +267,7 @@ class Game:
         self.replaceBordersWithTeleport()
         self.spawnRandomMines()
         self.drawBoard()
-        ontimer(self.minesTurtle.clear, self.timeAfterWhichMinesHide * 1000)
+        ontimer(lambda: self.conditionalExecution(self.gameRunning, self.minesTurtle.clear), self.timeAfterWhichMinesHide * 1000)
         self.roundOfMovement()
 
     def roundOfMovement(self):
@@ -317,7 +309,7 @@ class Game:
         ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
         if self.gameMode == GameMode.SINGLE:
             ontimer(lambda: self.conditionalExecution(not self.gameRunning, lambda v=victory: self.initHallOfFame(v)), 2000)
-        onkey(lambda: self.startGame(), "r")
+        onkey(self.startGame, "r")
 
     @staticmethod
     def conditionalExecution(condition, function, *args, **kwargs):
@@ -443,6 +435,7 @@ class Game:
         turtleObject.write(message, align=textAlign, font=textFont)
 
     def drawBoard(self):
+        self.drawSquare(self.mapTurtle, -self.gameWidth, -self.gameHeight, 2 * (self.gameWidth + self.gameHeight), "black")
         bgcolor('black')
         for index in range(len(self.tiles)):
             tile = self.tiles[index]
@@ -474,15 +467,26 @@ class Game:
         self.writeText(self.messageTurtle, 0, 0, message)
         self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
+    def resetGame(self):
+        self.allTanks.clear()
+        self.bullets.clear()
+        self.bonuses.clear()
+        self.occupiedTilesByEnemies.clear()
+        resetscreen()
+        clearscreen()
+        setup(420, 420, 540, 200)
+        hideturtle()
+        tracer(False)
+        listen()
+
     def showStartMenu(self):
         self.gameRunning = False
-        self.messageTurtle.clear()
-        modalWidth, modalHeight = 350, 250
-        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True, borderThickness=2)
-        self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 28, "bold"))
-        self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 16, "normal"))
+        self.resetGame()
+        self.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
+        self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 32, "bold"))
+        self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 18, "normal"))
+        self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 18, "normal"))
+        self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 18, "normal"))
 
         onkey(lambda: self.showGameModeMenu(), "p")
         onkey(lambda: self.toggleHelpMenu(), "h")
@@ -490,7 +494,7 @@ class Game:
 
     def showGameModeMenu(self):
         self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, 400, 300, "white", "black", True, borderThickness=2)
+        self.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
         self.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 28, "bold"))
         self.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 16, "normal"))
         self.writeText(self.messageTurtle, 0, 0, "Press '2' for PvP mode", textFont=("Arial", 16, "normal"))
@@ -522,14 +526,15 @@ class Game:
 
     def initHallOfFame(self, victory):
         score = ((1000 if victory else 0) + 1000 * sum(1 for tank in self.enemyTanks if tank.destroyed) + 10 * sum(self.basicHp - tank.hp for tank in self.enemyTanks if not tank.destroyed))
-        playerName = askstring("Hall of Fame", "Enter your name:") or "Anonymous"
+        playerName = askstring("Hall of Fame", "Enter your name:\t\t\t\t") or "Anonymous"
         self.saveToHallOfFame(playerName, score)
         self.showHallOfFame()
 
-    def showHallOfFame(self):
+    def showHallOfFame(self, modalWidth=400, modalHeight=500):
+        setup(max((self.columns + 1) * self.tileSize, 400), max((self.rows + 1) * self.tileSize, 500), self.startGameX, self.startGameY)
         scores = self.loadHallOfFame()
         self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, 400, 500, "white", "black", True)
+        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
         self.writeText(self.messageTurtle, 0, 180, "🏆 Hall of Fame 🏆", textFont=("Arial", 32, "bold"))
 
         y_offset = 130

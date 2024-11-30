@@ -31,6 +31,12 @@ class Tank:
         self.destroyed = False
         self.deathReason = ""
         self.active_bonuses = {}
+    #
+    # def __del__(self):
+    #     self.tankTurtle.clear()
+    #     self.hpTurtle.clear()
+    #     del self.tankTurtle
+    #     del self.hpTurtle
 
     def takeDamage(self, amount, reason):
         if self.hp > 0:
@@ -132,8 +138,8 @@ class Tank:
             if self.isOnBonus(bonus):
                 self.collectBonus(bonus)
                 self.game.bonuses.remove(bonus)
-                bonus.turtle.clear()
-                bonus.turtle.hideturtle()
+                bonus.bonusTurtle.clear()
+                bonus.bonusTurtle.hideturtle()
 
         centralizedPosition = self.position + int(self.game.tileSize * 0.4)
         tileIndex = self.game.getTileIndexFromPoint(centralizedPosition)

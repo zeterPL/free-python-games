@@ -12,6 +12,9 @@ class AITank(Tank):
         self.tryAppointNewPath()
         self.game.occupiedTilesByEnemies[self.tankId] = {self.game.getTileIndexFromPoint(self.position)}  # at start occupy tile where spawn
         self.stuckRounds = 0
+    #
+    # def __del__(self):
+    #     super().__del__()
 
     def decideTarget(self):
         potentialTargets = [tank for tank in (self.game.firstTank, self.game.secondTank) if tank and not tank.destroyed]
@@ -71,7 +74,7 @@ class AITank(Tank):
                 nextPosition = self.position + movementVector
                 nextTiles = self.getTilesInRange(nextPosition, int(0.8 * self.game.tileSize))
                 if (self.isValidPointForBot(nextPosition) and not self.isCollidingWithOtherTank(nextTiles)
-                        and not self.game.tiles[self.game.getTileIndexFromPoint(self.position + self.game.tileSize / 10 * movementVector)] == Tile.MINE.value):
+                        and not self.game.tiles[self.game.getTileIndexFromPoint(self.position + 4 * movementVector)] == Tile.MINE.value):
                     self.change(movementVector, direction)
                     return
         self.change(vector(0, 0))  # If no valid movement is found, stop the tank
