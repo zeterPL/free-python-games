@@ -4,11 +4,18 @@ import os
 from pygame import mixer
 import random
 from tkinter.simpledialog import askstring
+from enum import Enum
 from file import File
 from tank import Tank
 from aiTank import AITank
 from bonus import Bonus, BonusType
 from tile import Tile, tileColors, defaultTiles
+
+
+class GameMode(Enum):
+    SINGLE = 0
+    PVP = 1
+    PVE = 2
 
 
 class Game:
@@ -29,8 +36,8 @@ class Game:
         self.firstTankSpawnIndex = 187
         self.secondTankSpawnIndex = None
         self.enemyTanksSpawnIndexes = []
-        self.firstTankControls = {"Up": (vector(0, 5), 0), "Down": (vector(0, -5), 180), "Left": (vector(-5, 0), 270), "Right": (vector(5, 0), 90), "Stop": "Control_R", "Shoot": "Return"}
-        self.secondTankControls = {"w": (vector(0, 5), 0), "s": (vector(0, -5), 180), "a": (vector(-5, 0), 270), "d": (vector(5, 0), 90), "Stop": "Control_L", "Shoot": "Shift_L"}
+        self.firstTankControls = {'Up': 'Up', 'Down': 'Down', 'Left': 'Left', 'Right': 'Right', 'Stop': 'Control_R', 'Shoot': 'Return'}
+        self.secondTankControls = {'Up': 'w', 'Down': 's', 'Left': 'a', 'Right': 'd', 'Stop': 'Control_L', 'Shoot': 'Shift_L'}
         self.assignSettingsFromFile(settingsFile)
         self.tiles = list(self.initialTiles)
         self.tileColors = initialTileColors
@@ -47,7 +54,6 @@ class Game:
 
         self.gameRunning = False
         self.gamePaused = False
-        self.showingHelpFromGame = False
 
         self.firstTank = None
         self.secondTank = None
@@ -76,20 +82,13 @@ class Game:
         self.explosionSound = mixer.Sound("files/sounds/explosion.wav")
         self.damageSound = mixer.Sound("files/sounds/damage.wav")
         self.gameOverSound = mixer.Sound("files/sounds/game-over.mp3")
+        self.victorySound = mixer.Sound("files/sounds/victory.mp3")
 
         setup(420, 420, 540, 200)
         hideturtle()
         tracer(False)
-
-        for key in ["r", "R"]:
-            onkey(self.startGame, key)
-        for key in ["p", "P"]:
-            onkey(self.togglePause, key)
-        for key in ["h", "H"]:
-            onkey(self.toggleHelpMenu, key)
-
         listen()
-        self.startScreen()
+        self.showStartMenu()
         done()
 
     def assignSettingsFromFile(self, settingsFile):
@@ -112,8 +111,8 @@ class Game:
             self.enemyTanksSpawnIndexes = loadedData['enemies'] or self.enemyTanksSpawnIndexes
             self.hallOfFameStoragePath = loadedData.get("hallOfFameStoragePath", self.hallOfFameStoragePath)
             self.helpFilePath = loadedData.get('helpFilePath', self.helpFilePath)
-            self.firstTankControls = loadedData['firstTankControls']
-            self.secondTankControls = loadedData['secondTankControls']
+            self.firstTankControls = loadedData['firstTankControls'] or self.firstTankControls
+            self.secondTankControls = loadedData['secondTankControls'] or self.secondTankControls
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
             print(f"Error loading configuration: {e}")
@@ -159,18 +158,6 @@ class Game:
             return False
         return point.x % self.tileSize == self.tankCentralization or point.y % self.tileSize == self.tankCentralization
 
-    def showGameModeMenu(self):
-        self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, 400, 300, "white", "black", True)
-        self.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 20, "bold"))
-        self.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 12, "normal"))
-        self.writeText(self.messageTurtle, 0, 0, "Press '2' for Multiplayer", textFont=("Arial", 12, "normal"))
-        self.writeText(self.messageTurtle, 0, -40, "Press 'H' for Help", textFont=("Arial", 12, "normal"))
-        self.writeText(self.messageTurtle, 0, -70, "Press 'Escape' to Exit", textFont=("Arial", 12, "italic"))
-
-        onkey(lambda: self.setGameMode("SinglePlayer"), "1")
-        onkey(lambda: self.setGameMode("Multiplayer"), "2")
-
     def spawnBonus(self):
         if not self.gameRunning:
             return
@@ -202,12 +189,6 @@ class Game:
         for tank in self.allTanks:
             tank.updateActiveBonuses()
         ontimer(self.updateBonuses, 1000)
-
-    def setGameMode(self, mode):
-        self.gameMode = mode
-        self.startGame()
-
-    onkey(exit, "Escape")
 
     def saveToHallOfFame(self, name, score):
         scores = self.loadHallOfFame()
@@ -255,8 +236,12 @@ class Game:
             y_offset -= 30
         self.writeText(self.messageTurtle, 0, y_offset - 30, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
 
-    def getPlayerName(self):
-        return askstring("Hall of Fame", "Enter your name:") or "Anonymous"
+    def initHallOfFame(self):
+        score = len([tank for tank in self.enemyTanks if tank.destroyed])
+        playerName = askstring("Hall of Fame", "Enter your name:") or "Anonymous"
+
+        self.saveToHallOfFame(playerName, score)
+        self.showHallOfFame()
 
     def replaceBordersWithTeleport(self):
         replaceValues = [Tile.NO_TILE.value, Tile.ROAD.value, Tile.FOREST.value, Tile.DESTRUCTIBLE_BLOCK.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK, Tile.MINE.value]
@@ -291,21 +276,13 @@ class Game:
             self.tiles[randomIndex] = 7
             possibleIndexes.remove(randomIndex)  # Prevent duplicate selection
 
-    def startScreen(self):
-        self.gameRunning = False
-        self.showGameModeMenu()
-        # self.drawStartMenu()
-        self.awaitStart()
-
-    def awaitStart(self):
-        onkey(self.startGame, "s")
-        onkey(self.startGame, "S")
-        onkey(self.toggleHelpMenu, "h")
-        onkey(self.toggleHelpMenu, "H")
-        onkey(exit, "Escape")
+    def setGameMode(self, mode):
+        self.gameMode = mode
+        self.startGame()
+        onkey(lambda: self.togglePause(), "p")
 
     def startGame(self):
-        if self.gameRunning:  # don't start game if it's already started
+        if self.gameRunning:
             return
         setupWidth = max((self.columns + 1) * self.tileSize, 420)
         setupHeight = max((self.rows + 1) * self.tileSize, 420)
@@ -334,7 +311,7 @@ class Game:
                               self.controls1, self.firstTankControls['Stop'], self.firstTankControls['Shoot'])
         self.allTanks = [self.firstTank]
 
-        if self.gameMode == "Multiplayer":
+        if self.gameMode in [GameMode.PVP, GameMode.PVE]:
             if self.secondTankSpawnIndex:
                 secondTankPosition = self.getTilePosition(self.secondTankSpawnIndex)
                 self.secondTank = Tank(self, secondTankPosition[0] + self.tankCentralization, secondTankPosition[1] + self.tankCentralization, "slate gray", 1,
@@ -356,7 +333,7 @@ class Game:
         self.roundOfMovement()
 
     def roundOfMovement(self):
-        if not self.gameRunning or self.gamePaused:
+        if self.gamePaused or not self.gameRunning:
             return
         for playerTank in list(set(self.allTanks) - set(self.enemyTanks)):
             playerTank.tankMovement()
@@ -370,35 +347,34 @@ class Game:
             ontimer(self.roundOfMovement, 100)
 
     def checkIfGameOver(self):
-        if self.firstTank and self.firstTank.destroyed:
-            self.endGame(self.firstTank.deathReason)
-        if self.secondTank and self.secondTank.destroyed:
-            self.endGame(self.secondTank.deathReason)
+        if self.gameMode == GameMode.SINGLE and self.firstTank.destroyed:
+            self.endGame(False, self.firstTank.deathReason)
+        elif self.gameMode == GameMode.SINGLE and all(tank.destroyed for tank in self.enemyTanks):
+            self.endGame(True, "All enemy tanks destroyed")
+        elif self.gameMode == GameMode.PVP and self.firstTank.destroyed:
+            self.endGame(False, self.firstTank.deathReason)
+        elif self.gameMode == GameMode.PVP and self.secondTank.destroyed:
+            self.endGame(False, self.secondTank.deathReason)
+        elif self.gameMode == GameMode.PVE and (self.firstTank.destroyed and self.secondTank.destroyed):
+            self.endGame(False, "All players tanks destroyed")
+        elif self.gameMode == GameMode.PVE and all(tank.destroyed for tank in self.enemyTanks):
+            self.endGame(True, "All enemy tanks destroyed")
+
+    def endGame(self, victory, announcement):
+        self.gameRunning = False
+        for tank in self.allTanks:  # draw destroyed tanks
+            tank.drawTank()
+        ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.victorySound.play if victory else self.gameOverSound.play), 1000)
+        ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
+        if self.gameMode == GameMode.SINGLE:
+            ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.initHallOfFame), 2000)
+        onkey(lambda: self.startGame(), "r")
 
     @staticmethod
     def conditionalExecution(condition, function, *args, **kwargs):
         conditionResult = condition() if callable(condition) else condition
         if conditionResult:
             return function(*args, **kwargs)
-
-    def endGame(self, reason):
-        if not self.gameRunning:
-            return
-        self.gameRunning = False
-        for tank in self.allTanks:  # draw destroyed tanks
-            tank.drawTank()
-        ontimer(lambda: self.conditionalExecution(not self.gameRunning and self.gameMode == "Multiplayer", self.drawModalMessage, f"Game Over!\n{reason}", "Press 'R' to restart"), 2000)
-        ontimer(lambda: self.conditionalExecution(not self.gameRunning and self.gameMode != "Multiplayer", self.init_hall_of_fame), 2000)
-        ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.gameOverSound.play), 1000)
-
-    def init_hall_of_fame(self):
-        score = len([tank for tank in self.enemyTanks if tank.destroyed])
-        player_name = self.getPlayerName()
-
-        self.saveToHallOfFame(player_name, score)
-        self.showHallOfFame()
-
-        self.showHallOfFame()
 
     def tanksCollision(self, tankChecking, tankCheckingPosition=None, collisionThreshold=20):
         tankCheckingPosition = tankCheckingPosition or tankChecking.position
@@ -452,19 +428,15 @@ class Game:
         if not self.helpContent:
             print("Help menu was not loaded correctly, so you can't open menu.")
             return
+        self.gamePaused = not self.gamePaused
         if not self.gamePaused:
-            self.showingHelpFromGame = self.gameRunning
-            self.gamePaused = True
-            self.drawHelpMenu()
-        else:
-            self.gamePaused = False
             self.messageTurtle.clear()
-            if self.showingHelpFromGame:
-                self.showingHelpFromGame = False
+            if self.gameRunning:
                 self.roundOfMovement()
             else:
-                self.showGameModeMenu()
-                self.awaitStart()
+                self.showStartMenu()
+        else:
+            self.showHelpMenu()
 
     def drawSquare(self, turtleObject, x, y, size=None, squareColor=None, circuitColor="black"):
         if not size:
@@ -484,9 +456,10 @@ class Game:
         turtleObject.end_fill()
 
     @staticmethod
-    def drawRectangle(turtleObject, x, y, rectangleWidth, rectangleHeight, fillColor="white", borderColor="black", startDrawingFromMiddle=False):
+    def drawRectangle(turtleObject, x, y, rectangleWidth, rectangleHeight, fillColor="white", borderColor="black", startDrawingFromMiddle=False, borderThickness=1):
         turtleObject.color(borderColor)
         turtleObject.fillcolor(fillColor)
+        turtleObject.pensize(borderThickness)
         turtleObject.up()
         if startDrawingFromMiddle:
             turtleObject.goto(x - rectangleWidth // 2, y - rectangleHeight // 2)
@@ -551,7 +524,36 @@ class Game:
         self.writeText(self.messageTurtle, 0, 0, message)
         self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
-    def drawHelpMenu(self, modalWidth=420, modalHeight=420):
+    def showStartMenu(self):
+        self.gameRunning = False
+        self.messageTurtle.clear()
+        modalWidth, modalHeight = 350, 250
+        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True, borderThickness=2)
+        self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 28, "bold"))
+        self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 16, "normal"))
+        self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 16, "normal"))
+        self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 16, "normal"))
+
+        onkey(lambda: self.showGameModeMenu(), "p")
+        onkey(lambda: self.toggleHelpMenu(), "h")
+        onkey(lambda: exit(), "Escape")
+
+    def showGameModeMenu(self):
+        self.messageTurtle.clear()
+        self.drawRectangle(self.messageTurtle, 0, 0, 400, 300, "white", "black", True, borderThickness=2)
+        self.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 28, "bold"))
+        self.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 16, "normal"))
+        self.writeText(self.messageTurtle, 0, 0, "Press '2' for PvP mode", textFont=("Arial", 16, "normal"))
+        self.writeText(self.messageTurtle, 0, -50, "Press '3' for PvE mode", textFont=("Arial", 16, "normal"))
+        self.writeText(self.messageTurtle, 0, -120, "Press 'H' for Help", textFont=("Arial", 12, "italic"))
+        self.writeText(self.messageTurtle, 0, -150, "Press 'Escape' to return to Menu", textFont=("Arial", 12, "italic"))
+
+        onkey(lambda: self.setGameMode(GameMode.SINGLE), "1")
+        onkey(lambda: self.setGameMode(GameMode.PVP), "2")
+        onkey(lambda: self.setGameMode(GameMode.PVE), "3")
+        onkey(lambda: self.showStartMenu(), "Escape")
+
+    def showHelpMenu(self, modalWidth=420, modalHeight=420):
         self.messageTurtle.clear()
         self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
         yOffset = (modalHeight / 2) - 40
@@ -563,19 +565,10 @@ class Game:
             xOffset += leadingSpaces * 10
             self.writeText(self.messageTurtle, xOffset, yOffset, line, "left", ("Arial", 10, "normal"))
             yOffset -= 20
-        if self.showingHelpFromGame:
+        if self.gameRunning:
             self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
         else:
-            self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start screen", textFont=("Arial", 8, "italic"))
-
-    def drawStartMenu(self):
-        self.messageTurtle.clear()
-        modalWidth, modalHeight = 350, 250
-        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
-        self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 20, "bold"))
-        self.writeText(self.messageTurtle, 0, -20, "Press 'S' to Start", textFont=("Arial", 12, "normal"))
-        self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 12, "normal"))
-        self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 12, "normal"))
+            self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start menu", textFont=("Arial", 8, "italic"))
 
 
 if __name__ == "__main__":

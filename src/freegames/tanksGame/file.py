@@ -13,11 +13,12 @@ class File:
             return [errorMessage]
 
     @staticmethod
-    def parseControls(control_string):
+    def parseControls(controlString):
         controls = {}
-        for mapping in control_string.split(","):
-            action, key = mapping.split(":")
-            controls[action.strip()] = key.strip()
+        if controlString:
+            for mapping in controlString.split(","):
+                action, key = mapping.split(":")
+                controls[action.strip()] = key.strip()
         return controls
 
     @staticmethod
