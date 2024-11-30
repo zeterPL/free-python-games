@@ -190,59 +190,6 @@ class Game:
             tank.updateActiveBonuses()
         ontimer(self.updateBonuses, 1000)
 
-    def saveToHallOfFame(self, name, score):
-        scores = self.loadHallOfFame()
-
-        found = False
-        for i, (player_name, player_score) in enumerate(scores):
-            if player_name == name:
-                scores[i] = (name, max(score, player_score))
-                found = True
-                break
-
-        if not found:
-            scores.append((name, score))
-
-        scores.sort(key=lambda x: x[1], reverse=True)
-        scores = scores[:10]
-
-        with open(self.hallOfFameStoragePath, "w", encoding="utf-8") as file:
-            for player_name, player_score in scores:
-                file.write(f"{player_name}:{player_score}\n")
-
-    def loadHallOfFame(self):
-        if not os.path.exists(self.hallOfFameStoragePath):
-            return []
-        with open(self.hallOfFameStoragePath, "r", encoding="utf-8") as file:
-            lines = file.readlines()
-        scores = []
-        for line in lines:
-            try:
-                name, score = line.strip().split(":")
-                scores.append((name, int(score)))
-            except ValueError:
-                continue
-        return scores
-
-    def showHallOfFame(self):
-        scores = self.loadHallOfFame()
-        self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, 400, 500, "white", "black", True)
-        self.writeText(self.messageTurtle, 0, 120, "🏆 Hall of Fame 🏆", textFont=("Arial", 18, "bold"))
-
-        y_offset = 80
-        for index, (name, score) in enumerate(scores):
-            self.writeText(self.messageTurtle, -150, y_offset, f"{index + 1}. {name} - {score}", "left", textFont=("Arial", 12, "normal"))
-            y_offset -= 30
-        self.writeText(self.messageTurtle, 0, y_offset - 30, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
-
-    def initHallOfFame(self):
-        score = len([tank for tank in self.enemyTanks if tank.destroyed])
-        playerName = askstring("Hall of Fame", "Enter your name:") or "Anonymous"
-
-        self.saveToHallOfFame(playerName, score)
-        self.showHallOfFame()
-
     def replaceBordersWithTeleport(self):
         replaceValues = [Tile.NO_TILE.value, Tile.ROAD.value, Tile.FOREST.value, Tile.DESTRUCTIBLE_BLOCK.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK, Tile.MINE.value]
         for col in range(self.columns):
@@ -301,7 +248,6 @@ class Game:
         self.spawnBonus()
         self.spawnBonusTimer()
         self.updateBonuses()
-
         for tank in self.allTanks:
             if hasattr(tank, 'bonusDisplayTurtle'):
                 tank.bonusDisplayTurtle.clear()
@@ -370,7 +316,7 @@ class Game:
         ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.victorySound.play if victory else self.gameOverSound.play), 1000)
         ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
         if self.gameMode == GameMode.SINGLE:
-            ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.initHallOfFame), 2000)
+            ontimer(lambda: self.conditionalExecution(not self.gameRunning, lambda v=victory: self.initHallOfFame(v)), 2000)
         onkey(lambda: self.startGame(), "r")
 
     @staticmethod
@@ -491,7 +437,8 @@ class Game:
             portalSize = max(int(0.5 * portalSize), 4)
 
     @staticmethod
-    def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold")):
+    def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold"), textColor="black"):
+        turtleObject.color(textColor)
         turtleObject.goto(x, y)
         turtleObject.write(message, align=textAlign, font=textFont)
 
@@ -572,6 +519,56 @@ class Game:
             self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
         else:
             self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start menu", textFont=("Arial", 8, "italic"))
+
+    def initHallOfFame(self, victory):
+        score = ((1000 if victory else 0) + 1000 * sum(1 for tank in self.enemyTanks if tank.destroyed) + 10 * sum(self.basicHp - tank.hp for tank in self.enemyTanks if not tank.destroyed))
+        playerName = askstring("Hall of Fame", "Enter your name:") or "Anonymous"
+        self.saveToHallOfFame(playerName, score)
+        self.showHallOfFame()
+
+    def showHallOfFame(self):
+        scores = self.loadHallOfFame()
+        self.messageTurtle.clear()
+        self.drawRectangle(self.messageTurtle, 0, 0, 400, 500, "white", "black", True)
+        self.writeText(self.messageTurtle, 0, 180, "🏆 Hall of Fame 🏆", textFont=("Arial", 32, "bold"))
+
+        y_offset = 130
+        for index, (name, score) in enumerate(scores, 1):
+            resultTextFont = ("Arial", 24, "bold") if index <= 3 else ("Arial", 16, "normal")
+            resultTextColor = "gold" if index == 1 else "silver" if index == 2 else "chocolate3" if index == 3 else "black"
+            self.writeText(self.messageTurtle, -150, y_offset, f"{index}. {name} - {score}", "left", textFont=resultTextFont, textColor=resultTextColor)
+            y_offset -= 35
+        self.writeText(self.messageTurtle, 0, -220, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
+
+    def loadHallOfFame(self):
+        if not os.path.exists(self.hallOfFameStoragePath):
+            return []
+        with open(self.hallOfFameStoragePath, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+        scores = []
+        for line in lines:
+            try:
+                name, score = line.strip().split(":")
+                scores.append((name, int(score)))
+            except ValueError:
+                continue
+        return scores
+
+    def saveToHallOfFame(self, name, score):
+        scores = self.loadHallOfFame()
+        found = False
+        for i, (playerName, playerScore) in enumerate(scores):
+            if playerName == name:
+                scores[i] = (name, max(score, playerScore))
+                found = True
+                break
+        if not found:
+            scores.append((name, score))
+        scores.sort(key=lambda x: x[1], reverse=True)
+        scores = scores[:10]
+        with open(self.hallOfFameStoragePath, "w", encoding="utf-8") as file:
+            for player_name, player_score in scores:
+                file.write(f"{player_name}:{player_score}\n")
 
 
 if __name__ == "__main__":
