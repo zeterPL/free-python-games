@@ -20,9 +20,8 @@ class GameMode(Enum):
 
 class Game:
     def __init__(self, initialTiles, initialTileColors, settingsFile=None):
-        self.gameMode = None
-        self.hallOfFameStoragePath = "files/hallOfFame.txt"
-        self.helpFilePath = "files/help.txt"
+        self.hallOfFameStoragePath = ""
+        self.helpFilePath = ""
         self.initialTiles = initialTiles
         self.rows = 20
         self.columns = 20
@@ -38,6 +37,9 @@ class Game:
         self.enemyTanksSpawnIndexes = []
         self.firstTankControls = {'Up': 'Up', 'Down': 'Down', 'Left': 'Left', 'Right': 'Right', 'Stop': 'Control_R', 'Shoot': 'Return'}
         self.secondTankControls = {'Up': 'w', 'Down': 's', 'Left': 'a', 'Right': 'd', 'Stop': 'Control_L', 'Shoot': 'Shift_L'}
+        self.enableBonuses = False
+        self.bonusSpawningFrequency = 10
+        self.maxNumberOfBonuses = 3
         self.assignSettingsFromFile(settingsFile)
         self.tiles = list(self.initialTiles)
         self.tileColors = initialTileColors
@@ -51,6 +53,8 @@ class Game:
 
         self.gameRunning = False
         self.gamePaused = False
+        self.roundCounter = 0
+        self.gameMode = None
 
         self.firstTank = None
         self.secondTank = None
@@ -108,6 +112,9 @@ class Game:
             self.helpFilePath = loadedData.get('helpFilePath', self.helpFilePath)
             self.firstTankControls = loadedData['firstTankControls'] or self.firstTankControls
             self.secondTankControls = loadedData['secondTankControls'] or self.secondTankControls
+            self.enableBonuses = loadedData.get('enableBonuses', self.enableBonuses)
+            self.bonusSpawningFrequency = loadedData.get('bonusSpawningFrequency', self.bonusSpawningFrequency)
+            self.maxNumberOfBonuses = loadedData.get('maxNumberOfBonuses', self.maxNumberOfBonuses)
             print(f"Map and settings successfully loaded from '{settingsFile}'!")
         except ValueError as e:
             print(f"Error loading configuration: {e}")
@@ -154,7 +161,7 @@ class Game:
         return point.x % self.tileSize == self.tankCentralization or point.y % self.tileSize == self.tankCentralization
 
     def spawnBonus(self):
-        if not self.gameRunning:
+        if not self.gameRunning or not self.enableBonuses or len(self.bonuses) >= self.maxNumberOfBonuses:
             return
         bonusType = random.choice([BonusType.HEALTH, BonusType.SHOOTING_SPEED])
         possibleIndexes = [index for index, value in enumerate(self.tiles) if value == Tile.ROAD.value]
@@ -171,17 +178,6 @@ class Game:
         position = vector(x, y)
         bonus = Bonus(self, bonusType, position)
         self.bonuses.append(bonus)
-
-    def spawnBonusTimer(self):
-        if self.gameRunning:
-            self.spawnBonus()
-            ontimer(self.spawnBonusTimer, 30000)  # Spawn a bonus every 30 seconds
-
-    def updateBonuses(self):
-        if self.gameRunning:
-            for tank in self.allTanks:
-                tank.updateActiveBonuses()
-            ontimer(self.updateBonuses, 1000)
 
     def replaceBordersWithTeleport(self):
         replaceValues = [Tile.NO_TILE.value, Tile.ROAD.value, Tile.FOREST.value, Tile.DESTRUCTIBLE_BLOCK.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK, Tile.MINE.value]
@@ -215,11 +211,6 @@ class Game:
             randomIndex = random.choice(possibleIndexes)
             self.tiles[randomIndex] = 7
             possibleIndexes.remove(randomIndex)  # Prevent duplicate selection
-
-    def setGameMode(self, mode):
-        self.gameMode = mode
-        self.startGame()
-        onkey(lambda: self.togglePause(), "p")
 
     def startGame(self):
         if self.gameRunning:
@@ -258,11 +249,7 @@ class Game:
         self.replaceBordersWithTeleport()
         self.spawnRandomMines()
         self.drawBoard()
-        ontimer(lambda: self.conditionalExecution(self.gameRunning, self.minesTurtle.clear), self.timeAfterWhichMinesHide * 1000)
         self.roundOfMovement()
-        self.spawnBonus()
-        self.spawnBonusTimer()
-        self.updateBonuses()
 
     def roundOfMovement(self):
         if self.gamePaused or not self.gameRunning:
@@ -276,6 +263,14 @@ class Game:
         self.checkIfGameOver()
         update()
         if self.gameRunning:
+            self.roundCounter += 1
+            if self.roundCounter == self.timeAfterWhichMinesHide*10:
+                self.minesTurtle.clear()
+            if self.roundCounter % (self.bonusSpawningFrequency*10) == 0:  # every x seconds spawn new bonus
+                self.spawnBonus()
+            if self.roundCounter % 10 == 0:  # every second update active bonuses statuses
+                for tank in self.allTanks:
+                    tank.updateActiveBonuses()
             ontimer(self.roundOfMovement, 100)
 
     def checkIfGameOver(self):
@@ -417,10 +412,11 @@ class Game:
         turtleObject.goto(x, y)
         turtleObject.dot(circleSize, circleColor)
 
-    def drawPortal(self, turtleObject, x, y, portalSize, numberOfLayers, portalColor, backgroundColor):
+    @staticmethod
+    def drawPortal(turtleObject, x, y, portalSize, numberOfLayers, portalColor, backgroundColor):
         for layer in range(numberOfLayers):
-            self.drawCircle(turtleObject, x, y, portalSize, portalColor)
-            self.drawCircle(turtleObject, x, y, int(portalSize - 2), backgroundColor)
+            Game.drawCircle(turtleObject, x, y, portalSize, portalColor)
+            Game.drawCircle(turtleObject, x, y, int(portalSize - 2), backgroundColor)
             portalSize = max(int(0.5 * portalSize), 4)
 
     @staticmethod
@@ -462,7 +458,8 @@ class Game:
         self.writeText(self.messageTurtle, 0, 0, message)
         self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
-    def resetGame(self):
+    @staticmethod
+    def resetGame():
         resetscreen()
         clearscreen()
         setup(420, 420, 540, 200)
@@ -483,15 +480,20 @@ class Game:
         onkey(lambda: self.toggleHelpMenu(), "h")
         onkey(lambda: exit(), "Escape")
 
+    def setGameMode(self, mode):
+        self.gameMode = mode
+        self.startGame()
+        onkey(lambda: self.togglePause(), "p")
+
     def showGameModeMenu(self):
         self.messageTurtle.clear()
         self.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
         self.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 28, "bold"))
         self.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, 0, "Press '2' for PvP mode", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, -50, "Press '3' for PvE mode", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, -120, "Press 'H' for Help", textFont=("Arial", 12, "italic"))
-        self.writeText(self.messageTurtle, 0, -150, "Press 'Escape' to return to Menu", textFont=("Arial", 12, "italic"))
+        self.writeText(self.messageTurtle, 0, 0, "Press '2' for PvP mode     ", textFont=("Arial", 16, "normal"))
+        self.writeText(self.messageTurtle, 0, -50, "Press '3' for PvE mode     ", textFont=("Arial", 16, "normal"))
+        self.writeText(self.messageTurtle, 0, -110, "Press 'H' for Help", textFont=("Arial", 12, "italic"))
+        self.writeText(self.messageTurtle, 0, -140, "Press 'Escape' to return to Menu", textFont=("Arial", 12, "italic"))
 
         onkey(lambda: self.setGameMode(GameMode.SINGLE), "1")
         onkey(lambda: self.setGameMode(GameMode.PVP), "2")
@@ -516,10 +518,11 @@ class Game:
             self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start menu", textFont=("Arial", 8, "italic"))
 
     def initHallOfFame(self, victory):
-        score = ((1000 if victory else 0) + 1000 * sum(1 for tank in self.enemyTanks if tank.destroyed) + 10 * sum(self.basicHp - tank.hp for tank in self.enemyTanks if not tank.destroyed))
-        playerName = askstring("Hall of Fame", "Enter your name:\t\t\t\t") or "Anonymous"
-        self.saveToHallOfFame(playerName, score)
-        self.showHallOfFame()
+        if os.path.exists(self.hallOfFameStoragePath):
+            score = ((1000 if victory else 0) + 1000 * sum(1 for tank in self.enemyTanks if tank.destroyed) + 10 * sum(self.basicHp - tank.hp for tank in self.enemyTanks if not tank.destroyed))
+            playerName = askstring("Hall of Fame", "Enter your name:\t\t\t\t") or "Anonymous"
+            self.saveToHallOfFame(playerName, score)
+            self.showHallOfFame()
 
     def showHallOfFame(self, modalWidth=400, modalHeight=500):
         setup(max((self.columns + 1) * self.tileSize, 400), max((self.rows + 1) * self.tileSize, 500), self.startGameX, self.startGameY)
@@ -537,8 +540,6 @@ class Game:
         self.writeText(self.messageTurtle, 0, -220, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
 
     def loadHallOfFame(self):
-        if not os.path.exists(self.hallOfFameStoragePath):
-            return []
         with open(self.hallOfFameStoragePath, "r", encoding="utf-8") as file:
             lines = file.readlines()
         scores = []
