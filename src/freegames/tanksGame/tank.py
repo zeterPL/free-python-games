@@ -32,7 +32,7 @@ class Tank:
         self.loaded = True
         self.destroyed = False
         self.deathReason = ""
-        self.active_bonuses = {}
+        self.activeBonuses = {}
 
     def takeDamage(self, amount, reason):
         if self.hp > 0:
@@ -70,9 +70,9 @@ class Tank:
         return -1
 
     def isOnBonus(self, bonus):
-        tank_rect = (self.position.x, self.position.y, self.game.tileSize, self.game.tileSize)
-        bonus_rect = (bonus.position.x, bonus.position.y, self.game.tileSize, self.game.tileSize)
-        return self.rectOverlap(tank_rect, bonus_rect)
+        tankRect = (self.position.x, self.position.y, self.game.tileSize, self.game.tileSize)
+        bonusRect = (bonus.position.x, bonus.position.y, self.game.tileSize, self.game.tileSize)
+        return self.rectOverlap(tankRect, bonusRect)
 
     def rectOverlap(self, rect1, rect2):
         x1, y1, w1, h1 = rect1
@@ -81,49 +81,49 @@ class Tank:
 
     def collectBonus(self, bonus):
         if bonus.bonus_type == BonusType.HEALTH:
-            self.active_bonuses[BonusType.HEALTH] = 5000
+            self.activeBonuses[BonusType.HEALTH] = 5000
         elif bonus.bonus_type == BonusType.SHOOTING_SPEED:
-            self.active_bonuses[BonusType.SHOOTING_SPEED] = 10000
+            self.activeBonuses[BonusType.SHOOTING_SPEED] = 10000
             self.reloadingTime = max(500, self.reloadingTime - 500)
 
     def updateActiveBonuses(self):
-        to_remove = []
-        for bonus_type in list(self.active_bonuses.keys()):
-            self.active_bonuses[bonus_type] -= 1000
-            if self.active_bonuses[bonus_type] <= 0:
-                to_remove.append(bonus_type)
+        toRemove = []
+        for bonusType in list(self.activeBonuses.keys()):
+            self.activeBonuses[bonusType] -= 1000
+            if self.activeBonuses[bonusType] <= 0:
+                toRemove.append(bonusType)
             else:
-                if bonus_type == BonusType.HEALTH:
+                if bonusType == BonusType.HEALTH:
                     self.hp = min(self.maxHp, self.hp + 1)
                     self.drawHP()
-        for bonus_type in to_remove:
-            self.removeBonus(bonus_type)
+        for bonusType in toRemove:
+            self.removeBonus(bonusType)
         self.displayActiveBonuses()
 
-    def removeBonus(self, bonus_type):
-        if bonus_type == BonusType.SHOOTING_SPEED:
+    def removeBonus(self, bonusType):
+        if bonusType == BonusType.SHOOTING_SPEED:
             self.reloadingTime += 500
             if self.reloadingTime > 2000:
                 self.reloadingTime = 2000
-        del self.active_bonuses[bonus_type]
+        del self.activeBonuses[bonusType]
 
     def displayActiveBonuses(self):
         self.bonusDisplayTurtle.clear()
         x, y = self.position.x, self.position.y + self.game.tileSize + 10
         self.bonusDisplayTurtle.up()
         self.bonusDisplayTurtle.goto(x, y)
-        bonus_texts = []
-        for bonus_type, remaining_time in self.active_bonuses.items():
-            if bonus_type == BonusType.SHOOTING_SPEED:
-                bonus_name = "Shooting Speed"
-            elif bonus_type == BonusType.HEALTH:
-                bonus_name = "Health Regen"
+        bonusTexts = []
+        for bonusType, remainingTime in self.activeBonuses.items():
+            if bonusType == BonusType.SHOOTING_SPEED:
+                bonusName = "Shooting Speed"
+            elif bonusType == BonusType.HEALTH:
+                bonusName = "Health Regen"
             else:
-                bonus_name = "Unknown"
-            seconds_left = remaining_time // 1000
-            bonus_texts.append(f"{bonus_name}: {seconds_left}s")
-        if bonus_texts:
-            self.bonusDisplayTurtle.write('\n'.join(bonus_texts), align="left", font=("Arial", 8, "normal"))
+                bonusName = "Unknown"
+            secondsLeft = remainingTime // 1000
+            bonusTexts.append(f"{bonusName}: {secondsLeft}s")
+        if bonusTexts:
+            self.bonusDisplayTurtle.write('\n'.join(bonusTexts), align="left", font=("Arial", 8, "normal"))
 
     def moveTank(self, wantMove=True):
         newPosition = self.position + self.speed
@@ -170,14 +170,13 @@ class Tank:
 
     def drawReloadBar(self, reloadColor="gold", bgColor="black"):
         self.reloadTurtle.clear()
-        if self.hp <= 0 or self.game.tiles[self.game.getTileIndexFromPoint(self.position + int(self.game.tileSize * 0.4))] == Tile.FOREST.value:
-            return
-        x, y = self.position - self.game.tankCentralization
-        barWidth = self.game.tileSize
-        barHeight = self.game.tileSize // 20 * 3
-        reloadRatio = 1 - (self.reloadingRemainingTime / self.reloadingTime) if self.reloadingTime > 0 else 1
-        self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
-        self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
+        if self.hp > 0:
+            x, y = self.position - self.game.tankCentralization
+            barWidth = self.game.tileSize
+            barHeight = self.game.tileSize // 20 * 3
+            reloadRatio = 1 - (self.reloadingRemainingTime / self.reloadingTime) if self.reloadingTime > 0 else 1
+            self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
+            self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
 
     def drawTank(self):
         self.tankTurtle.clear()
@@ -249,9 +248,9 @@ class Tank:
 
     def updateReload(self):
         if self.reloadingRemainingTime > 0:
-            self.drawReloadBar()
             self.reloadingRemainingTime -= 100  # Decrease remaining time
             ontimer(self.updateReload, 100)  # Update every 100ms
         else:
             self.loaded = True
-            self.drawReloadBar()  # Fully loaded
+        if self.game.tiles[self.game.getTileIndexFromPoint(self.position + int(self.game.tileSize * 0.4))] != Tile.FOREST.value:
+            self.drawReloadBar()

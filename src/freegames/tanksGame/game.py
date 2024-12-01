@@ -156,34 +156,32 @@ class Game:
     def spawnBonus(self):
         if not self.gameRunning:
             return
-        bonus_type = random.choice([BonusType.HEALTH, BonusType.SHOOTING_SPEED])
-        possible_indexes = [index for index, value in enumerate(self.tiles) if value == Tile.ROAD.value]
-        occupied_indexes = set()
+        bonusType = random.choice([BonusType.HEALTH, BonusType.SHOOTING_SPEED])
+        possibleIndexes = [index for index, value in enumerate(self.tiles) if value == Tile.ROAD.value]
+        occupiedIndexes = set()
         for tank in self.allTanks:
-            occupied_indexes.add(self.getTileIndexFromPoint(tank.position))
+            occupiedIndexes.add(self.getTileIndexFromPoint(tank.position))
         for bonus in self.bonuses:
-            occupied_indexes.add(self.getTileIndexFromPoint(bonus.position))
-        possible_indexes = [idx for idx in possible_indexes if idx not in occupied_indexes]
-        if not possible_indexes:
+            occupiedIndexes.add(self.getTileIndexFromPoint(bonus.position))
+        possibleIndexes = [idx for idx in possibleIndexes if idx not in occupiedIndexes]
+        if not possibleIndexes:
             return
-        random_index = random.choice(possible_indexes)
-        x, y = self.getTilePosition(random_index)
+        randomIndex = random.choice(possibleIndexes)
+        x, y = self.getTilePosition(randomIndex)
         position = vector(x, y)
-        bonus = Bonus(self, bonus_type, position)
+        bonus = Bonus(self, bonusType, position)
         self.bonuses.append(bonus)
 
     def spawnBonusTimer(self):
-        if not self.gameRunning:
-            return
-        self.spawnBonus()
-        ontimer(self.spawnBonusTimer, 30000)  # Spawn a bonus every 30 seconds
+        if self.gameRunning:
+            self.spawnBonus()
+            ontimer(self.spawnBonusTimer, 30000)  # Spawn a bonus every 30 seconds
 
     def updateBonuses(self):
-        if not self.gameRunning:
-            return
-        for tank in self.allTanks:
-            tank.updateActiveBonuses()
-        ontimer(self.updateBonuses, 1000)
+        if self.gameRunning:
+            for tank in self.allTanks:
+                tank.updateActiveBonuses()
+            ontimer(self.updateBonuses, 1000)
 
     def replaceBordersWithTeleport(self):
         replaceValues = [Tile.NO_TILE.value, Tile.ROAD.value, Tile.FOREST.value, Tile.DESTRUCTIBLE_BLOCK.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK, Tile.MINE.value]
@@ -210,7 +208,7 @@ class Game:
             neighborsToOccupiedIndexes.update(self.getNeighbors(index))
         occupiedIndexes.update(neighborsToOccupiedIndexes)
         # spawn mines in possible indexes
-        possibleIndexes = [index for index, value in enumerate(self.tiles) if value == 1 and index not in occupiedIndexes]
+        possibleIndexes = [index for index, value in enumerate(self.tiles) if value == Tile.ROAD.value and index not in occupiedIndexes]
         for _ in range(self.numberOfRandomMines):
             if not possibleIndexes:  # Break if there are no valid positions left
                 break
@@ -227,22 +225,15 @@ class Game:
         if self.gameRunning:
             return
 
-        setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
-
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
         self.bullets = []
         self.enemyTanks = []
         self.allTanks = []
-
         self.bonuses = []
-        self.spawnBonus()
-        self.spawnBonusTimer()
-        self.updateBonuses()
-        for tank in self.allTanks:
-            if hasattr(tank, 'bonusDisplayTurtle'):
-                tank.bonusDisplayTurtle.clear()
+
+        setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
 
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0,
@@ -269,6 +260,9 @@ class Game:
         self.drawBoard()
         ontimer(lambda: self.conditionalExecution(self.gameRunning, self.minesTurtle.clear), self.timeAfterWhichMinesHide * 1000)
         self.roundOfMovement()
+        self.spawnBonus()
+        self.spawnBonusTimer()
+        self.updateBonuses()
 
     def roundOfMovement(self):
         if self.gamePaused or not self.gameRunning:
@@ -469,10 +463,6 @@ class Game:
         self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
     def resetGame(self):
-        self.allTanks.clear()
-        self.bullets.clear()
-        self.bonuses.clear()
-        self.occupiedTilesByEnemies.clear()
         resetscreen()
         clearscreen()
         setup(420, 420, 540, 200)
