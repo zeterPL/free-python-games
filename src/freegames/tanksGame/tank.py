@@ -81,9 +81,9 @@ class Tank:
         return not (x1 + w1 <= x2 or x1 >= x2 + w2 or y1 + h1 <= y2 or y1 >= y2 + h2)
 
     def collectBonus(self, bonus):
-        if bonus.bonus_type == BonusType.HEALTH:
+        if bonus.bonusType == BonusType.HEALTH:
             self.activeBonuses[BonusType.HEALTH] = 5000
-        elif bonus.bonus_type == BonusType.RELOAD:
+        elif bonus.bonusType == BonusType.RELOAD:
             self.activeBonuses[BonusType.RELOAD] = 10000
             self.reloadingTime = max(500, self.reloadingTime - 500)
         else:
@@ -104,7 +104,7 @@ class Tank:
         self.displayActiveBonuses()
 
     def removeBonus(self, bonusType):
-        if bonusType == BonusType.SHOOTING_SPEED:
+        if bonusType == BonusType.RELOAD:
             self.reloadingTime += 500
             if self.reloadingTime > 2000:
                 self.reloadingTime = 2000
@@ -117,8 +117,8 @@ class Tank:
         self.bonusDisplayTurtle.goto(x, y)
         bonusTexts = []
         for bonusType, remainingTime in self.activeBonuses.items():
-            if bonusType == BonusType.SHOOTING_SPEED:
-                bonusName = "Shooting Speed"
+            if bonusType == BonusType.RELOAD:
+                bonusName = "Reload Speed"
             elif bonusType == BonusType.HEALTH:
                 bonusName = "Health Regen"
             else:
