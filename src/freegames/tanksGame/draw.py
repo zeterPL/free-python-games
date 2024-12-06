@@ -62,14 +62,12 @@ class Draw:
     @staticmethod
     def drawSingleChevron(turtleObject, x, y, size, fillColor="red", circuitColor=""):
         Draw.startDrawing(turtleObject, x, y, fillColor=fillColor, circuitColor=circuitColor)
-        print(f"{turtleObject.position()=}")
         turtleObject.setheading(90)
         turtleObject.forward(size)
         turtleObject.right(45)
         turtleObject.forward(2*size)
         turtleObject.right(90)
         turtleObject.forward(2*size)
-        print(f"{turtleObject.position()=}")
         turtleObject.right(45)
         turtleObject.forward(size)
         turtleObject.right(135)
@@ -86,18 +84,6 @@ class Draw:
 
     @staticmethod
     def drawSkull(turtleObject, x, y, squareSize, skullColor="light grey", eyesColor="black"):
-        # Draw.drawCircle(turtleObject, x+squareSize//2, y+squareSize*2//3, squareSize//2, skullColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*7//20, y+squareSize*6//10, squareSize//10, squareSize//10, fillColor=eyesColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*11//20, y+squareSize*6//10, squareSize//10, squareSize//10, fillColor=eyesColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*19//40, y+squareSize*5//10, squareSize//20, squareSize//20, fillColor=eyesColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*3//8, y+squareSize//4, squareSize//4, squareSize//6, fillColor=skullColor, borderColor="")
-
-        # Draw.drawCircle(turtleObject, x+squareSize//2, y+squareSize//2, squareSize//2, skullColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*3//8, y+squareSize//6, squareSize//4, squareSize//6, fillColor=skullColor, borderColor="")
-        # Draw.drawRectangle(turtleObject, x+squareSize*7//20, y+squareSize*13//30, squareSize//10, squareSize//10, fillColor=eyesColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*11//20, y+squareSize*13//30, squareSize//10, squareSize//10, fillColor=eyesColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*19//40, y+squareSize//3, squareSize//20, squareSize//20, fillColor=eyesColor)
-
         Draw.drawCircle(turtleObject, x+squareSize//2, y+squareSize*6//10, squareSize//2, skullColor)
         Draw.drawRectangle(turtleObject, x+squareSize*7//20, y+squareSize*43//80, squareSize//10, squareSize//10, fillColor=eyesColor)
         Draw.drawRectangle(turtleObject, x+squareSize*11//20, y+squareSize*43//80, squareSize//10, squareSize//10, fillColor=eyesColor)
@@ -115,8 +101,6 @@ class Draw:
     def drawSandglass(turtleObject, x, y, squareSize, glassColor="SpringGreen2", sandColor="red"):
         Draw.drawTriangle(turtleObject, x+squareSize*5//16, y+squareSize*6//8, squareSize*3//8, trianglePointedUp=False, fillColor=glassColor)
         Draw.drawTriangle(turtleObject, x+squareSize*5//16, y+squareSize//4, squareSize*3//8, fillColor=glassColor)
-        # Draw.drawTriangle(turtleObject, x+squareSize*4//10, y+squareSize*7//10, squareSize//5, trianglePointedUp=False, fillColor=sandColor)
-        # Draw.drawRectangle(turtleObject, x+squareSize*19//40, y+squareSize*5//16, squareSize//20, squareSize*3//16, fillColor=sandColor, borderColor="")
         Draw.drawTriangle(turtleObject, x+squareSize*4//10, y+squareSize*13//20, squareSize//5, trianglePointedUp=False, fillColor=sandColor)
         Draw.drawRectangle(turtleObject, x+squareSize*2//4, y+squareSize*5//16, squareSize//40, squareSize*3//16, fillColor=sandColor, borderColor="")
         Draw.drawRectangle(turtleObject, x+squareSize*15//32, y+squareSize*5//16, squareSize//8, squareSize*1//16, fillColor=sandColor, borderColor="")

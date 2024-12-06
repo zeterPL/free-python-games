@@ -8,7 +8,7 @@ from enum import Enum
 from file import File
 from tank import Tank
 from aiTank import AITank
-from bonus import Bonus, BonusType
+from bonus import Bonus
 from tile import Tile, tileColors, defaultTiles
 from draw import Draw
 
@@ -161,25 +161,6 @@ class Game:
             return False
         return point.x % self.tileSize == self.tankCentralization or point.y % self.tileSize == self.tankCentralization
 
-    def spawnBonus(self):
-        if not self.gameRunning or not self.enableBonuses or len(self.bonuses) >= self.maxNumberOfBonuses:
-            return
-        bonusType = random.choice(list(BonusType))
-        possibleIndexes = [index for index, value in enumerate(self.tiles) if value == Tile.ROAD.value]
-        occupiedIndexes = set()
-        for tank in self.allTanks:
-            occupiedIndexes.add(self.getTileIndexFromPoint(tank.position))
-        for bonus in self.bonuses:
-            occupiedIndexes.add(self.getTileIndexFromPoint(bonus.position))
-        possibleIndexes = [idx for idx in possibleIndexes if idx not in occupiedIndexes]
-        if not possibleIndexes:
-            return
-        randomIndex = random.choice(possibleIndexes)
-        x, y = self.getTilePosition(randomIndex)
-        position = vector(x, y)
-        bonus = Bonus(self, bonusType, position)
-        self.bonuses.append(bonus)
-
     def replaceBordersWithTeleport(self):
         replaceValues = [Tile.NO_TILE.value, Tile.ROAD.value, Tile.FOREST.value, Tile.DESTRUCTIBLE_BLOCK.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK, Tile.MINE.value]
         for col in range(self.columns):
@@ -268,10 +249,10 @@ class Game:
             if self.roundCounter == self.timeAfterWhichMinesHide*10:
                 self.minesTurtle.clear()
             if self.roundCounter % (self.bonusSpawningFrequency*10) == 0:  # every x seconds spawn new bonus
-                self.spawnBonus()
+                Bonus.spawnBonus(self)
             if self.roundCounter % 10 == 0:  # every second update active bonuses statuses
                 for tank in self.allTanks:
-                    tank.updateActiveBonuses()
+                    Bonus.updateActiveBonuses(tank)
             ontimer(self.roundOfMovement, 100)
 
     def checkIfGameOver(self):

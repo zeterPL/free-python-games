@@ -3,7 +3,7 @@ from freegames import vector
 import random
 from bullet import Bullet
 from tile import Tile
-from bonus import BonusType
+from bonus import Bonus, BonusType
 from draw import Draw
 
 
@@ -34,27 +34,21 @@ class Tank:
         self.destroyed = False
         self.deathReason = ""
         self.activeBonuses = {}
+        self.indestructible = False
 
     def takeDamage(self, amount, reason):
-        if self.hp > 0:
+        if not self.destroyed and not self.indestructible:
             self.hp -= amount
-            print(f"Tank {self.tankId} receive {amount} damage remaining HP: {self.hp}")
             if self.hp <= 0:
                 self.destroyed = True
                 self.deathReason = reason
                 self.drawTank()
-        self.game.damageSound.play()
+            self.game.damageSound.play()
 
     def change(self, tankSpeedDirection, angle=None):
         if self.destroyed:
             return
-        offsets = {
-            90: vector(self.tankSpeedValue, 0),  # right
-            180: vector(0, -self.tankSpeedValue),  # down
-            270: vector(-self.tankSpeedValue, 0),  # left
-            0: vector(0, self.tankSpeedValue)  # up
-        }
-        if angle in offsets and self.game.valid(self.position + tankSpeedDirection):
+        if angle is not None and self.game.valid(self.position + tankSpeedDirection):
             self.speed = tankSpeedDirection
             self.direction = angle
             return 0
@@ -70,75 +64,16 @@ class Tank:
         # if tank move in wrong direction, where he can't go
         return -1
 
-    def isOnBonus(self, bonus):
-        tankRect = (self.position.x, self.position.y, self.game.tileSize, self.game.tileSize)
-        bonusRect = (bonus.position.x, bonus.position.y, self.game.tileSize, self.game.tileSize)
-        return self.rectOverlap(tankRect, bonusRect)
-
-    def rectOverlap(self, rect1, rect2):
-        x1, y1, w1, h1 = rect1
-        x2, y2, w2, h2 = rect2
-        return not (x1 + w1 <= x2 or x1 >= x2 + w2 or y1 + h1 <= y2 or y1 >= y2 + h2)
-
-    def collectBonus(self, bonus):
-        if bonus.bonusType == BonusType.HEALTH:
-            self.activeBonuses[BonusType.HEALTH] = 5000
-        elif bonus.bonusType == BonusType.RELOAD:
-            self.activeBonuses[BonusType.RELOAD] = 10000
-            self.reloadingTime = max(500, self.reloadingTime - 500)
-        else:
-            print("Bonus activation not implemented yet")
-
-    def updateActiveBonuses(self):
-        toRemove = []
-        for bonusType in list(self.activeBonuses.keys()):
-            self.activeBonuses[bonusType] -= 1000
-            if self.activeBonuses[bonusType] <= 0:
-                toRemove.append(bonusType)
-            else:
-                if bonusType == BonusType.HEALTH:
-                    self.hp = min(self.maxHp, self.hp + 1)
-                    self.drawHP()
-        for bonusType in toRemove:
-            self.removeBonus(bonusType)
-        self.displayActiveBonuses()
-
-    def removeBonus(self, bonusType):
-        if bonusType == BonusType.RELOAD:
-            self.reloadingTime += 500
-            if self.reloadingTime > 2000:
-                self.reloadingTime = 2000
-        del self.activeBonuses[bonusType]
-
-    def displayActiveBonuses(self):
-        self.bonusDisplayTurtle.clear()
-        x, y = self.position.x, self.position.y + self.game.tileSize + 10
-        self.bonusDisplayTurtle.up()
-        self.bonusDisplayTurtle.goto(x, y)
-        bonusTexts = []
-        for bonusType, remainingTime in self.activeBonuses.items():
-            if bonusType == BonusType.RELOAD:
-                bonusName = "Reload Speed"
-            elif bonusType == BonusType.HEALTH:
-                bonusName = "Health Regen"
-            else:
-                bonusName = "Unknown"
-            secondsLeft = remainingTime // 1000
-            bonusTexts.append(f"{bonusName}: {secondsLeft}s")
-        if bonusTexts:
-            self.bonusDisplayTurtle.write('\n'.join(bonusTexts), align="left", font=("Arial", 8, "normal"))
-
     def moveTank(self, wantMove=True):
         newPosition = self.position + self.speed
         if not self.destroyed and self.game.valid(newPosition) and wantMove and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize * 0.8)):
             self.position = newPosition
 
         for bonus in self.game.bonuses[:]:
-            if self.isOnBonus(bonus):
-                self.collectBonus(bonus)
+            if bonus.tankIsOnBonus(self, bonus, self.game.tileSize):
+                bonus.activateBonus(self, bonus)
                 self.game.bonuses.remove(bonus)
                 bonus.bonusTurtle.clear()
-                bonus.bonusTurtle.hideturtle()
 
         centralizedPosition = self.position + int(self.game.tileSize * 0.4)
         tileIndex = self.game.getTileIndexFromPoint(centralizedPosition)
@@ -219,7 +154,7 @@ class Tank:
             Draw.drawSquare(self.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
         self.drawHP()
         self.drawReloadBar()
-        self.displayActiveBonuses()
+        Bonus.displayActiveBonuses(self)
 
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
