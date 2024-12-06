@@ -1,10 +1,16 @@
 from turtle import Turtle
 from enum import Enum
+from draw import Draw
 
 
 class BonusType(Enum):
     HEALTH = 1
-    SHOOTING_SPEED = 2
+    RELOAD = 2
+    REGENERATION = 3
+    SHIELD = 4
+    ATTACK = 5
+    SPEED = 6
+    ALL = 7
 
 
 class Bonus:
@@ -36,5 +42,5 @@ class Bonus:
         # self.game.drawStar(self.bonusTurtle, self.position.x+1, self.position.y+self.game.tileSize*5//8, self.game.tileSize-1, fillColor="gold2", circuitColor="")
         # self.game.drawHearth(self.bonusTurtle, self.position.x + self.game.tileSize//8, self.position.y + self.game.tileSize*3//8, self.game.tileSize, fillColor="red", circuitColor="")
 
-        self.game.drawRectangle(self.bonusTurtle, self.position.x+self.game.tileSize*1//8, self.position.y+self.game.tileSize*3//8, self.game.tileSize*6//8, self.game.tileSize*2//8, fillColor="red", borderColor="red")
-        self.game.drawRectangle(self.bonusTurtle, self.position.x+self.game.tileSize*3//8, self.position.y+self.game.tileSize*1//8, self.game.tileSize*2//8, self.game.tileSize*6//8, fillColor="red", borderColor="red")
+        Draw.drawRectangle(self.bonusTurtle, self.position.x+self.game.tileSize*1//8, self.position.y+self.game.tileSize*3//8, self.game.tileSize*6//8, self.game.tileSize*2//8, fillColor="red", borderColor="red")
+        Draw.drawRectangle(self.bonusTurtle, self.position.x+self.game.tileSize*3//8, self.position.y+self.game.tileSize*1//8, self.game.tileSize*2//8, self.game.tileSize*6//8, fillColor="red", borderColor="red")

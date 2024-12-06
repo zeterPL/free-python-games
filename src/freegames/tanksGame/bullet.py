@@ -1,5 +1,6 @@
 from turtle import Turtle
 from freegames import vector
+from draw import Draw
 
 
 class Bullet:
@@ -19,4 +20,4 @@ class Bullet:
             0: vector(0, self.bulletSpeed)
         }
         self.position.move(bulletDirectionMovements[self.direction])
-        self.shooter.game.drawSquare(self.bulletTurtle, self.position.x, self.position.y, int(0.15 * self.shooter.game.tileSize), "red")
+        Draw.drawSquare(self.bulletTurtle, self.position.x, self.position.y, int(0.15 * self.shooter.game.tileSize), "red")

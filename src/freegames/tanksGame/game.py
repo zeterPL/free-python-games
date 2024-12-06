@@ -10,6 +10,7 @@ from tank import Tank
 from aiTank import AITank
 from bonus import Bonus, BonusType
 from tile import Tile, tileColors, defaultTiles
+from draw import Draw
 
 
 class GameMode(Enum):
@@ -163,7 +164,7 @@ class Game:
     def spawnBonus(self):
         if not self.gameRunning or not self.enableBonuses or len(self.bonuses) >= self.maxNumberOfBonuses:
             return
-        bonusType = random.choice([BonusType.HEALTH, BonusType.SHOOTING_SPEED])
+        bonusType = random.choice(list(BonusType))
         possibleIndexes = [index for index, value in enumerate(self.tiles) if value == Tile.ROAD.value]
         occupiedIndexes = set()
         for tank in self.allTanks:
@@ -337,7 +338,7 @@ class Game:
                 if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
                     self.tiles[self.getTileIndexFromPoint(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
                     x, y = self.getTilePosition(self.getTileIndexFromPoint(bullet.position))
-                    self.drawSquare(self.mapTurtle, x, y, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
+                    Draw.drawSquare(self.mapTurtle, x, y, self.tileSize, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
                 hit = True
             if hit:
                 bullet.bulletTurtle.clear()
@@ -369,104 +370,25 @@ class Game:
             self.showHelpMenu()
 
     @staticmethod
-    def startDrawing(turtleObject, x, y, fillColor="", circuitColor="black", pensize=1):
-        turtleObject.color(circuitColor)
-        turtleObject.fillcolor(fillColor)
-        turtleObject.pensize(pensize)
-        turtleObject.up()
-        turtleObject.goto(x, y)
-        turtleObject.down()
-        turtleObject.begin_fill()
-
-    @staticmethod
-    def endDrawing(turtleObject):
-        turtleObject.end_fill()
-        turtleObject.up()
-
-    def drawSquare(self, turtleObject, x, y, size=None, squareColor=None, circuitColor="black"):
-        if not size:
-            size = self.tileSize
-        Game.startDrawing(turtleObject, x, y, fillColor=squareColor, circuitColor=circuitColor)
-        for count in range(4):
-            turtleObject.forward(size)
-            turtleObject.left(90)
-        Game.endDrawing(turtleObject)
-
-    @staticmethod
-    def drawRectangle(turtleObject, x, y, rectangleWidth, rectangleHeight, fillColor="white", borderColor="black", startDrawingFromMiddle=False, borderThickness=1):
-        if startDrawingFromMiddle:
-            x = x - rectangleWidth // 2
-            y = y - rectangleHeight // 2
-        Game.startDrawing(turtleObject, x, y, fillColor=fillColor, circuitColor=borderColor, pensize=borderThickness)
-        for _ in range(2):
-            turtleObject.forward(rectangleWidth)
-            turtleObject.left(90)
-            turtleObject.forward(rectangleHeight)
-            turtleObject.left(90)
-        Game.endDrawing(turtleObject)
-
-    @staticmethod
-    def drawCircle(turtleObject, x, y, circleSize, circleColor):
-        Game.startDrawing(turtleObject, x, y)
-        turtleObject.dot(circleSize, circleColor)
-        Game.endDrawing(turtleObject)
-
-    @staticmethod
-    def drawHearth(turtleObject, x, y, size, fillColor="red", circuitColor="red"):
-        Game.startDrawing(turtleObject, x, y, fillColor=fillColor, circuitColor=circuitColor)
-        turtleObject.left(140)
-        turtleObject.circle(-size//4, 200)
-        turtleObject.setheading(60)
-        turtleObject.circle(-size//4, 200)
-        turtleObject.forward(size//2)
-        Game.endDrawing(turtleObject)
-
-    @staticmethod
-    def drawStar(turtleObject, x, y, size, fillColor="gold", circuitColor=""):
-        Game.startDrawing(turtleObject, x, y, fillColor=fillColor, circuitColor=circuitColor)
-        for _ in range(5):
-            turtleObject.forward(size)
-            turtleObject.right(144)
-        Game.endDrawing(turtleObject)
-
-    # @staticmethod
-    # def drawTriangle(turtleObject, x, y, sideSize, trianglePointedUp=False, fillColor="red", circuitColor=""):
-    #     Game.startDrawing(turtleObject, x, y, fillColor=fillColor, circuitColor=circuitColor)
-    #     for _ in range(3):
-    #         turtleObject.forward(sideSize)
-    #         if trianglePointedUp:
-    #             turtleObject.left(120)
-    #         else:
-    #             turtleObject.right(120)
-    #     Game.endDrawing(turtleObject)
-
-    @staticmethod
-    def drawPortal(turtleObject, x, y, portalSize, numberOfLayers, portalColor, backgroundColor):
-        for layer in range(numberOfLayers):
-            Game.drawCircle(turtleObject, x, y, portalSize, portalColor)
-            Game.drawCircle(turtleObject, x, y, int(portalSize - 2), backgroundColor)
-            portalSize = max(int(0.5 * portalSize), 4)
-
-    @staticmethod
     def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold"), textColor="black"):
         turtleObject.color(textColor)
         turtleObject.goto(x, y)
         turtleObject.write(message, align=textAlign, font=textFont)
 
     def drawBoard(self):
-        self.drawSquare(self.mapTurtle, -self.gameWidth, -self.gameHeight, 2 * (self.gameWidth + self.gameHeight), "black")
+        Draw.drawSquare(self.mapTurtle, -self.gameWidth, -self.gameHeight, 2 * (self.gameWidth + self.gameHeight), "black")
         bgcolor('black')
         for index in range(len(self.tiles)):
             tile = self.tiles[index]
             if tile > 0:
                 x, y = self.getTilePosition(index)
                 tileColor = self.tileColors[tile]
-                self.drawSquare(self.mapTurtle, x, y, squareColor=tileColor)
+                Draw.drawSquare(self.mapTurtle, x, y, self.tileSize, squareColor=tileColor)
                 if tile == Tile.MINE.value:  # drawing mines
-                    self.drawCircle(self.minesTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize // 2, "black")
+                    Draw.drawCircle(self.minesTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize // 2, "black")
                 if tile == Tile.TELEPORT.value:  # drawing portals
-                    self.drawPortal(self.mapTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize * 0.8, 5, "purple", "black")
-        self.drawRectangle(self.mapTurtle, 0, 0, self.rows * self.tileSize, self.columns * self.tileSize, "", "white", True)  # drawing white circuit around board
+                    Draw.drawPortal(self.mapTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize * 0.8, 5, "purple", "black")
+        Draw.drawRectangle(self.mapTurtle, 0, 0, self.rows * self.tileSize, self.columns * self.tileSize, "", "white", True)  # drawing white circuit around board
 
     def drawExplosion(self, drawingTurtle, x, y, explosionIteration=0, maxIterations=3):
         explosionColors = ["red", "yellow", "orange"]
@@ -474,7 +396,7 @@ class Game:
         t = self.tileSize // 20
         offsets = [(0, 0), (2 * t, 2 * t), (-2 * t, -2 * t), (-2 * t, 2 * t), (2 * t, -2 * t), (4 * t, 0), (0, 4 * t), (-4 * t, 0), (0, -4 * t)]
         for dx, dy in offsets:
-            self.drawSquare(drawingTurtle, x + dx * (explosionIteration + t), y + dy * (explosionIteration + t), 2 * t + explosionIteration, explosionColor)
+            Draw.drawSquare(drawingTurtle, x + dx * (explosionIteration + t), y + dy * (explosionIteration + t), 2 * t + explosionIteration, explosionColor)
         if explosionIteration < maxIterations:
             ontimer(lambda: self.drawExplosion(drawingTurtle, x, y, explosionIteration + 1, maxIterations), 150)
         else:
@@ -482,7 +404,7 @@ class Game:
 
     def drawModalMessage(self, message, subMessage, x=0, y=0, modalWidth=350, modalHeight=120):
         self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, x, y, modalWidth, modalHeight, "white", "black", True)
+        Draw.drawRectangle(self.messageTurtle, x, y, modalWidth, modalHeight, "white", "black", True)
         self.writeText(self.messageTurtle, 0, 0, message)
         self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
@@ -498,7 +420,7 @@ class Game:
     def showStartMenu(self):
         self.gameRunning = False
         self.resetGame()
-        self.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
+        Draw.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
         self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 32, "bold"))
         self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 18, "normal"))
         self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 18, "normal"))
@@ -515,7 +437,7 @@ class Game:
 
     def showGameModeMenu(self):
         self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
+        Draw.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
         self.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 28, "bold"))
         self.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 16, "normal"))
         self.writeText(self.messageTurtle, 0, 0, "Press '2' for PvP mode     ", textFont=("Arial", 16, "normal"))
@@ -530,7 +452,7 @@ class Game:
 
     def showHelpMenu(self, modalWidth=420, modalHeight=420):
         self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
+        Draw.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
         yOffset = (modalHeight / 2) - 40
         longestTextLineWidth = 312  # I checked manually how many pixels take to write the longest line
         for line in self.helpContent:
@@ -556,7 +478,7 @@ class Game:
         setup(max((self.columns + 1) * self.tileSize, 400), max((self.rows + 1) * self.tileSize, 500), self.startGameX, self.startGameY)
         scores = self.loadHallOfFame()
         self.messageTurtle.clear()
-        self.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
+        Draw.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
         self.writeText(self.messageTurtle, 0, 180, "🏆 Hall of Fame 🏆", textFont=("Arial", 32, "bold"))
 
         y_offset = 130

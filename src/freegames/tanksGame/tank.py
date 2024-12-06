@@ -4,6 +4,7 @@ import random
 from bullet import Bullet
 from tile import Tile
 from bonus import BonusType
+from draw import Draw
 
 
 class Tank:
@@ -82,9 +83,11 @@ class Tank:
     def collectBonus(self, bonus):
         if bonus.bonus_type == BonusType.HEALTH:
             self.activeBonuses[BonusType.HEALTH] = 5000
-        elif bonus.bonus_type == BonusType.SHOOTING_SPEED:
-            self.activeBonuses[BonusType.SHOOTING_SPEED] = 10000
+        elif bonus.bonus_type == BonusType.RELOAD:
+            self.activeBonuses[BonusType.RELOAD] = 10000
             self.reloadingTime = max(500, self.reloadingTime - 500)
+        else:
+            print("Bonus activation not implemented yet")
 
     def updateActiveBonuses(self):
         toRemove = []
@@ -143,7 +146,7 @@ class Tank:
         if tileValue == Tile.MINE.value:
             x, y = self.game.getTilePosition(tileIndex)
             self.game.tiles[tileIndex] = Tile.ROAD.value
-            self.game.drawSquare(self.game.mapTurtle, x, y, squareColor=self.game.tileColors[Tile.ROAD.value])
+            Draw.drawSquare(self.game.mapTurtle, x, y, self.game.tileSize, squareColor=self.game.tileColors[Tile.ROAD.value])
             self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
             self.takeDamage(random.randint(self.game.basicAttack//2, self.game.basicAttack*2), f"tank {self.tankId} ran over a mine")
         elif tileValue == Tile.TELEPORT.value:
@@ -165,8 +168,8 @@ class Tank:
             barWidth = self.game.tileSize
             barHeight = self.game.tileSize // 20 * 3
             hpRatio = self.hp / self.maxHp
-            self.game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth, barHeight, bgColor)
-            self.game.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth*hpRatio, barHeight, hpColor)
+            Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth, barHeight, bgColor)
+            Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth*hpRatio, barHeight, hpColor)
 
     def drawReloadBar(self, reloadColor="gold", bgColor="black"):
         self.reloadTurtle.clear()
@@ -175,8 +178,8 @@ class Tank:
             barWidth = self.game.tileSize
             barHeight = self.game.tileSize // 20 * 3
             reloadRatio = 1 - (self.reloadingRemainingTime / self.reloadingTime) if self.reloadingTime > 0 else 1
-            self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
-            self.game.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
+            Draw.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
+            Draw.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
 
     def drawTank(self):
         self.tankTurtle.clear()
@@ -191,18 +194,18 @@ class Tank:
             270: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)]
         }
         for index, (dx, dy) in enumerate(trackOffsets[angle]):
-            self.game.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, self.tankColor)
+            Draw.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, self.tankColor)
             if self.destroyed and index in [0, t, 5, t]:
-                self.game.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, "black")
+                Draw.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, "black")
         """Draw hull."""
         hullOffsets = {0: (4 * t, t), 90: (t, 4 * t), 180: (4 * t, 7 * t), 270: (7 * t, 4 * t)}
-        self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, self.tankColor)
+        Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, self.tankColor)
         if self.destroyed:
-            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
-            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
-            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
-            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 2 * t, y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
-            self.game.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 6 * t, y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
+            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
+            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 2 * t, y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
+            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 6 * t, y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
         """Draw cannon."""
         cannonOffsets = {
             0: [(7 * t, 9 * t), (7 * t, 11 * t), (7 * t, 13 * t)],
@@ -211,9 +214,9 @@ class Tank:
             270: [(5 * t, 7 * t), (3 * t, 7 * t), (t, 7 * t)]
         }
         for dx, dy in cannonOffsets[angle]:
-            self.game.drawSquare(self.tankTurtle, x + dx, y + dy, 2 * t, self.tankColor)
+            Draw.drawSquare(self.tankTurtle, x + dx, y + dy, 2 * t, self.tankColor)
         if self.destroyed:
-            self.game.drawSquare(self.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
+            Draw.drawSquare(self.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
         self.drawHP()
         self.drawReloadBar()
         self.displayActiveBonuses()
