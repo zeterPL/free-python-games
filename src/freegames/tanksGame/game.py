@@ -199,6 +199,7 @@ class Game:
         if self.gameRunning:
             return
 
+        self.roundCounter = 0
         self.gameRunning = True
         self.gamePaused = False
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game

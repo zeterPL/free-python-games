@@ -12,6 +12,7 @@ class AITank(Tank):
         self.tryAppointNewPath()
         self.game.occupiedTilesByEnemies[self.tankId] = {self.game.getTileIndexFromPoint(self.position)}  # at start occupy tile where spawn
         self.stuckRounds = 0
+        self.hpBeforeStuck = self.hp
 
     def decideTarget(self):
         potentialTargets = [tank for tank in (self.game.firstTank, self.game.secondTank) if tank and not tank.destroyed]
@@ -143,7 +144,10 @@ class AITank(Tank):
         else:
             self.game.occupiedTilesByEnemies[self.tankId] = currentTiles
             self.stuckRounds += 1
-            if self.stuckRounds > 10:
+            if self.hpBeforeStuck != self.hp:
+                self.hpBeforeStuck = self.hp
+                self.stuckRounds = 0
+            elif self.stuckRounds > 10:
                 self.getStuckTankOut()
         self.decideTarget()
 

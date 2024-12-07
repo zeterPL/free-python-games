@@ -75,43 +75,45 @@ class Bonus:
         return not (x1 + w1 <= x2 or x1 >= x2 + w2 or y1 + h1 <= y2 or y1 >= y2 + h2)
 
     @staticmethod
-    def activateBonus(tank, bonus):
-        if bonus.bonusType == BonusType.HEALTH:
+    def activateBonus(tank, bonusType, amountTime=0):
+        if bonusType == BonusType.HEALTH:
             tank.hp += 30
             if tank.hp > tank.maxHp:
                 tank.maxHp = tank.hp
-        elif bonus.bonusType == BonusType.RELOAD:
-            tank.activeBonuses[BonusType.RELOAD] = 10000
+        elif bonusType == BonusType.RELOAD:
+            tank.activeBonuses[BonusType.RELOAD] += amountTime or 10000
             tank.reloadingTime = max(200, tank.reloadingTime // 2)
-        elif bonus.bonusType == BonusType.REGENERATION:
-            tank.activeBonuses[BonusType.REGENERATION] = 10000
-        elif bonus.bonusType == BonusType.SHIELD:
-            tank.activeBonuses[BonusType.SHIELD] = 4000
+        elif bonusType == BonusType.REGENERATION:
+            tank.activeBonuses[BonusType.REGENERATION] += amountTime or 10000
+        elif bonusType == BonusType.SHIELD:
+            tank.activeBonuses[BonusType.SHIELD] += amountTime or 4000
             tank.indestructible = True
-        elif bonus.bonusType == BonusType.ATTACK:
-            tank.activeBonuses[BonusType.ATTACK] = 5000
+        elif bonusType == BonusType.ATTACK:
+            tank.activeBonuses[BonusType.ATTACK] += amountTime or 5000
             tank.attack *= 2
-        elif bonus.bonusType == BonusType.SPEED:
-            tank.activeBonuses[BonusType.SPEED] = 10000
+        elif bonusType == BonusType.SPEED:
+            tank.activeBonuses[BonusType.SPEED] += amountTime or 10000
+            tank.teleportToMiddleTile()
             tank.speedRatio = 2
-        elif bonus.bonusType == BonusType.ALL:
-            pass
+            tank.change(tank.speed, tank.direction)
+        elif bonusType == BonusType.ALL:
+            tank.activeBonuses[BonusType.ALL] = 5000
+            for bType in BonusType:
+                if bType != BonusType.ALL:
+                    Bonus.activateBonus(tank, bType, 5000)
         else:
             print("Bonus activation not implemented yet")
 
     @staticmethod
     def updateActiveBonuses(tank):
-        toRemove = []
-        for bonusType in list(tank.activeBonuses.keys()):
-            tank.activeBonuses[bonusType] -= 1000
-            if tank.activeBonuses[bonusType] <= 0:
-                toRemove.append(bonusType)
-            else:
-                if bonusType == BonusType.REGENERATION:
-                    tank.hp = min(tank.maxHp, tank.hp + 0.1*tank.maxHp)
+        for bonusType, remainingTime in tank.activeBonuses.items():
+            if remainingTime > 0:
+                tank.activeBonuses[bonusType] -= 1000
+                if tank.activeBonuses[bonusType] <= 0:
+                    Bonus.deactivateBonus(tank, bonusType)
+                elif bonusType == BonusType.REGENERATION:
+                    tank.hp = min(tank.maxHp, tank.hp + 0.1 * tank.maxHp)
                     tank.drawHP()
-        for bonusType in toRemove:
-            Bonus.deactivateBonus(tank, bonusType)
         Bonus.displayActiveBonuses(tank)
 
     @staticmethod
@@ -121,10 +123,12 @@ class Bonus:
         elif bonusType == BonusType.SHIELD:
             tank.indestructible = False
         elif bonusType == BonusType.ATTACK:
-            tank.attack /= 2
+            tank.attack = tank.defaultAttack
         elif bonusType == BonusType.SPEED:
+            tank.teleportToMiddleTile()
             tank.speedRatio = 1
-        del tank.activeBonuses[bonusType]
+            tank.change(tank.speed/2, tank.direction)
+        tank.activeBonuses[bonusType] = 0
 
     @staticmethod
     def displayActiveBonuses(tank):
@@ -135,22 +139,25 @@ class Bonus:
         tank.bonusDisplayTurtle.up()
         tank.bonusDisplayTurtle.goto(x, y)
         bonusTexts = []
-        for bonusType, remainingTime in tank.activeBonuses.items():
-            if bonusType == BonusType.RELOAD:
-                bonusName = "Reload Speed"
-            elif bonusType == BonusType.REGENERATION:
-                bonusName = "Health Regen"
-            elif bonusType == BonusType.SHIELD:
-                bonusName = "INDESTRUCTIBLE"
-            elif bonusType == BonusType.ATTACK:
-                bonusName = "Double damage"
-            elif bonusType == BonusType.SPEED:
-                bonusName = "Double speed"
-            elif bonusType == BonusType.ALL:
-                bonusName = "All bonuses"
-            else:
-                bonusName = "Unknown"
-            secondsLeft = remainingTime // 1000
-            bonusTexts.append(f"{bonusName}: {secondsLeft}s")
+        if tank.activeBonuses[BonusType.ALL]:
+            bonusTexts.append(f"All bonuses: {tank.activeBonuses[BonusType.ALL] // 1000}s")
+        else:
+            for bonusType, remainingTime in tank.activeBonuses.items():
+                if remainingTime <= 0:
+                    continue
+                if bonusType == BonusType.RELOAD:
+                    bonusName = "Reload Speed"
+                elif bonusType == BonusType.REGENERATION:
+                    bonusName = "Health Regen"
+                elif bonusType == BonusType.SHIELD:
+                    bonusName = "INDESTRUCTIBLE"
+                elif bonusType == BonusType.ATTACK:
+                    bonusName = "Double damage"
+                elif bonusType == BonusType.SPEED:
+                    bonusName = "Double speed"
+                else:
+                    bonusName = "Unknown"
+                secondsLeft = remainingTime // 1000
+                bonusTexts.append(f"{bonusName}: {secondsLeft}s")
         if bonusTexts:
             tank.bonusDisplayTurtle.write('\n'.join(bonusTexts), align="left", font=("Arial", 8, "normal"))

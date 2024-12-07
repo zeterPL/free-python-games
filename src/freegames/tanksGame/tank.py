@@ -3,7 +3,7 @@ from freegames import vector
 import random
 from bullet import Bullet
 from tile import Tile
-from bonus import Bonus
+from bonus import Bonus, BonusType
 from draw import Draw
 
 
@@ -25,6 +25,7 @@ class Tank:
         self.hp = hp or self.game.basicHp
         self.maxHp = hp or self.game.basicHp
         self.attack = attack or self.game.basicAttack
+        self.defaultAttack = self.attack
         self.tankTurtle = Turtle(visible=False)
         self.hpTurtle = Turtle(visible=False)
         self.reloadTurtle = Turtle(visible=False)
@@ -34,7 +35,7 @@ class Tank:
         self.loaded = True
         self.destroyed = False
         self.deathReason = ""
-        self.activeBonuses = {}
+        self.activeBonuses = {bonusType: 0 for bonusType in BonusType}
         self.indestructible = False
 
     def takeDamage(self, amount, reason):
@@ -72,7 +73,7 @@ class Tank:
 
         for bonus in self.game.bonuses[:]:
             if bonus.tankIsOnBonus(self, bonus, self.game.tileSize):
-                bonus.activateBonus(self, bonus)
+                bonus.activateBonus(self, bonus.bonusType)
                 self.game.bonuses.remove(bonus)
                 bonus.bonusTurtle.clear()
 
@@ -97,6 +98,17 @@ class Tank:
             self.bonusDisplayTurtle.clear()
         else:
             self.drawTank()
+
+    def teleportToMiddleTile(self):
+        tileIndex = self.game.getTileIndexFromPoint(self.position)
+        dx = (self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization) - self.position.x
+        dy = (self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization) - self.position.y
+        if abs(dx) > self.game.tileSize // 2:
+            self.position = vector(self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization + self.game.tileSize, self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization)
+        elif abs(dy) > self.game.tileSize // 2:
+            self.position = vector(self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization, self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization + self.game.tileSize)
+        else:
+            self.position = vector(self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization, self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization)
 
     def drawHP(self, hpColor="red", bgColor="black"):
         self.hpTurtle.clear()
