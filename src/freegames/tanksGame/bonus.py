@@ -1,9 +1,9 @@
 from turtle import Turtle
+import random
 from enum import Enum
+from freegames import vector
 from draw import Draw
 from tile import Tile
-from freegames import vector
-import random
 
 
 class BonusType(Enum):
@@ -93,9 +93,7 @@ class Bonus:
             tank.attack *= 2
         elif bonus.bonusType == BonusType.SPEED:
             tank.activeBonuses[BonusType.SPEED] = 10000
-            # tank.speed *= 2
-            # tank.tankSpeedValue *= 2
-            print(f"{tank.moveControls=}")
+            tank.speedRatio = 2
         elif bonus.bonusType == BonusType.ALL:
             pass
         else:
@@ -125,14 +123,14 @@ class Bonus:
         elif bonusType == BonusType.ATTACK:
             tank.attack /= 2
         elif bonusType == BonusType.SPEED:
-            pass
-            # self.speed /= 2
-            # self.tankSpeedValue /= 2
+            tank.speedRatio = 1
         del tank.activeBonuses[bonusType]
 
     @staticmethod
     def displayActiveBonuses(tank):
         tank.bonusDisplayTurtle.clear()
+        if tank.destroyed:
+            return
         x, y = tank.position.x, tank.position.y + tank.game.tileSize + 10
         tank.bonusDisplayTurtle.up()
         tank.bonusDisplayTurtle.goto(x, y)

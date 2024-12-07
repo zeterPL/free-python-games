@@ -11,6 +11,7 @@ from aiTank import AITank
 from bonus import Bonus
 from tile import Tile, tileColors, defaultTiles
 from draw import Draw
+from bullet import Bullet
 
 
 class GameMode(Enum):
@@ -241,7 +242,8 @@ class Game:
             playerTank.moveTank()
         for enemyTank in self.enemyTanks:
             enemyTank.moveTank()
-        self.processBulletsMovementsAndCollisions()
+        # self.processBulletsMovementsAndCollisions()
+        Bullet.processBulletsMovementsAndCollisions(self)
         self.checkIfGameOver()
         update()
         if self.gameRunning:
@@ -300,31 +302,31 @@ class Game:
                 return True
         return False
 
-    def processBulletsMovementsAndCollisions(self):
-        for bullet in self.bullets[:]:
-            bullet.moveBullet()
-            hit = False
-            tankSize = 0.8 * self.tileSize
-            if bullet.position.x < -self.gameWidth // 2 or bullet.position.x > self.gameWidth // 2 or bullet.position.y < -self.gameHeight // 2 or bullet.position.y > self.gameHeight // 2:
-                bullet.bulletTurtle.clear()
-                self.bullets.remove(bullet)
-                continue
-            for tank in self.allTanks:
-                if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
-                    self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
-                    tank.takeDamage(bullet.shooter.attack, f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
-                    hit = True
-            bulletTileValue = self.tiles[self.getTileIndexFromPoint(bullet.position)]
-            if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
-                if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
-                    self.tiles[self.getTileIndexFromPoint(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
-                    x, y = self.getTilePosition(self.getTileIndexFromPoint(bullet.position))
-                    Draw.drawSquare(self.mapTurtle, x, y, self.tileSize, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
-                hit = True
-            if hit:
-                bullet.bulletTurtle.clear()
-                self.bullets.remove(bullet)
-                self.explosionSound.play()
+    # def processBulletsMovementsAndCollisions(self):
+    #     for bullet in self.bullets[:]:
+    #         bullet.moveBullet()
+    #         hit = False
+    #         tankSize = 0.8 * self.tileSize
+    #         if bullet.position.x < -self.gameWidth // 2 or bullet.position.x > self.gameWidth // 2 or bullet.position.y < -self.gameHeight // 2 or bullet.position.y > self.gameHeight // 2:
+    #             bullet.bulletTurtle.clear()
+    #             self.bullets.remove(bullet)
+    #             continue
+    #         for tank in self.allTanks:
+    #             if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
+    #                 self.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
+    #                 tank.takeDamage(bullet.shooter.attack, f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
+    #                 hit = True
+    #         bulletTileValue = self.tiles[self.getTileIndexFromPoint(bullet.position)]
+    #         if bulletTileValue in [Tile.INDESTRUCTIBLE_BLOCK.value, Tile.DESTRUCTIBLE_BLOCK.value]:
+    #             if bulletTileValue == Tile.DESTRUCTIBLE_BLOCK.value:
+    #                 self.tiles[self.getTileIndexFromPoint(bullet.position)] = Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value
+    #                 x, y = self.getTilePosition(self.getTileIndexFromPoint(bullet.position))
+    #                 Draw.drawSquare(self.mapTurtle, x, y, self.tileSize, squareColor=self.tileColors[Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value])
+    #             hit = True
+    #         if hit:
+    #             bullet.bulletTurtle.clear()
+    #             self.bullets.remove(bullet)
+    #             self.explosionSound.play()
 
     def togglePause(self):
         self.gamePaused = not self.gamePaused

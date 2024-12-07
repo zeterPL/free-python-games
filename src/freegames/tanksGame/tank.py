@@ -3,7 +3,7 @@ from freegames import vector
 import random
 from bullet import Bullet
 from tile import Tile
-from bonus import Bonus, BonusType
+from bonus import Bonus
 from draw import Draw
 
 
@@ -13,6 +13,7 @@ class Tank:
         self.position = vector(x, y)
         self.speed = vector(0, 0)
         self.tankSpeedValue = self.game.tankSpeedValue
+        self.speedRatio = 1
         self.direction = 0  # 0 - forward, 90 - right, 180 - backward, 270 - left
         self.tankColor = tankColor
         self.tankId = tankId
@@ -48,13 +49,13 @@ class Tank:
     def change(self, tankSpeedDirection, angle=None):
         if self.destroyed:
             return
-        if angle is not None and self.game.valid(self.position + tankSpeedDirection):
-            self.speed = tankSpeedDirection
+        if angle is not None and self.game.valid(self.position + tankSpeedDirection * self.speedRatio):
+            self.speed = tankSpeedDirection * self.speedRatio
             self.direction = angle
             return 0
         # stop tank
         if tankSpeedDirection.x == 0 and tankSpeedDirection.y == 0:
-            self.speed = tankSpeedDirection
+            self.speed = tankSpeedDirection * self.speedRatio
             self.direction = angle or self.direction
             return 1
         # if tank was stopped before then he can turn in any direction
@@ -89,10 +90,11 @@ class Tank:
                 self.position -= vector(self.speed.x//abs(self.speed.x)*self.game.tileSize*(self.game.columns-2), 0)
             else:
                 self.position -= vector(0, self.speed.y//abs(self.speed.y)*self.game.tileSize*(self.game.rows-2))
-        elif tileValue == Tile.FOREST.value:
+        elif tileValue == Tile.FOREST.value:  # tank hide in forest
             self.tankTurtle.clear()
-            self.hpTurtle.clear()  # tank hide in forest
+            self.hpTurtle.clear()
             self.reloadTurtle.clear()
+            self.bonusDisplayTurtle.clear()
         else:
             self.drawTank()
 
