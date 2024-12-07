@@ -37,6 +37,7 @@ class Tank:
         self.deathReason = ""
         self.activeBonuses = {bonusType: 0 for bonusType in BonusType}
         self.indestructible = False
+        self.railgunOn = False
 
     def takeDamage(self, amount, reason):
         if not self.destroyed and not self.indestructible:

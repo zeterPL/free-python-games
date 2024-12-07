@@ -1,4 +1,4 @@
-from turtle import Turtle
+from turtle import Turtle, ontimer
 from freegames import vector
 from draw import Draw
 from tile import Tile
@@ -20,6 +20,14 @@ class Bullet:
             270: vector(-5, 0),
             0: vector(0, 5)
         }
+        if self.shooter.railgunOn:
+            self.position.move(bulletDirectionMovements[self.direction] * self.bulletSpeed / 5)
+            while not Bullet.checkBulletHit(self.shooter.game, self):
+                self.position.move(bulletDirectionMovements[self.direction] * self.shooter.speedRatio / 5)
+                laserTurtle = Turtle(visible=False)
+                Draw.drawSquare(laserTurtle, self.position.x, self.position.y, int(0.1 * self.shooter.game.tileSize), "blue", "")
+                ontimer(laserTurtle.clear, 200)
+            return True
         for _ in range(self.bulletSpeed//5):
             self.position.move(bulletDirectionMovements[self.direction] * self.shooter.speedRatio)
             if Bullet.checkBulletHit(self.shooter.game, self):
@@ -55,13 +63,3 @@ class Bullet:
                 bullet.bulletTurtle.clear()
                 game.bullets.remove(bullet)
                 game.explosionSound.play()
-        # bulletsToRemove = []
-        # for bullet in game.bullets:
-        #     hit = bullet.moveBullet()
-        #     if hit:
-        #         bulletsToRemove.append(bullet)
-        # for bullet in bulletsToRemove:
-        #     bullet.bulletTurtle.clear()
-        #     game.bullets.remove(bullet)
-        #     game.explosionSound.play()
-

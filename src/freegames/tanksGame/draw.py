@@ -106,6 +106,25 @@ class Draw:
         Draw.drawRectangle(turtleObject, x+squareSize*15//32, y+squareSize*5//16, squareSize//8, squareSize*1//16, fillColor=sandColor, borderColor="")
 
     @staticmethod
+    def drawLightning(turtleObject, x, y, t, fillColor="gold", circuitColor="black"):
+        Draw.startDrawing(turtleObject, x, y, fillColor=fillColor, circuitColor=circuitColor)
+        x, y = x + 5 * t, y + 12 * t
+        turtleObject.goto(x, y)
+        x, y = x - 4 * t, y
+        turtleObject.goto(x, y)
+        x, y = x + 3 * t, y + 12 * t
+        turtleObject.goto(x, y)
+        x, y = x + 14 * t, y
+        turtleObject.goto(x, y)
+        x, y = x - 9 * t, y - 10 * t
+        turtleObject.goto(x, y)
+        x, y = x + 5 * t, y
+        turtleObject.goto(x, y)
+        x, y = x - 14 * t, y - 14 * t
+        turtleObject.goto(x, y)
+        Draw.endDrawing(turtleObject)
+
+    @staticmethod
     def drawTriangle(turtleObject, x, y, sideSize, trianglePointedUp=True, fillColor="red", circuitColor=""):
         Draw.startDrawing(turtleObject, x, y, fillColor=fillColor, circuitColor=circuitColor)
         for _ in range(3):

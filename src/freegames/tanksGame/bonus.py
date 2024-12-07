@@ -13,7 +13,8 @@ class BonusType(Enum):
     SHIELD = 4
     ATTACK = 5
     SPEED = 6
-    ALL = 7
+    RAILGUN = 7
+    ALL = 8
 
 
 class Bonus:
@@ -39,6 +40,8 @@ class Bonus:
             Draw.drawSkull(self.bonusTurtle, self.position.x, self.position.y, self.game.tileSize)
         elif self.bonusType == BonusType.SPEED:
             Draw.drawChevronPattern(self.bonusTurtle, self.position.x+self.game.tileSize*3//10, self.position.y+self.game.tileSize*3//20, self.game.tileSize//6, self.game.tileSize//20, numberOfChevrons=3, fillColor="blue")
+        elif self.bonusType == BonusType.RAILGUN:
+            Draw.drawLightning(self.bonusTurtle, self.position.x + self.game.tileSize * 3 // 10, self.position.y + self.game.tileSize * 3 // 20, self.game.tileSize/40, fillColor="gold", circuitColor="black")
         elif self.bonusType == BonusType.ALL:
             Draw.drawStar(self.bonusTurtle, self.position.x+self.game.tileSize//8, self.position.y+self.game.tileSize*5//8, self.game.tileSize*6//8, fillColor="gold2", circuitColor="")
 
@@ -96,6 +99,9 @@ class Bonus:
             tank.teleportToMiddleTile()
             tank.speedRatio = 2
             tank.change(tank.speed, tank.direction)
+        elif bonusType == BonusType.RAILGUN:
+            tank.activeBonuses[BonusType.RAILGUN] += amountTime or 12000
+            tank.railgunOn = True
         elif bonusType == BonusType.ALL:
             tank.activeBonuses[BonusType.ALL] = 5000
             for bType in BonusType:
@@ -128,6 +134,8 @@ class Bonus:
             tank.teleportToMiddleTile()
             tank.speedRatio = 1
             tank.change(tank.speed/2, tank.direction)
+        elif bonusType == BonusType.RAILGUN:
+            tank.railgunOn = False
         tank.activeBonuses[bonusType] = 0
 
     @staticmethod
@@ -155,6 +163,8 @@ class Bonus:
                     bonusName = "Double damage"
                 elif bonusType == BonusType.SPEED:
                     bonusName = "Double speed"
+                elif bonusType == BonusType.RAILGUN:
+                    bonusName = "RAILGUN"
                 else:
                     bonusName = "Unknown"
                 secondsLeft = remainingTime // 1000
