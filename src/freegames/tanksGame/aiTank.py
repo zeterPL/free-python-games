@@ -168,14 +168,19 @@ class AITank(Tank):
         self.shoot()
 
     def hasLineOfSight(self, targetPosition):
-        rowBot, columnBot = divmod(self.game.getTileIndexFromPoint(self.position), self.game.columns)
+        centralizedBotPosition = self.position + int(self.game.tileSize * 0.4)
+        rowBot, columnBot = divmod(self.game.getTileIndexFromPoint(centralizedBotPosition), self.game.columns)
         rowTarget, columnTarget = divmod(self.game.getTileIndexFromPoint(targetPosition), self.game.columns)
         if rowBot == rowTarget:  # Horizontal line of sight
             startColumn, endColumn = sorted((columnBot, columnTarget))
             tileIndices = {rowBot * self.game.columns + column for column in range(startColumn, endColumn + 1)}
+            if not (targetPosition.y <= centralizedBotPosition.y <= targetPosition.y + int(self.game.tileSize * 0.8)):  # Check if target is exactly in line of shooting
+                return False
         elif columnBot == columnTarget:  # Vertical line of sight
             startRow, endRow = sorted((rowBot, rowTarget))
             tileIndices = {row * self.game.columns + columnBot for row in range(startRow, endRow + 1)}
+            if not (targetPosition.x <= centralizedBotPosition.x <= targetPosition.x + int(self.game.tileSize * 0.8)):  # Check if target is exactly in line of shooting
+                return False
         else:
             return False
         # Check if any tile is an indestructible block
