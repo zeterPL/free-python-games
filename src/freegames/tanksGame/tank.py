@@ -39,15 +39,6 @@ class Tank:
         self.indestructible = False
         self.railgunOn = False
 
-    def takeDamage(self, amount, reason):
-        if not self.destroyed and not self.indestructible:
-            self.hp -= amount
-            if self.hp <= 0:
-                self.destroyed = True
-                self.deathReason = reason
-                self.drawTank()
-            self.game.damageSound.play()
-
     def change(self, tankSpeedDirection, angle=None):
         if self.destroyed:
             return
@@ -177,7 +168,7 @@ class Tank:
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
         onkey(lambda: self.change(vector(0, 0)), self.stoppingControl)
-        for key, (tankSpeed, angle) in self.moveControls.items():
+        for key in self.moveControls.keys():
             onkey(lambda k=key: self.keyPressHandler(k), key)
             if len(key) == 1 and key.isalpha():
                 onkey(lambda k=key: self.keyPressHandler(k), key.upper())
@@ -193,16 +184,22 @@ class Tank:
                         self.keysPressed[k] = False
 
     def shoot(self):
-        if not self.loaded or self.destroyed:
+        if self.game.gamePaused or not self.loaded or self.destroyed:
             return
         bullet = Bullet(self)
         self.game.bullets.append(bullet)
         self.loaded = False
         self.reloadingRemainingTime = self.reloadingTime
         self.updateReload()  # Start updating the reload bar
-        self.game.laserShootSound.play()
+        if not self.railgunOn:
+            self.game.laserShootSound.play()
+        else:
+            self.game.railgunSound.play()
 
     def updateReload(self):
+        if self.game.gamePaused:
+            ontimer(self.updateReload, 100)
+            return
         if self.reloadingRemainingTime > 0:
             self.reloadingRemainingTime -= 100  # Decrease remaining time
             ontimer(self.updateReload, 100)  # Update every 100ms
@@ -210,3 +207,23 @@ class Tank:
             self.loaded = True
         if self.game.tiles[self.game.getTileIndexFromPoint(self.position + int(self.game.tileSize * 0.4))] != Tile.FOREST.value:
             self.drawReloadBar()
+
+    @staticmethod
+    def debugPrintActualHpSituation(func):
+        def wrapper(self, *args, **kwargs):
+            if self.tankId in [0, 1]:
+                print(f"Before damage: {self.tankId=} {self.hp=}")
+            func(self, *args, **kwargs)
+            if self.tankId in [0, 1]:
+                print(f"After damage: {self.tankId=} {self.hp=}")
+        return wrapper
+
+    @debugPrintActualHpSituation
+    def takeDamage(self, amount, reason):
+        if not self.destroyed and not self.indestructible:
+            self.hp -= amount
+            if self.hp <= 0:
+                self.destroyed = True
+                self.deathReason = reason
+                self.drawTank()
+            self.game.damageSound.play()

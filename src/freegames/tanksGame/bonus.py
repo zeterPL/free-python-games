@@ -126,8 +126,7 @@ class Bonus:
                 if tank.activeBonuses[bonusType] <= 0:
                     Bonus.deactivateBonus(tank, bonusType)
                 elif bonusType == BonusType.REGENERATION:
-                    print(f"{tank.hp=}")
-                    tank.hp = min(tank.maxHp, tank.hp + 0.1 * tank.maxHp)
+                    tank.hp = min(tank.maxHp, tank.hp + int(0.1 * tank.maxHp))
                     tank.drawHP()
         Bonus.displayActiveBonuses(tank)
 

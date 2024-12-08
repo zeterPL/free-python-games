@@ -84,6 +84,7 @@ class Game:
 
         mixer.init()  # for playing sounds
         self.laserShootSound = mixer.Sound("files/sounds/laserShoot.wav")
+        self.railgunSound = mixer.Sound("files/sounds/railgun.mp3")
         self.explosionSound = mixer.Sound("files/sounds/explosion.wav")
         self.damageSound = mixer.Sound("files/sounds/damage.wav")
         self.gameOverSound = mixer.Sound("files/sounds/game-over.mp3")
@@ -284,7 +285,7 @@ class Game:
         ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
         if self.gameMode == GameMode.SINGLE:
             ontimer(lambda: self.conditionalExecution(not self.gameRunning, lambda v=victory: self.initHallOfFame(v)), 2000)
-        onkey(self.startGame, "r")
+        Game.activateKeys([(self.startGame, "r")])
 
     @staticmethod
     def conditionalExecution(condition, function, *args, **kwargs):
@@ -376,6 +377,16 @@ class Game:
         tracer(False)
         listen()
 
+    @staticmethod
+    def activateKeys(keyBindings):
+        for func, key in keyBindings:
+            onkey(func, key)
+
+    @staticmethod
+    def deactivateKeys(keys):
+        for key in keys:
+            onkey(None, key)  # type: ignore
+
     def showStartMenu(self):
         self.gameRunning = False
         self.resetGame()
@@ -384,15 +395,13 @@ class Game:
         self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 18, "normal"))
         self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 18, "normal"))
         self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 18, "normal"))
-
-        onkey(lambda: self.showGameModeMenu(), "p")
-        onkey(lambda: self.toggleHelpMenu(), "h")
-        onkey(lambda: exit(), "Escape")
+        Game.activateKeys([(self.showGameModeMenu, "p"), (self.toggleHelpMenu, "h"), (exit, "Escape")])
 
     def setGameMode(self, mode):
+        Game.deactivateKeys(["1", "2", "3"])
         self.gameMode = mode
         self.startGame()
-        onkey(lambda: self.togglePause(), "p")
+        Game.activateKeys([(self.togglePause, "p")])
 
     def showGameModeMenu(self):
         self.messageTurtle.clear()
@@ -403,11 +412,10 @@ class Game:
         self.writeText(self.messageTurtle, 0, -50, "Press '3' for PvE mode     ", textFont=("Arial", 16, "normal"))
         self.writeText(self.messageTurtle, 0, -110, "Press 'H' for Help", textFont=("Arial", 12, "italic"))
         self.writeText(self.messageTurtle, 0, -140, "Press 'Escape' to return to Menu", textFont=("Arial", 12, "italic"))
-
-        onkey(lambda: self.setGameMode(GameMode.SINGLE), "1")
-        onkey(lambda: self.setGameMode(GameMode.PVP), "2")
-        onkey(lambda: self.setGameMode(GameMode.PVE), "3")
-        onkey(lambda: self.showStartMenu(), "Escape")
+        Game.activateKeys([(lambda: self.setGameMode(GameMode.SINGLE), "1"),
+                           (lambda: self.setGameMode(GameMode.PVP), "2"),
+                           (lambda: self.setGameMode(GameMode.PVE), "3"),
+                           (self.showStartMenu, "Escape")])
 
     def showHelpMenu(self, modalWidth=420, modalHeight=420):
         self.messageTurtle.clear()
@@ -428,11 +436,10 @@ class Game:
 
     def initHallOfFame(self, victory):
         if os.path.exists(self.hallOfFameStoragePath):
-            score = int(len(self.enemyTanks) * (
-                    (1000 if victory else 0) +
-                    20 * self.basicHp * sum(1 for tank in self.enemyTanks if tank.destroyed) +
-                    10 * sum(max(self.basicHp - tank.hp, 0) for tank in self.enemyTanks if not tank.destroyed) +
-                    max(10 * self.firstTank.hp, 0)))
+            score = int(len(self.enemyTanks) * (2 if victory else 1) *
+                        (20 * self.basicHp * sum(1 for tank in self.enemyTanks if tank.destroyed) +
+                        10 * sum(max(self.basicHp - tank.hp, 0) for tank in self.enemyTanks if not tank.destroyed) +
+                        max(10 * self.firstTank.hp, 0)))
             playerName = askstring("Hall of Fame", "Enter your name:\t\t\t\t") or "Anonymous"
             self.saveToHallOfFame(playerName, score)
             self.showHallOfFame()

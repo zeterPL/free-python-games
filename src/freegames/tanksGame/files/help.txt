@@ -1,4 +1,4 @@
-Player controls:
+Default player controls:
 Player 1:
     Movement - Arrow keys
     Shooting - Enter
