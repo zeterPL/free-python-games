@@ -429,8 +429,8 @@ class Game:
             score = int(len(self.enemyTanks) * (
                     (1000 if victory else 0) +
                     20 * self.basicHp * sum(1 for tank in self.enemyTanks if tank.destroyed) +
-                    10 * sum(self.basicHp - tank.hp for tank in self.enemyTanks if not tank.destroyed) +
-                    10 * self.firstTank.hp))
+                    10 * sum(max(self.basicHp - tank.hp, 0) for tank in self.enemyTanks if not tank.destroyed) +
+                    max(10 * self.firstTank.hp, 0)))
             playerName = askstring("Hall of Fame", "Enter your name:\t\t\t\t") or "Anonymous"
             self.saveToHallOfFame(playerName, score)
             self.showHallOfFame()

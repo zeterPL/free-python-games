@@ -117,9 +117,12 @@ class Tank:
             x, y = self.position - self.game.tankCentralization
             barWidth = self.game.tileSize
             barHeight = self.game.tileSize // 20 * 3
-            hpRatio = self.hp / self.maxHp
+            baseHpRatio = min(self.hp / self.game.basicHp, 1)
             Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth, barHeight, bgColor)
-            Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth*hpRatio, barHeight, hpColor)
+            Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth*baseHpRatio, barHeight, hpColor)
+            if self.hp > self.game.basicHp:
+                additionalHpRatio = (self.hp - self.game.basicHp) / self.game.basicHp
+                Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize * 1.2, barWidth*additionalHpRatio, barHeight, "purple", "")
 
     def drawReloadBar(self, reloadColor="gold", bgColor="black"):
         self.reloadTurtle.clear()

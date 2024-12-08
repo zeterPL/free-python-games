@@ -80,7 +80,7 @@ class Bonus:
     @staticmethod
     def activateBonus(tank, bonusType, amountTime=0):
         if bonusType == BonusType.HEALTH:
-            tank.hp += 30
+            tank.hp = min(tank.hp + 30, 2 * tank.game.basicHp)  # maximum hp is double base Hp
             if tank.hp > tank.maxHp:
                 tank.maxHp = tank.hp
         elif bonusType == BonusType.RELOAD:
@@ -100,7 +100,7 @@ class Bonus:
             tank.speedRatio = 2
             tank.change(tank.speed, tank.direction)
         elif bonusType == BonusType.RAILGUN:
-            tank.activeBonuses[BonusType.RAILGUN] += amountTime or 12000
+            tank.activeBonuses[BonusType.RAILGUN] += amountTime or 7000
             tank.railgunOn = True
         elif bonusType == BonusType.ALL:
             tank.activeBonuses[BonusType.ALL] = 5000
@@ -118,6 +118,7 @@ class Bonus:
                 if tank.activeBonuses[bonusType] <= 0:
                     Bonus.deactivateBonus(tank, bonusType)
                 elif bonusType == BonusType.REGENERATION:
+                    print(f"{tank.hp=}")
                     tank.hp = min(tank.maxHp, tank.hp + 0.1 * tank.maxHp)
                     tank.drawHP()
         Bonus.displayActiveBonuses(tank)
