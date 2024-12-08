@@ -32,6 +32,16 @@ class File:
                 return default
             except ValueError:
                 raise ValueError(f"Invalid integer value for '{key}' in section '{section}'.")
+
+        def parseBool(fileConfig, section, key, default=None, required=False):
+            try:
+                value = fileConfig[section].get(key, default)
+                return value.lower() in ['true', '1', 'yes'] if isinstance(value, str) else False
+            except KeyError:
+                if required:
+                    raise KeyError(f"Missing key '{key}' in section '{section}'.")
+                return default
+
         if not os.path.exists(filePath):
             raise ValueError(f"The file '{filePath}' does not exist.")
         config = configparser.ConfigParser()
@@ -77,12 +87,8 @@ class File:
         except ValueError as e:
             raise ValueError(f"Invalid value in 'enemies' section: {e}.")
         # Parse bonuses
-        try:
-            enableBonuses = config['bonuses'].get('enableBonuses', 'true').lower() in ['true', '1', 'yes']
-        except KeyError as e:
-            raise KeyError(f"Missing key in 'bonuses' section: {e}.")
-        except ValueError as e:
-            raise ValueError(f"Invalid value in 'bonuses' section: {e}.")
+        enableBonuses = parseBool(config, 'bonuses', 'enableBonuses')
+        uniqueBonuses = parseBool(config, 'bonuses', 'uniqueBonuses')
         bonusSpawningFrequency = parseInt(config, 'bonuses', 'bonusSpawningFrequency', default='30')
         maxNumberOfBonuses = parseInt(config, 'bonuses', 'maxNumberOfBonuses', default='5')
         # Validate map size
@@ -111,6 +117,7 @@ class File:
             "firstTankControls": firstTankControls,
             "secondTankControls": secondTankControls,
             "enableBonuses": enableBonuses,
+            "uniqueBonuses": uniqueBonuses,
             "bonusSpawningFrequency": bonusSpawningFrequency,
             "maxNumberOfBonuses": maxNumberOfBonuses
         }

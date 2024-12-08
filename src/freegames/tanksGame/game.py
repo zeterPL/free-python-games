@@ -40,6 +40,7 @@ class Game:
         self.firstTankControls = {'Up': 'Up', 'Down': 'Down', 'Left': 'Left', 'Right': 'Right', 'Stop': 'Control_R', 'Shoot': 'Return'}
         self.secondTankControls = {'Up': 'w', 'Down': 's', 'Left': 'a', 'Right': 'd', 'Stop': 'Control_L', 'Shoot': 'Shift_L'}
         self.enableBonuses = False
+        self.uniqueBonuses = False
         self.bonusSpawningFrequency = 10
         self.maxNumberOfBonuses = 3
         self.assignSettingsFromFile(settingsFile)
@@ -115,6 +116,7 @@ class Game:
             self.firstTankControls = loadedData['firstTankControls'] or self.firstTankControls
             self.secondTankControls = loadedData['secondTankControls'] or self.secondTankControls
             self.enableBonuses = loadedData.get('enableBonuses', self.enableBonuses)
+            self.uniqueBonuses = loadedData.get('uniqueBonuses', self.uniqueBonuses)
             self.bonusSpawningFrequency = loadedData.get('bonusSpawningFrequency', self.bonusSpawningFrequency)
             self.maxNumberOfBonuses = loadedData.get('maxNumberOfBonuses', self.maxNumberOfBonuses)
             print(f"Map and settings successfully loaded from '{settingsFile}'!")

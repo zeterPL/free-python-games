@@ -7,6 +7,7 @@ class Draw:
         turtleObject.up()
         turtleObject.goto(x, y)
         turtleObject.down()
+        turtleObject.goto(x, y)  # Without it sometimes it's bugging and don't draw first circle
         turtleObject.begin_fill()
 
     @staticmethod
@@ -37,7 +38,7 @@ class Draw:
 
     @staticmethod
     def drawCircle(turtleObject, x, y, circleSize, circleColor):
-        Draw.startDrawing(turtleObject, x, y)
+        Draw.startDrawing(turtleObject, x, y, fillColor=circleColor)
         turtleObject.dot(circleSize, circleColor)
         Draw.endDrawing(turtleObject)
 

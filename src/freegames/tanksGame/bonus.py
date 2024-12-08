@@ -49,7 +49,15 @@ class Bonus:
     def spawnBonus(game):
         if not game.gameRunning or not game.enableBonuses or len(game.bonuses) >= game.maxNumberOfBonuses:
             return
-        bonusType = random.choice(list(BonusType))
+        availableBonusTypes = list(BonusType)
+        if game.uniqueBonuses:
+            existingBonusTypes = {bonus.bonusType for bonus in game.bonuses}
+            availableBonusTypes = [bonusType for bonusType in BonusType if bonusType not in existingBonusTypes]
+        if not availableBonusTypes:
+            return
+        bonusType = random.choice(availableBonusTypes)
+        if bonusType == BonusType.ALL and random.randint(0, 1):  # to decrease chance of OP bonus ALL
+            bonusType = random.choice(availableBonusTypes)
         possibleIndexes = [index for index, value in enumerate(game.tiles) if value == Tile.ROAD.value]
         occupiedIndexes = set()
         for tank in game.allTanks:
