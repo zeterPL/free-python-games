@@ -14,7 +14,6 @@ from draw import Draw
 from bullet import Bullet
 
 import gc
-import time
 
 
 class GameMode(Enum):
@@ -201,23 +200,38 @@ class Game:
             self.tiles[randomIndex] = 7
             possibleIndexes.remove(randomIndex)  # Prevent duplicate selection
 
-    def print_all_turtles(self):
-        all_objects = gc.get_objects()  # Pobranie wszystkich obiektów
-        turtle_objects = [obj for obj in all_objects if isinstance(obj, Turtle)]  # Filtracja obiektów typu Turtle
-
-        print(f"\nZnaleziono {len(turtle_objects)} obiektów Turtle:")
-        for idx, turtle_obj in enumerate(turtle_objects, 1):
-            print(f"\nTurtle {idx}: {turtle_obj}")
-            # Znalezienie wszystkich odwołań do danego obiektu
-            referrers = gc.get_referrers(turtle_obj)
-            print(f"Liczba odwołań: {len(referrers)}")
-            for ref_idx, ref in enumerate(referrers, 1):
-                # print(f"  Odwołanie {ref_idx}: {type(ref)}")
-                # Dla słowników (np. atrybuty instancji klas) wypisz klucze, jeśli istnieją
-                if isinstance(ref, dict):
-                    for key, value in ref.items():
-                        if value is turtle_obj:
-                            print(f"    Znaleziono w zmiennej: {key}")
+    # @staticmethod
+    # def printAllTanks():
+    #     gc.collect()
+    #     allObjects = gc.get_objects()  # Pobranie wszystkich obiektów
+    #     tankObjects = [obj for obj in allObjects if isinstance(obj, Tank) or isinstance(obj, AITank)]  # Filtracja obiektów typu Tank
+    #     allObjects = None
+    #
+    #     print(f"\nZnaleziono {len(tankObjects)} obiektów Tank:")
+    #     for idx, tankObj in enumerate(tankObjects, 1):
+    #         print(f"\nTank {idx}: {tankObj} {tankObj.tankId=}")
+    #         referrers = gc.get_referrers(tankObj)
+    #         print(f"Liczba odwołań: {len(referrers)}")
+    #         for ref_idx, ref in enumerate(referrers, 1):
+    #             print(f"  Odwołanie {ref_idx}: {type(ref)}")
+    #             if isinstance(ref, list):
+    #                 print(f"    Lista zawiera {len(ref)} elementów")
+    #                 if tankObj in ref:
+    #                     print(f"    Tank znaleziony w liście na pozycji: {ref.index(tankObj)}")
+    #             elif isinstance(ref, dict):
+    #                 keys_with_tank = [key for key, value in ref.items() if value is tankObj]
+    #                 print(f"    Klucze w słowniku, które wskazują na Tank: {keys_with_tank}")
+    #             elif isinstance(ref, tuple):
+    #                 print(f"    Krotka zawiera {len(ref)} elementów")
+    #             elif hasattr(ref, "cell_contents"):
+    #                 # Sprawdzanie zawartości cell
+    #                 try:
+    #                     contents = ref.cell_contents
+    #                     print(f"    Cell w closure. Zawartość: {contents}")
+    #                 except ValueError:
+    #                     print("    Cell w closure jest pusty.")
+    #             else:
+    #                 print(f"    Inny typ referencji: {ref}")
 
     def clearObjectsFromMemory(self):
         resetscreen()
@@ -225,12 +239,12 @@ class Game:
         hideturtle()
         tracer(False)
 
-        print(f"Przed czyszczeniem jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
+        # print(f"Przed czyszczeniem jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
 
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
 
         for tank in self.allTanks:
-            tank.deleteTurtles()
+            tank.delete()
 
         self.bullets = []
         self.occupiedTilesByEnemies = {}
@@ -240,23 +254,23 @@ class Game:
         self.firstTank = None
         self.secondTank = None
 
-        print(f"Po czyszczeniu jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
+        # gc.collect()
+        # print(f"Po czyszczeniu jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
 
-        gc.collect()
-        allObjects = gc.get_objects()
-        print(f"Liczba wszystkich obiektów: {len(allObjects)}")
-        turtleObjects = sum(1 for obj in allObjects if isinstance(obj, Turtle))
-        print(f"Liczba obiektów Turtle: {turtleObjects}")
-        tankObjects = sum(1 for obj in allObjects if isinstance(obj, Tank))
-        print(f"Liczba obiektów Tank: {tankObjects}")
-        aiTankObjects = sum(1 for obj in allObjects if isinstance(obj, AITank))
-        print(f"Liczba obiektów botow Tank: {aiTankObjects}")
-        bulletObjects = sum(1 for obj in allObjects if isinstance(obj, Bullet))
-        print(f"Liczba obiektów bullet: {bulletObjects}")
-        bonusObjects = sum(1 for obj in allObjects if isinstance(obj, Bonus))
-        print(f"Liczba obiektów bonus: {bonusObjects}")
+        # allObjects = gc.get_objects()
+        # print(f"Liczba wszystkich obiektów: {len(allObjects)}")
+        # turtleObjects = sum(1 for obj in allObjects if isinstance(obj, Turtle))
+        # print(f"Liczba obiektów Turtle: {turtleObjects}")
+        # tankObjects = sum(1 for obj in allObjects if isinstance(obj, Tank))
+        # print(f"Liczba obiektów Tank: {tankObjects}")
+        # aiTankObjects = sum(1 for obj in allObjects if isinstance(obj, AITank))
+        # print(f"Liczba obiektów botow Tank: {aiTankObjects}")
+        # bulletObjects = sum(1 for obj in allObjects if isinstance(obj, Bullet))
+        # print(f"Liczba obiektów bullet: {bulletObjects}")
+        # bonusObjects = sum(1 for obj in allObjects if isinstance(obj, Bonus))
+        # print(f"Liczba obiektów bonus: {bonusObjects}")
 
-        self.print_all_turtles()
+        # self.printAllTanks()
 
     def startGame(self):
         if self.gameRunning:
@@ -267,6 +281,8 @@ class Game:
         self.gamePaused = False
 
         self.clearObjectsFromMemory()
+
+        Game.activateKeys([(self.togglePause, "p"), (self.toggleHelpMenu, "h"), (self.showStartMenu, "Escape")])
 
         setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
 
@@ -427,6 +443,7 @@ class Game:
 
     @staticmethod
     def resetGame():
+        print("GRRR")
         resetscreen()
         clearscreen()
         setup(420, 420, 540, 200)
@@ -472,7 +489,6 @@ class Game:
         Game.deactivateKeys(["1", "2", "3"])
         self.gameMode = mode
         self.startGame()
-        Game.activateKeys([(self.togglePause, "p"), (self.toggleHelpMenu, "h"), (self.showStartMenu, "Escape")])
 
     def showHelpMenu(self, modalWidth=420, modalHeight=420):
         self.messageTurtle.clear()

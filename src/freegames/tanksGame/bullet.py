@@ -12,10 +12,6 @@ class Bullet:
         self.shooter = shooter
         self.bulletTurtle = Turtle(visible=False)
 
-    # def deleteTurtles(self):
-    #     self.bulletTurtle.reset()
-    #     del self.bulletTurtle
-
     def moveBullet(self):
         self.bulletTurtle.clear()
         bulletDirectionMovements = {

@@ -14,6 +14,10 @@ class AITank(Tank):
         self.stuckRounds = 0
         self.hpBeforeStuck = self.hp
 
+    def delete(self):
+        super().delete()
+        self.target = None  # delete reference to other tank
+
     def decideTarget(self):
         potentialTargets = [tank for tank in (self.game.firstTank, self.game.secondTank) if tank and not tank.destroyed]
         if not potentialTargets:
@@ -115,7 +119,7 @@ class AITank(Tank):
             self.position.move(vector(self.tankSpeedValue * (dx // abs(dx)), 0))
         else:
             self.position.move(vector(0, self.tankSpeedValue * (dy // abs(dy))))
-        print(f"Tank was stuck at pos={self.position} center={self.game.getTilePosition(tileIndex)} dx={dx} dy={dy}")
+        print(f"{self.tankId=} was stuck at pos={self.position} center={self.game.getTilePosition(tileIndex)} dx={dx} dy={dy}")
 
     def moveTank(self, wantMove=True):
         if not self.target or self.destroyed:
@@ -147,8 +151,13 @@ class AITank(Tank):
             if self.hpBeforeStuck != self.hp:
                 self.hpBeforeStuck = self.hp
                 self.stuckRounds = 0
-            elif self.stuckRounds > 10:
+            elif self.stuckRounds > 100:
+                print(f"{self.tankId=} was stuck more than 100 rounds try teleport it to middle")
+                self.teleportToMiddleTile()
+            elif self.stuckRounds > 20:
                 self.getStuckTankOut()
+            elif self.stuckRounds > 10:
+                self.path = None
         self.decideTarget()
 
     def decideToShoot(self):

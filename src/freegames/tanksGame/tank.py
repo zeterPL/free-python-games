@@ -39,22 +39,15 @@ class Tank:
         self.indestructible = False
         self.railgunOn = False
 
-    def deleteTurtles(self):
-        self.tankTurtle.reset()
-        del self.tankTurtle
-        self.hpTurtle.reset()
-        del self.hpTurtle
-        self.reloadTurtle.reset()
-        del self.reloadTurtle
-        self.bonusDisplayTurtle.reset()
-        del self.bonusDisplayTurtle
-        for key in self.moveControls.keys():
-            onkey(None, key)
-        onkey(None, self.stoppingControl)
-        onkey(None, self.shootingControl)
+    def delete(self):
+        self.tankTurtle = None
+        self.hpTurtle = None
+        self.reloadTurtle = None
+        self.bonusDisplayTurtle = None
+        self.game.deactivateKeys([self.stoppingControl, self.shootingControl] + list(self.moveControls.keys()))
 
-    def __del__(self):
-        print(f"Usunieto czolg z pamieci {self.tankId=}")
+    # def __del__(self):
+    #     print(f"Usunieto czolg z pamieci {self.tankId=}")
 
     def change(self, tankSpeedDirection, angle=None):
         if self.destroyed:

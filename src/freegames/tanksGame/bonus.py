@@ -25,10 +25,6 @@ class Bonus:
         self.bonusTurtle = Turtle(visible=False)
         self.drawBonus()
 
-    # def deleteTurtles(self):
-    #     self.bonusTurtle.reset()
-    #     del self.bonusTurtle
-
     def drawBonus(self):
         x, y, t = self.position.x, self.position.y, self.game.tileSize
         Draw.drawCircle(self.bonusTurtle, x+t//2, y+t//2, t*7//8, circleColor="light goldenrod yellow")
@@ -152,6 +148,8 @@ class Bonus:
 
     @staticmethod
     def displayActiveBonuses(tank):
+        if tank.bonusDisplayTurtle is None:
+            return
         tank.bonusDisplayTurtle.clear()
         if tank.destroyed or tank.game.tiles[tank.game.getTileIndexFromPoint(tank.position)] == Tile.FOREST.value:
             return
