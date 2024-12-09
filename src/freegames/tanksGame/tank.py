@@ -39,6 +39,23 @@ class Tank:
         self.indestructible = False
         self.railgunOn = False
 
+    def deleteTurtles(self):
+        self.tankTurtle.reset()
+        del self.tankTurtle
+        self.hpTurtle.reset()
+        del self.hpTurtle
+        self.reloadTurtle.reset()
+        del self.reloadTurtle
+        self.bonusDisplayTurtle.reset()
+        del self.bonusDisplayTurtle
+        for key in self.moveControls.keys():
+            onkey(None, key)
+        onkey(None, self.stoppingControl)
+        onkey(None, self.shootingControl)
+
+    def __del__(self):
+        print(f"Usunieto czolg z pamieci {self.tankId=}")
+
     def change(self, tankSpeedDirection, angle=None):
         if self.destroyed:
             return
@@ -218,7 +235,7 @@ class Tank:
                 print(f"After damage: {self.tankId=} {self.hp=}")
         return wrapper
 
-    @debugPrintActualHpSituation
+    # @debugPrintActualHpSituation
     def takeDamage(self, amount, reason):
         if not self.destroyed and not self.indestructible:
             self.hp -= amount

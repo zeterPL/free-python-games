@@ -25,25 +25,30 @@ class Bonus:
         self.bonusTurtle = Turtle(visible=False)
         self.drawBonus()
 
+    # def deleteTurtles(self):
+    #     self.bonusTurtle.reset()
+    #     del self.bonusTurtle
+
     def drawBonus(self):
-        Draw.drawCircle(self.bonusTurtle, self.position.x+self.game.tileSize//2, self.position.y+self.game.tileSize//2, self.game.tileSize*7//8, circleColor="light goldenrod yellow")
+        x, y, t = self.position.x, self.position.y, self.game.tileSize
+        Draw.drawCircle(self.bonusTurtle, x+t//2, y+t//2, t*7//8, circleColor="light goldenrod yellow")
         if self.bonusType == BonusType.HEALTH:
-            Draw.drawHearth(self.bonusTurtle, self.position.x + self.game.tileSize * 1 // 5, self.position.y + self.game.tileSize * 4 // 10, self.game.tileSize * 6 // 8, fillColor="red")
+            Draw.drawHearth(self.bonusTurtle, x+t*1//5, y+t*4//10, t*6//8, fillColor="red")
         elif self.bonusType == BonusType.RELOAD:
-            Draw.drawSandglass(self.bonusTurtle, self.position.x, self.position.y, self.game.tileSize)
+            Draw.drawSandglass(self.bonusTurtle, x, y, t)
         elif self.bonusType == BonusType.REGENERATION:
-            Draw.drawRectangle(self.bonusTurtle, self.position.x+self.game.tileSize//5, self.position.y+self.game.tileSize*2//5, self.game.tileSize*6//10, self.game.tileSize//5, fillColor="red", borderColor="red")
-            Draw.drawRectangle(self.bonusTurtle, self.position.x+self.game.tileSize*2//5, self.position.y+self.game.tileSize//5, self.game.tileSize//5, self.game.tileSize * 6 // 10, fillColor="red", borderColor="red")
+            Draw.drawRectangle(self.bonusTurtle, x+t//5, y+t*2//5, t*6//10, t//5, fillColor="red", borderColor="red")
+            Draw.drawRectangle(self.bonusTurtle, x+t*2//5, y+t//5, t//5, t*6//10, fillColor="red", borderColor="red")
         elif self.bonusType == BonusType.SHIELD:
-            Draw.drawShield(self.bonusTurtle, self.position.x, self.position.y, self.game.tileSize)
+            Draw.drawShield(self.bonusTurtle, x, y, t)
         elif self.bonusType == BonusType.ATTACK:
-            Draw.drawSkull(self.bonusTurtle, self.position.x, self.position.y, self.game.tileSize)
+            Draw.drawSkull(self.bonusTurtle, x, y, t)
         elif self.bonusType == BonusType.SPEED:
-            Draw.drawChevronPattern(self.bonusTurtle, self.position.x+self.game.tileSize*3//10, self.position.y+self.game.tileSize*3//20, self.game.tileSize//6, self.game.tileSize//20, numberOfChevrons=3, fillColor="blue")
+            Draw.drawChevronPattern(self.bonusTurtle, x+t*3//10, y+t*3//20, t//6, t//20, numberOfChevrons=3, fillColor="blue")
         elif self.bonusType == BonusType.RAILGUN:
-            Draw.drawLightning(self.bonusTurtle, self.position.x + self.game.tileSize * 3 // 10, self.position.y + self.game.tileSize * 3 // 20, self.game.tileSize/40, fillColor="gold", circuitColor="black")
+            Draw.drawLightning(self.bonusTurtle, x+t*3//10, y+t*3//20, t/40, fillColor="gold", circuitColor="black")
         elif self.bonusType == BonusType.ALL:
-            Draw.drawStar(self.bonusTurtle, self.position.x+self.game.tileSize//8, self.position.y+self.game.tileSize*5//8, self.game.tileSize*6//8, fillColor="gold2", circuitColor="")
+            Draw.drawStar(self.bonusTurtle, x+t//8, y+t*5//8, t*6//8, fillColor="gold2", circuitColor="")
 
     @staticmethod
     def spawnBonus(game):
@@ -127,7 +132,6 @@ class Bonus:
                     Bonus.deactivateBonus(tank, bonusType)
                 elif bonusType == BonusType.REGENERATION:
                     tank.hp = min(tank.maxHp, tank.hp + int(0.1 * tank.maxHp))
-                    tank.drawHP()
         Bonus.displayActiveBonuses(tank)
 
     @staticmethod
@@ -149,7 +153,7 @@ class Bonus:
     @staticmethod
     def displayActiveBonuses(tank):
         tank.bonusDisplayTurtle.clear()
-        if tank.destroyed:
+        if tank.destroyed or tank.game.tiles[tank.game.getTileIndexFromPoint(tank.position)] == Tile.FOREST.value:
             return
         x, y = tank.position.x, tank.position.y + tank.game.tileSize + 10
         tank.bonusDisplayTurtle.up()

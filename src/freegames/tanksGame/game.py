@@ -13,6 +13,9 @@ from tile import Tile, tileColors, defaultTiles
 from draw import Draw
 from bullet import Bullet
 
+import gc
+import time
+
 
 class GameMode(Enum):
     SINGLE = 0
@@ -198,6 +201,63 @@ class Game:
             self.tiles[randomIndex] = 7
             possibleIndexes.remove(randomIndex)  # Prevent duplicate selection
 
+    def print_all_turtles(self):
+        all_objects = gc.get_objects()  # Pobranie wszystkich obiektów
+        turtle_objects = [obj for obj in all_objects if isinstance(obj, Turtle)]  # Filtracja obiektów typu Turtle
+
+        print(f"\nZnaleziono {len(turtle_objects)} obiektów Turtle:")
+        for idx, turtle_obj in enumerate(turtle_objects, 1):
+            print(f"\nTurtle {idx}: {turtle_obj}")
+            # Znalezienie wszystkich odwołań do danego obiektu
+            referrers = gc.get_referrers(turtle_obj)
+            print(f"Liczba odwołań: {len(referrers)}")
+            for ref_idx, ref in enumerate(referrers, 1):
+                # print(f"  Odwołanie {ref_idx}: {type(ref)}")
+                # Dla słowników (np. atrybuty instancji klas) wypisz klucze, jeśli istnieją
+                if isinstance(ref, dict):
+                    for key, value in ref.items():
+                        if value is turtle_obj:
+                            print(f"    Znaleziono w zmiennej: {key}")
+
+    def clearObjectsFromMemory(self):
+        resetscreen()
+        clearscreen()
+        hideturtle()
+        tracer(False)
+
+        print(f"Przed czyszczeniem jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
+
+        self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
+
+        for tank in self.allTanks:
+            tank.deleteTurtles()
+
+        self.bullets = []
+        self.occupiedTilesByEnemies = {}
+        self.enemyTanks = []
+        self.allTanks = []
+        self.bonuses = []
+        self.firstTank = None
+        self.secondTank = None
+
+        print(f"Po czyszczeniu jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
+
+        gc.collect()
+        allObjects = gc.get_objects()
+        print(f"Liczba wszystkich obiektów: {len(allObjects)}")
+        turtleObjects = sum(1 for obj in allObjects if isinstance(obj, Turtle))
+        print(f"Liczba obiektów Turtle: {turtleObjects}")
+        tankObjects = sum(1 for obj in allObjects if isinstance(obj, Tank))
+        print(f"Liczba obiektów Tank: {tankObjects}")
+        aiTankObjects = sum(1 for obj in allObjects if isinstance(obj, AITank))
+        print(f"Liczba obiektów botow Tank: {aiTankObjects}")
+        bulletObjects = sum(1 for obj in allObjects if isinstance(obj, Bullet))
+        print(f"Liczba obiektów bullet: {bulletObjects}")
+        bonusObjects = sum(1 for obj in allObjects if isinstance(obj, Bonus))
+        print(f"Liczba obiektów bonus: {bonusObjects}")
+
+        self.print_all_turtles()
+
     def startGame(self):
         if self.gameRunning:
             return
@@ -205,11 +265,8 @@ class Game:
         self.roundCounter = 0
         self.gameRunning = True
         self.gamePaused = False
-        self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
-        self.bullets = []
-        self.enemyTanks = []
-        self.allTanks = []
-        self.bonuses = []
+
+        self.clearObjectsFromMemory()
 
         setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
 
@@ -397,12 +454,6 @@ class Game:
         self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 18, "normal"))
         Game.activateKeys([(self.showGameModeMenu, "p"), (self.toggleHelpMenu, "h"), (exit, "Escape")])
 
-    def setGameMode(self, mode):
-        Game.deactivateKeys(["1", "2", "3"])
-        self.gameMode = mode
-        self.startGame()
-        Game.activateKeys([(self.togglePause, "p")])
-
     def showGameModeMenu(self):
         self.messageTurtle.clear()
         Draw.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
@@ -416,6 +467,12 @@ class Game:
                            (lambda: self.setGameMode(GameMode.PVP), "2"),
                            (lambda: self.setGameMode(GameMode.PVE), "3"),
                            (self.showStartMenu, "Escape")])
+
+    def setGameMode(self, mode):
+        Game.deactivateKeys(["1", "2", "3"])
+        self.gameMode = mode
+        self.startGame()
+        Game.activateKeys([(self.togglePause, "p"), (self.toggleHelpMenu, "h"), (self.showStartMenu, "Escape")])
 
     def showHelpMenu(self, modalWidth=420, modalHeight=420):
         self.messageTurtle.clear()
