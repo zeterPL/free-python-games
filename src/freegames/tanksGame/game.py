@@ -13,8 +13,6 @@ from tile import Tile, tileColors, defaultTiles
 from draw import Draw
 from bullet import Bullet
 
-import gc
-
 
 class GameMode(Enum):
     SINGLE = 0
@@ -60,6 +58,7 @@ class Game:
         self.gamePaused = False
         self.roundCounter = 0
         self.gameMode = None
+        self.gameRound = 1
 
         self.firstTank = None
         self.secondTank = None
@@ -200,52 +199,17 @@ class Game:
             self.tiles[randomIndex] = 7
             possibleIndexes.remove(randomIndex)  # Prevent duplicate selection
 
-    # @staticmethod
-    # def printAllTanks():
-    #     gc.collect()
-    #     allObjects = gc.get_objects()  # Pobranie wszystkich obiektów
-    #     tankObjects = [obj for obj in allObjects if isinstance(obj, Tank) or isinstance(obj, AITank)]  # Filtracja obiektów typu Tank
-    #     allObjects = None
-    #
-    #     print(f"\nZnaleziono {len(tankObjects)} obiektów Tank:")
-    #     for idx, tankObj in enumerate(tankObjects, 1):
-    #         print(f"\nTank {idx}: {tankObj} {tankObj.tankId=}")
-    #         referrers = gc.get_referrers(tankObj)
-    #         print(f"Liczba odwołań: {len(referrers)}")
-    #         for ref_idx, ref in enumerate(referrers, 1):
-    #             print(f"  Odwołanie {ref_idx}: {type(ref)}")
-    #             if isinstance(ref, list):
-    #                 print(f"    Lista zawiera {len(ref)} elementów")
-    #                 if tankObj in ref:
-    #                     print(f"    Tank znaleziony w liście na pozycji: {ref.index(tankObj)}")
-    #             elif isinstance(ref, dict):
-    #                 keys_with_tank = [key for key, value in ref.items() if value is tankObj]
-    #                 print(f"    Klucze w słowniku, które wskazują na Tank: {keys_with_tank}")
-    #             elif isinstance(ref, tuple):
-    #                 print(f"    Krotka zawiera {len(ref)} elementów")
-    #             elif hasattr(ref, "cell_contents"):
-    #                 # Sprawdzanie zawartości cell
-    #                 try:
-    #                     contents = ref.cell_contents
-    #                     print(f"    Cell w closure. Zawartość: {contents}")
-    #                 except ValueError:
-    #                     print("    Cell w closure jest pusty.")
-    #             else:
-    #                 print(f"    Inny typ referencji: {ref}")
-
-    def clearObjectsFromMemory(self):
+    def resetGame(self, setupWidth, setupHeight, setupXPosition, setupYPosition):
         resetscreen()
         clearscreen()
         hideturtle()
         tracer(False)
-
-        # print(f"Przed czyszczeniem jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
-
+        setup(setupWidth, setupHeight, setupXPosition, setupYPosition)
+        listen()
+        self.gameRound += 1
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
-
         for tank in self.allTanks:
             tank.delete()
-
         self.bullets = []
         self.occupiedTilesByEnemies = {}
         self.enemyTanks = []
@@ -253,24 +217,6 @@ class Game:
         self.bonuses = []
         self.firstTank = None
         self.secondTank = None
-
-        # gc.collect()
-        # print(f"Po czyszczeniu jest {len(self.allTanks)=} {len(self.bonuses)=} {len(self.bullets)=}")
-
-        # allObjects = gc.get_objects()
-        # print(f"Liczba wszystkich obiektów: {len(allObjects)}")
-        # turtleObjects = sum(1 for obj in allObjects if isinstance(obj, Turtle))
-        # print(f"Liczba obiektów Turtle: {turtleObjects}")
-        # tankObjects = sum(1 for obj in allObjects if isinstance(obj, Tank))
-        # print(f"Liczba obiektów Tank: {tankObjects}")
-        # aiTankObjects = sum(1 for obj in allObjects if isinstance(obj, AITank))
-        # print(f"Liczba obiektów botow Tank: {aiTankObjects}")
-        # bulletObjects = sum(1 for obj in allObjects if isinstance(obj, Bullet))
-        # print(f"Liczba obiektów bullet: {bulletObjects}")
-        # bonusObjects = sum(1 for obj in allObjects if isinstance(obj, Bonus))
-        # print(f"Liczba obiektów bonus: {bonusObjects}")
-
-        # self.printAllTanks()
 
     def startGame(self):
         if self.gameRunning:
@@ -280,11 +226,8 @@ class Game:
         self.gameRunning = True
         self.gamePaused = False
 
-        self.clearObjectsFromMemory()
-
+        self.resetGame(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
         Game.activateKeys([(self.togglePause, "p"), (self.toggleHelpMenu, "h"), (self.showStartMenu, "Escape")])
-
-        setup(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
 
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0,
@@ -354,10 +297,11 @@ class Game:
         self.gameRunning = False
         for tank in self.allTanks:  # draw destroyed tanks
             tank.drawTank()
-        ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.victorySound.play if victory else self.gameOverSound.play), 1000)
-        ontimer(lambda: self.conditionalExecution(not self.gameRunning, self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
+        currentRound = self.gameRound
+        ontimer(lambda: self.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, self.victorySound.play if victory else self.gameOverSound.play), 1000)
+        ontimer(lambda: self.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
         if self.gameMode == GameMode.SINGLE:
-            ontimer(lambda: self.conditionalExecution(not self.gameRunning, lambda v=victory: self.initHallOfFame(v)), 2000)
+            ontimer(lambda: self.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, lambda v=victory: self.initHallOfFame(v)), 2000)
         Game.activateKeys([(self.startGame, "r")])
 
     @staticmethod
@@ -442,16 +386,6 @@ class Game:
         self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
     @staticmethod
-    def resetGame():
-        print("GRRR")
-        resetscreen()
-        clearscreen()
-        setup(420, 420, 540, 200)
-        hideturtle()
-        tracer(False)
-        listen()
-
-    @staticmethod
     def activateKeys(keyBindings):
         for func, key in keyBindings:
             onkey(func, key)
@@ -463,13 +397,13 @@ class Game:
 
     def showStartMenu(self):
         self.gameRunning = False
-        self.resetGame()
+        self.resetGame(420, 420, 540, 200)
+        Game.activateKeys([(self.showGameModeMenu, "p"), (self.toggleHelpMenu, "h"), (exit, "Escape")])
         Draw.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
         self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 32, "bold"))
         self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 18, "normal"))
         self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 18, "normal"))
         self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 18, "normal"))
-        Game.activateKeys([(self.showGameModeMenu, "p"), (self.toggleHelpMenu, "h"), (exit, "Escape")])
 
     def showGameModeMenu(self):
         self.messageTurtle.clear()
