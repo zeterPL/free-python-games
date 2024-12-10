@@ -62,6 +62,56 @@ pip install -r .\files\requirements.txt
 **numberOfRandomMines** - liczba losowych min, które mają się pojawić na mapie</br>
 **timeAfterWhichMinesHide** - czas liczony w sekundach po którym miny przestaną być widoczne</br>
 
+### controls
+Ustawienie sterowania czołgów gracza.</br>
+Dostępne [wartości klawiszy](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/key-names.html) używanych w python tkinter</br>
+ - Poruszanie się do góry Up: wartość klawisza np. w</br>
+ - Poruszanie się do dołu Down: wartość klawisza np. s</br>
+ - Poruszanie się w lewo Left: wartość klawisza np. a</br>
+ - Poruszanie się w prawo Right: wartość klawisza np. d</br>
+ - Strzelanie Shoot: wartość klawisza np. Return (odpowiednik Enter-a)</br>
+ - Zatrzymywanie czołgu Stop: wartość klawisza np. Shift_L (odpowiednik lewego shifta)</br>
+
+**firstTankControls** - ustawienie klawiszy sterujących czołgiem 1 gracza</br>
+**secondTankControls** - ustawienie klawiszy sterujących czołgiem 2 gracza</br>
+
+### filePaths
+**helpFilePath** - ścieżka do pliku z pomocą</br>
+**hallOfFameStoragePath** - ścieżka do pliku przechowującego 10 najlepszych wyników graczy</br>
+
+### positions
+**firstTankSpawnPosition** - indeks pola gdzie ma pojawić się 1 czołg na starcie</br>
+**secondTankSpawnPosition** - indeks pola gdzie ma pojawić się 2 czołg na starcie</br>
+
+### enemies
+**enemyTanksPositions** - indeksy pól gdzie mają pojawiać się czołgi wrogich botów</br>
+
+### bonuses
+**enableBonuses** - czy na planszy mają pojawiać się bonusy</br>
+**uniqueBonuses** - czy na planszy mają być tylko unikalne bonusy</br>
+**bonusSpawningFrequency** - czas co ile sekund ma pojawiać się nowy bonus na planszy</br>
+**maxNumberOfBonuses** - maksymalna liczba bonusów jaka jest w tym samym czasie może być na planszy</br>
+
+# Rodzaje mapy
+0) **brak pola** - traktowane jako element nie należący do mapy</br>
+1) **droga** - pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów</br>
+2) **rzeka** - pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie</br>
+3) **las** - pole po którym mogą jeździć czołgi, ale są nie widoczne wtedy</br>
+4) **nieznisczalny blok** - blokuje czołgi i pociski, nie można go znisczyć</br>
+5) **nisczączy się blok** - blokuje czołgi, ale można go znisczyć strzelając do niego</br>
+6) **znisczony blok** - działa jak droga, jest to niszczący się blok który został znisczony przez pocisk</br>
+7) **mina** - działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbe obrażeń z zakresu od 0.5-2 * basicAttack</br>
+8) **teleport** - automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem, teleportuje czołg na przeciwną stronę mapy</br>
+
+# Rodzaje bonusów
+1) **zdrowie** - natychmiastwo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2*basicHp</br>
+2) **przeładowanie** - przeładowywuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy</br>
+3) **regeneracja** - przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg</br>
+4) **tarcza** - przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia</br>
+5) **zwiększone obrażenia** - przez 5 sekund czołg zadaje 2 razy więcej obrażeń</br>
+6) **prędkość** - przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej</br>
+7) **railgun** - przez 7 sekund czołg strzela laserem, natymiachstwo laser dociera do celu</br>
+8) **wszystkie bonusy** - przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy w tym zdrowie 1 raz</br>
 
 #### Przykład pliku konfiguracyjnego
 ```ini
@@ -122,57 +172,6 @@ uniqueBonuses = true
 bonusSpawningFrequency = 5
 maxNumberOfBonuses = 5
 ```
-
-### controls
-Ustawienie sterowania czołgów gracza.</br>
-Dostępne [wartości klawiszy](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/key-names.html) używanych w python tkinter</br>
- - Poruszanie się do góry Up: wartość klawisza np. w</br>
- - Poruszanie się do dołu Down: wartość klawisza np. s</br>
- - Poruszanie się w lewo Left: wartość klawisza np. a</br>
- - Poruszanie się w prawo Right: wartość klawisza np. d</br>
- - Strzelanie Shoot: wartość klawisza np. Return (odpowiednik Enter-a)</br>
- - Zatrzymywanie czołgu Stop: wartość klawisza np. Shift_L (odpowiednik lewego shifta)</br>
-
-**firstTankControls** - ustawienie klawiszy sterujących czołgiem 1 gracza</br>
-**secondTankControls** - ustawienie klawiszy sterujących czołgiem 2 gracza</br>
-
-### filePaths
-**helpFilePath** - ścieżka do pliku z pomocą</br>
-**hallOfFameStoragePath** - ścieżka do pliku przechowującego 10 najlepszych wyników graczy</br>
-
-### positions
-**firstTankSpawnPosition** - indeks pola gdzie ma pojawić się 1 czołg na starcie</br>
-**secondTankSpawnPosition** - indeks pola gdzie ma pojawić się 2 czołg na starcie</br>
-
-### enemies
-**enemyTanksPositions** - indeksy pól gdzie mają pojawiać się czołgi wrogich botów</br>
-
-### bonuses
-**enableBonuses** - czy na planszy mają pojawiać się bonusy</br>
-**uniqueBonuses** - czy na planszy mają być tylko unikalne bonusy</br>
-**bonusSpawningFrequency** - czas co ile sekund ma pojawiać się nowy bonus na planszy</br>
-**maxNumberOfBonuses** - maksymalna liczba bonusów jaka jest w tym samym czasie może być na planszy</br>
-
-# Rodzaje mapy
-0) **brak pola** - traktowane jako element nie należący do mapy</br>
-1) **droga** - pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów</br>
-2) **rzeka** - pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie</br>
-3) **las** - pole po którym mogą jeździć czołgi, ale są nie widoczne wtedy</br>
-4) **nieznisczalny blok** - blokuje czołgi i pociski, nie można go znisczyć</br>
-5) **nisczączy się blok** - blokuje czołgi, ale można go znisczyć strzelając do niego</br>
-6) **znisczony blok** - działa jak droga, jest to niszczący się blok który został znisczony przez pocisk</br>
-7) **mina** - działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbe obrażeń z zakresu od 0.5-2 * basicAttack</br>
-8) **teleport** - automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem, teleportuje czołg na przeciwną stronę mapy</br>
-
-# Rodzaje bonusów
-1) **zdrowie** - natychmiastwo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2*basicHp</br>
-2) **przeładowanie** - przeładowywuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy</br>
-3) **regeneracja** - przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg</br>
-4) **tarcza** - przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia</br>
-5) **zwiększone obrażenia** - przez 5 sekund czołg zadaje 2 razy więcej obrażeń</br>
-6) **prędkość** - przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej</br>
-7) **railgun** - przez 7 sekund czołg strzela laserem, natymiachstwo laser dociera do celu</br>
-8) **wszystkie bonusy** - przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy w tym zdrowie 1 raz</br>
 
 
 # Struktura plików projektu
