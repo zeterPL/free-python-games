@@ -87,9 +87,12 @@ class Tank:
             self.takeDamage(random.randint(self.game.basicAttack//2, self.game.basicAttack*2), f"tank {self.tankId} ran over a mine")
         elif tileValue == Tile.TELEPORT.value:
             if self.speed.x:
-                self.position -= vector(self.speed.x//abs(self.speed.x)*self.game.tileSize*(self.game.columns-2), 0)
+                numberOfTiles = self.game.columns - 2.5 if self.speed.x > 0 else self.game.columns - 2
+                self.position -= vector(self.speed.x // abs(self.speed.x) * self.game.tileSize * numberOfTiles, 0)
             else:
-                self.position -= vector(0, self.speed.y//abs(self.speed.y)*self.game.tileSize*(self.game.rows-2))
+                numberOfTiles = self.game.rows - 2.5 if self.speed.y > 0 else self.game.rows - 2
+                self.position -= vector(0, self.speed.y // abs(self.speed.y) * self.game.tileSize * numberOfTiles)
+
         elif tileValue == Tile.FOREST.value:  # tank hide in forest
             self.tankTurtle.clear()
             self.hpTurtle.clear()

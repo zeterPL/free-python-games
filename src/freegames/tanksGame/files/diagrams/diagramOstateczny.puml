@@ -215,6 +215,7 @@ class AITank {
   + getTilesInRange(point, tankRange)
   + getStuckTankOut()
   + moveTank(wantMove)
+  + shootIfNeighborTileIsDestructible()
   + decideToShoot()
   + hasLineOfSight(targetPosition)
 }
