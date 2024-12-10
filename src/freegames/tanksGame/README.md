@@ -8,8 +8,8 @@ ___
 3. :dragon: [Instrukcja instalacji](#instrukcja-instalacji)
 4. :wrench: [Opcje pliku konfiguracyjnego](#opcje-pliku-konfiguracyjnego)
 5. :earth_africa: [Rodzaje mapy](#rodzaje-mapy)
-6. :gift: [Rodzaje bonusów](#rodzaje-bonusow)
-7. :file_folder: [Struktura plików projektu](#struktura-plikow-projektu)
+6. :gift: [Rodzaje bonusów](#rodzaje-bonusów)
+7. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
 8. :godmode: [Klasy](#klasy)
 9. :recycle: [Stany gry](#stany-gry)
 
@@ -48,6 +48,49 @@ pip install -r .\files\requirements.txt
 ```
 
 # Opcje pliku konfiguracyjnego
+### map
+**tiles** - ustawienie wartości pól mapy (od 0 do 8), gdzie można zastąpić 1 spacją, jeśli nie jest to ostatnia wartość w wierszu
+
+### settings
+**startGameX** - pozycja w osi X na ekranie gdzie ma rozpocząć grę podawana w pixelach</br>
+startGameY** - pozycja w osi Y na ekranie gdzie ma rozpocząć grę podawana w pixelach</br>
+**rows** - liczba wierszy na mapie</br>
+**columns** - liczba kolumn na mapie</br>
+**tileSize** - rozmiar pola, powinien być wielokrotnością liczby 20 np. 20, 40, 60</br>
+**basicHp** - podstawowe hp czołgów</br>
+**basicAttack** - podstawowy atak czołgów</br>
+**numberOfRandomMines** - liczba losowych min, które mają się pojawić na mapie</br>
+**timeAfterWhichMinesHide** - czas liczony w sekundach po którym miny przestaną być widoczne</br>
+
+### controls
+Ustawienie sterowania czołgów gracza.</br>
+Dostępne [wartości klawiszy](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/key-names.html) używanych w python tkinter</br>
+ - Poruszanie się do góry Up: wartość klawisza np. w</br>
+ - Poruszanie się do dołu Down: wartość klawisza np. s</br>
+ - Poruszanie się w lewo Left: wartość klawisza np. a</br>
+ - Poruszanie się w prawo Right: wartość klawisza np. d</br>
+ - Strzelanie Shoot: wartość klawisza np. Return (odpowiednik Enter-a)</br>
+ - Zatrzymywanie czołgu Stop: wartość klawisza np. Shift_L (odpowiednik lewego shifta)</br>
+
+**firstTankControls** - ustawienie klawiszy sterujących czołgiem 1 gracza</br>
+**secondTankControls** - ustawienie klawiszy sterujących czołgiem 2 gracza</br>
+
+### filePaths
+**helpFilePath** - ścieżka do pliku z pomocą</br>
+**hallOfFameStoragePath** - ścieżka do pliku przechowującego 10 najlepszych wyników graczy</br>
+
+### positions
+**firstTankSpawnPosition** - indeks pola gdzie ma pojawić się 1 czołg na starcie</br>
+**secondTankSpawnPosition** - indeks pola gdzie ma pojawić się 2 czołg na starcie</br>
+
+### enemies
+**enemyTanksPositions** - indeksy pól gdzie mają pojawiać się czołgi wrogich botów</br>
+
+### bonuses
+**enableBonuses** - czy na planszy mają się pojawiać bonusy</br>
+**uniqueBonuses** - czy na planszy mają być tylko unikalne bonusy</br>
+**bonusSpawningFrequency** - czas w sekundach, co ile ma pojawiać się nowy bonus na planszy</br>
+**maxNumberOfBonuses** - maksymalna liczba bonusów jaka w tym samym czasie może być na planszy</br>
 
 # Rodzaje mapy
 0) **brak pola** - traktowane jako element nie należący do mapy</br>
