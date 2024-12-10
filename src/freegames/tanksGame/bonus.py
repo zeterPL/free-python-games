@@ -94,6 +94,7 @@ class Bonus:
                 tank.maxHp = tank.hp
         elif bonusType == BonusType.RELOAD:
             tank.activeBonuses[BonusType.RELOAD] += amountTime or 10000
+            tank.reloadingRemainingTime = 0
             tank.reloadingTime = max(200, tank.reloadingTime // 2)
         elif bonusType == BonusType.REGENERATION:
             tank.activeBonuses[BonusType.REGENERATION] += amountTime or 10000

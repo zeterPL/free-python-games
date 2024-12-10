@@ -316,8 +316,8 @@ class Game:
             distanceBetweenTanks = abs(tankCheckingPosition - otherTank.position)
             if otherTank != tankChecking and distanceBetweenTanks < collisionThreshold and tankChecking.speed != vector(0, 0):
                 if not otherTank.destroyed:  # to improve gameplay collision with destroyed tank won't take damage
-                    tankChecking.takeDamage(1, f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
-                    otherTank.takeDamage(1, f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
+                    tankChecking.takeDamage(otherTank.attack//20, f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
+                    otherTank.takeDamage(tankChecking.attack//20, f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
                 tankChecking.speed = vector(0, 0)
                 return True
         return False

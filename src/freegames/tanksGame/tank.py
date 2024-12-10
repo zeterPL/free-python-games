@@ -46,9 +46,6 @@ class Tank:
         self.bonusDisplayTurtle = None
         self.game.deactivateKeys([self.stoppingControl, self.shootingControl] + list(self.moveControls.keys()))
 
-    # def __del__(self):
-    #     print(f"Usunieto czolg z pamieci {self.tankId=}")
-
     def change(self, tankSpeedDirection, angle=None):
         if self.destroyed:
             return
@@ -133,7 +130,7 @@ class Tank:
             x, y = self.position - self.game.tankCentralization
             barWidth = self.game.tileSize
             barHeight = self.game.tileSize // 20 * 3
-            reloadRatio = 1 - (self.reloadingRemainingTime / self.reloadingTime) if self.reloadingTime > 0 else 1
+            reloadRatio = max(1 - (self.reloadingRemainingTime / self.reloadingTime), 0) if self.reloadingTime > 0 else 1
             Draw.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
             Draw.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
 
