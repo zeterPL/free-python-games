@@ -154,11 +154,28 @@ class AITank(Tank):
             elif self.stuckRounds > 100:
                 print(f"{self.tankId=} was stuck more than 100 rounds try teleport it to middle")
                 self.teleportToMiddleTile()
-            elif self.stuckRounds > 20:
+            elif self.stuckRounds > 30:
                 self.getStuckTankOut()
+            elif self.stuckRounds == 20:
+                self.shootIfNeighborTileIsDestructible()
             elif self.stuckRounds > 10:
                 self.path = None
         self.decideTarget()
+
+    def shootIfNeighborTileIsDestructible(self):
+        neighbors = [
+            (vector(self.position.x + self.game.tileSize, self.position.y), 90),  # Right
+            (vector(self.position.x - self.game.tileSize, self.position.y), 270),  # Left
+            (vector(self.position.x, self.position.y + self.game.tileSize), 0),  # Up
+            (vector(self.position.x, self.position.y - self.game.tileSize), 180),  # Down
+        ]
+        for neighbor, direction in neighbors:
+            tileIndex = self.game.getTileIndexFromPoint(neighbor)
+            if 0 <= tileIndex < len(self.game.tiles) and self.game.tiles[tileIndex] == Tile.DESTRUCTIBLE_BLOCK.value:
+                print(f"{self.tankId=} detected destructible block at {neighbor}. Shooting.")
+                self.change(vector(0, 0), direction)  # Turn towards the block
+                self.shoot()
+                return
 
     def decideToShoot(self):
         targetPosition = self.target.position
