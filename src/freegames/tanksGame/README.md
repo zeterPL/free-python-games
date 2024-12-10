@@ -53,7 +53,7 @@ pip install -r .\files\requirements.txt
 
 ### settings
 **startGameX** - pozycja w osi X na ekranie gdzie ma rozpocząć grę podawana w pixelach</br>
-startGameY** - pozycja w osi Y na ekranie gdzie ma rozpocząć grę podawana w pixelach</br>
+**startGameY** - pozycja w osi Y na ekranie gdzie ma rozpocząć grę podawana w pixelach</br>
 **rows** - liczba wierszy na mapie</br>
 **columns** - liczba kolumn na mapie</br>
 **tileSize** - rozmiar pola, powinien być wielokrotnością liczby 20 np. 20, 40, 60</br>
@@ -87,10 +87,10 @@ Dostępne [wartości klawiszy](https://anzeljg.github.io/rin2/book2/2405/docs/tk
 **enemyTanksPositions** - indeksy pól gdzie mają pojawiać się czołgi wrogich botów</br>
 
 ### bonuses
-**enableBonuses** - czy na planszy mają się pojawiać bonusy</br>
+**enableBonuses** - czy na planszy mają pojawiać się bonusy</br>
 **uniqueBonuses** - czy na planszy mają być tylko unikalne bonusy</br>
-**bonusSpawningFrequency** - czas w sekundach, co ile ma pojawiać się nowy bonus na planszy</br>
-**maxNumberOfBonuses** - maksymalna liczba bonusów jaka w tym samym czasie może być na planszy</br>
+**bonusSpawningFrequency** - czas co ile sekund ma pojawiać się nowy bonus na planszy</br>
+**maxNumberOfBonuses** - maksymalna liczba bonusów jaka jest w tym samym czasie może być na planszy</br>
 
 # Rodzaje mapy
 0) **brak pola** - traktowane jako element nie należący do mapy</br>
@@ -156,6 +156,18 @@ graph TD;
 ```
 
 # Klasy
+**Game** - zarządza grą, zmienia stany gry. Inicjalizuje mapę oraz czołgi. W niej znajduje się metoda <b><code>roundOfMovement</code></b> zawierająca główną pętle gry.</br>
+**Tank** - reprezentuje czołg gracza, przechowuje jego atrybuty (np. zdrowie, pozycję) i logikę ruchu, strzelania oraz kolizji.</br>
+**AITank** - dziedziczy po Tank, dodaje logikę sztucznej inteligencji, w tym wybór celu, ścieżkę poruszania się, decyzje o strzelaniu oraz reakcje na zablokowanie.</br>
+**Bullet** - reprezentuje pocisk, odpowiada za jego ruch, kolizje i interakcje z innymi obiektami na planszy.</br>
+**Bonus** - reprezentuje bonus, w tym jego pojawienie się, aktywację, działanie i wyświetlanie na planszy.</br>
+**File** - odpowiada za ładowanie i przetwarzanie plików, w tym konfiguracji, map i ustawień sterowania.</br>
+**Draw** - zawiera metody rysowania podstawowych figur oraz elementów takich jak np. bonusy.</br>
+
+### Enumy
+**GameMode** - definiuje dostępne tryby gry. (Single player, PVP, PVE)</br>
+**Tile** - definiuje typy pól na planszy. (droga, las, teleport, mina...)</br>
+**BonusType** - definiuje dostępne typy bonusów. (zdrowie, regeneracja, szybkość, atak...)</br>
 
 # Stany gry
 1. Głowne menu - główne menu do wyboru:
