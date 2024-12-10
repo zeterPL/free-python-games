@@ -62,6 +62,67 @@ pip install -r .\files\requirements.txt
 **numberOfRandomMines** - liczba losowych min, które mają się pojawić na mapie</br>
 **timeAfterWhichMinesHide** - czas liczony w sekundach po którym miny przestaną być widoczne</br>
 
+
+#### Przykład pliku konfiguracyjnego
+```ini
+[map]
+tiles =
+    4,4, ,4,4,4,4,4,4, ,4,4,4,4,4,4, ,4,4,4
+    4, , , , , , , , , , , , , , , , , , ,4
+    4, ,5,5,5,5,5, , ,7, , , , , , , , , ,4
+    4, ,5, , , ,5, , , , , , , , , , , , ,4
+    1, ,5, , , ,5, , , , , , , , , , , , ,1
+    4, ,5, , , ,5, , ,5, , , , , , , , , ,4
+    4, ,5,5,5,5,5, , ,4, , , , , , , , , ,4
+    4, , , ,7, , ,5,5,5,5,5, , ,7, , , , ,4
+    4, , , , , , , , ,5, , , , , , , , , ,4
+    4, , , , , , , , ,5, , , , , , , , , ,4
+    4, ,2,2,2,2,2,2, ,5, ,2,2,2,2,2,2,2, ,4
+    4, ,2,2,2,2,2,2, , , ,2,2,2,2,2,2,2, ,4
+    1, ,3,3,3,3,3,3, , , ,5,5,5,5,5,5,5, ,4
+    4, ,3,3,3,3,3,3, ,7, ,5, , , , , ,5, ,4
+    4, ,3,3,3,3,3,3, , , ,5, , , , , ,5, ,4
+    4, ,3,3,3,3,3,3, , , ,5, , , , , ,5, ,1
+    4, ,3,3,3,3,3,3, , , ,5, , , , , ,5, ,4
+    4, ,3,3,3,3,3,3, , , ,5,5,5,5,5,5,5, ,4
+    1, , , , , , , , , , , , , , , , , , ,4
+    4,4, ,4,4,4,4,4,4, ,4,4,4,4,4,4, ,4,4,4
+
+[settings]
+startGameX = 540
+startGameY = 0
+rows = 20
+columns = 20
+; The preferred size of the tiles to avoid errors is a multiple of 20
+tileSize = 40
+basicHp = 50
+basicAttack = 20
+numberOfRandomMines = 0
+timeAfterWhichMinesHide = 20
+
+[controls]
+firstTankControls = Up:8, Down:2, Left:4, Right:6, Stop:Shift_L, Shoot:Return
+secondTankControls = Up:w, Down:s, Left:a, Right:d, Stop:i, Shoot:u
+
+[filePaths]
+helpFilePath = files/help.txt
+hallOfFameStoragePath = files/hallOfFame.txt
+
+[positions]
+; index of tile where spawn tank
+firstTankSpawnPosition = 315
+secondTankSpawnPosition = 84
+
+[enemies]
+enemyTanksPositions = 21, 38, 361, 378
+
+[bonuses]
+enableBonuses = true
+uniqueBonuses = true
+bonusSpawningFrequency = 5
+maxNumberOfBonuses = 5
+```
+
 ### controls
 Ustawienie sterowania czołgów gracza.</br>
 Dostępne [wartości klawiszy](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/key-names.html) używanych w python tkinter</br>
@@ -186,7 +247,7 @@ graph TD;
    - Ponowne kliknięcie 'H' wychodzi z pomocy
 5. Pauza
    - Kliknięcie 'P' w trakcie gry pauzuje grę
-   - Ponowne kliknięcie 'P' zakańcza pauzę
+   - Ponowne kliknięcie 'P' wznawia grę
 6. Sala chwały
    - Automatycznie uruchamia się 2 sekundy po zakończeniu się gry w trybie Single Player
 
