@@ -92,28 +92,7 @@ Dostępne [wartości klawiszy](https://anzeljg.github.io/rin2/book2/2405/docs/tk
 **bonusSpawningFrequency** - czas co ile sekund ma pojawiać się nowy bonus na planszy</br>
 **maxNumberOfBonuses** - maksymalna liczba bonusów jaka jest w tym samym czasie może być na planszy</br>
 
-# Rodzaje mapy
-0) **brak pola** - traktowane jako element nie należący do mapy</br>
-1) **droga** - pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów</br>
-2) **rzeka** - pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie</br>
-3) **las** - pole po którym mogą jeździć czołgi, ale są nie widoczne wtedy</br>
-4) **nieznisczalny blok** - blokuje czołgi i pociski, nie można go znisczyć</br>
-5) **nisczączy się blok** - blokuje czołgi, ale można go znisczyć strzelając do niego</br>
-6) **znisczony blok** - działa jak droga, jest to niszczący się blok który został znisczony przez pocisk</br>
-7) **mina** - działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbe obrażeń z zakresu od 0.5-2 * basicAttack</br>
-8) **teleport** - automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem, teleportuje czołg na przeciwną stronę mapy</br>
-
-# Rodzaje bonusów
-1) **zdrowie** - natychmiastwo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2*basicHp</br>
-2) **przeładowanie** - przeładowywuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy</br>
-3) **regeneracja** - przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg</br>
-4) **tarcza** - przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia</br>
-5) **zwiększone obrażenia** - przez 5 sekund czołg zadaje 2 razy więcej obrażeń</br>
-6) **prędkość** - przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej</br>
-7) **railgun** - przez 7 sekund czołg strzela laserem, natymiachstwo laser dociera do celu</br>
-8) **wszystkie bonusy** - przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy w tym zdrowie 1 raz</br>
-
-#### Przykład pliku konfiguracyjnego
+#### Przykład pliku konfiguracyjnego **`tanksConfig.ini`**
 ```ini
 [map]
 tiles =
@@ -173,6 +152,26 @@ bonusSpawningFrequency = 5
 maxNumberOfBonuses = 5
 ```
 
+# Rodzaje mapy
+0) **brak pola** - traktowane jako element nie należący do mapy</br>
+1) **droga** - pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów</br>
+2) **rzeka** - pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie</br>
+3) **las** - pole po którym mogą jeździć czołgi, ale są nie widoczne wtedy</br>
+4) **nieznisczalny blok** - blokuje czołgi i pociski, nie można go znisczyć</br>
+5) **nisczączy się blok** - blokuje czołgi, ale można go znisczyć strzelając do niego</br>
+6) **znisczony blok** - działa jak droga, jest to niszczący się blok który został znisczony przez pocisk</br>
+7) **mina** - działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbe obrażeń z zakresu od 0.5-2 * basicAttack</br>
+8) **teleport** - automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem, teleportuje czołg na przeciwną stronę mapy</br>
+
+# Rodzaje bonusów
+1) **zdrowie** - natychmiastwo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2*basicHp</br>
+2) **przeładowanie** - przeładowywuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy</br>
+3) **regeneracja** - przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg</br>
+4) **tarcza** - przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia</br>
+5) **zwiększone obrażenia** - przez 5 sekund czołg zadaje 2 razy więcej obrażeń</br>
+6) **prędkość** - przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej</br>
+7) **railgun** - przez 7 sekund czołg strzela laserem, natymiachstwo laser dociera do celu</br>
+8) **wszystkie bonusy** - przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy w tym zdrowie 1 raz</br>
 
 # Struktura plików projektu
 <!--- W cmd: tree /F  --->
@@ -229,8 +228,132 @@ graph TD;
 **Tile** - definiuje typy pól na planszy. (droga, las, teleport, mina...)</br>
 **BonusType** - definiuje dostępne typy bonusów. (zdrowie, regeneracja, szybkość, atak...)</br>
 
+```mermaid
+classDiagram
+    class Game {
+        +allTanks : list~Tank~
+        +bullets : list~Bullet~
+        +bonuses : list~Bonus~
+        +gameMode : GameMode
+        +startGame()
+        +roundOfMovement()
+    }
+
+    class Tank {
+        +game : Game
+        +position : Vector
+        +speed : Vector
+        +direction : int
+        +moveControls : dict~str, Vector~
+        +tankId : int
+        +hp : int
+        +maxHp : int
+        +attack : int
+        +reloadingTime : int
+        +loaded : bool
+        +destroyed : bool
+        +activeBonuses : dict~BonusType, int~
+        +change(tankSpeedDirection : Vector, angle : int)
+        +moveTank(wantMove : bool)
+        +setControls()
+        +shoot()
+        +takeDamage(amount : int, reason : str)
+    }
+
+    class AITank {
+        +target : Tank
+        +path : list~int~
+        +decideTarget()
+        +findPath(startIndex : int, endIndex : int)
+        +moveTank(wantMove : bool)
+        +decideToShoot()
+    }
+
+    class Bullet {
+        +position : Vector
+        +direction : int
+        +bulletSpeed : int
+        +shooter : Tank
+        +moveBullet()
+        +static checkBulletHit(game : Game, bullet : Bullet)
+        +static processBulletsMovementsAndCollisions(game : Game)
+    }
+
+    class Bonus {
+        +game : Game
+        +bonusType : BonusType
+        +position : Vector
+        +static spawnBonus(game : Game)
+        +static tankIsOnBonus(tank : Tank, bonus : Bonus, tileSize : int)
+        +static activateBonus(tank : Tank, bonusType : BonusType, amountTime : int)
+        +static updateActiveBonuses(tank : Tank)
+        +static deactivateBonus(tank : Tank, bonusType : BonusType)
+        +static displayActiveBonuses(tank : Tank)
+    }
+
+    class Draw {
+        +static startDrawing()
+        +static endDrawing()
+    }
+
+    class File {
+        +static loadFileAsArray(fileName : str, errorMessage : str)
+        +static parseControls(controlString : str)
+        +static loadSettingsAndMapFromFile(filePath : str)
+    }
+
+    class GameMode {
+        <<enum>>
+        SINGLE
+        PVP
+        PVE
+    }
+
+    class BonusType {
+        <<enum>>
+        HEALTH
+        RELOAD
+        REGENERATION
+        SHIELD
+        ATTACK
+        SPEED
+        RAILGUN
+        ALL
+    }
+
+    class Tile {
+        <<enum>>
+        NO_TILE
+        ROAD
+        RIVER
+        FOREST
+        INDESTRUCTIBLE_BLOCK
+        DESTRUCTIBLE_BLOCK
+        DESTROYED_DESTRUCTIBLE_BLOCK
+        MINE
+        TELEPORT
+    }
+
+    %% Relationships
+	Game "1" *-- "*" Tank
+    Game "1" *-- "*" Bullet
+    Game "1" *-- "*" Bonus
+    Game "1" o-- "1" GameMode
+    Tank --> Game
+    Tank <|-- AITank
+    Tank "1" o-- "*" BonusType
+    Bullet --> Tank
+    Bonus --> Game
+    Bonus "1" o-- "*" BonusType
+
+    File ..> Game
+    Tile -- Game
+    Draw ..> Game
+
+```
+
 # Stany gry
-1. Głowne menu - główne menu do wyboru:
+1. Głowne menu - posiada opcje do wyboru:
    - Kliknięcie 'P' powoduje przejście do Wyboru trybu gry
    - Kliknięcie 'H' powoduje przejście do pomocy
    - Kliknięcie 'Escape' powoduje wyjście z gry
