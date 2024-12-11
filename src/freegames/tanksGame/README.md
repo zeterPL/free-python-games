@@ -130,7 +130,7 @@ numberOfRandomMines = 0
 timeAfterWhichMinesHide = 20
 
 [controls]
-firstTankControls = Up:8, Down:2, Left:4, Right:6, Stop:Shift_L, Shoot:Return
+firstTankControls = Up:Up, Down:Down, Left:Left, Right:Right, Stop:Shift_L, Shoot:Return
 secondTankControls = Up:w, Down:s, Left:a, Right:d, Stop:i, Shoot:u
 
 [filePaths]
@@ -154,31 +154,31 @@ maxNumberOfBonuses = 5
 
 # Rodzaje mapy
 
-| ID      | Pole mapy                        | Opis działania pola mapy                                                                 |
-|:-------:|----------------------------------|------------------------------------------------------------------------------------------|
-| 0       | **brak pola**                    | Traktowane jako element nie należący do mapy.                                            |
-| 1       | **droga**                        | Pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów.                 |
-| 2       | **rzeka**                        | Pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie.          |
-| 3       | **las**                          | Pole po którym mogą jeździć czołgi, ale są wtedy niewidoczne.                            |
-| 4       | **niezniszczalny&nbsp;blok**     | Blokuje czołgi i pociski, nie można go zniszczyć.                                        |
-| 5       | **niszczący&nbsp;się&nbsp;blok** | Blokuje czołgi, ale można go zniszczyć strzelając do niego.                              |
-| 6       | **zniszczony&nbsp;blok**         | Działa jak droga, jest to niszczący się blok który został zniszczony przez pocisk.       |
-| 7       | **mina**                         | Działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbę obrażeń z zakresu od połowy do dwukrotności basicAttack. |
-| 8       | **teleport**                     | Automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem. Teleportuje czołg na przeciwną stronę mapy. |
+| ID | Pole mapy                        | Opis działania pola mapy                                                                                                              |
+|:--:|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| 0  | **brak pola**                    | Traktowane jako element nie należący do mapy.                                                                                         |
+| 1  | **droga**                        | Pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów.                                                              |
+| 2  | **rzeka**                        | Pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie.                                                       |
+| 3  | **las**                          | Pole po którym mogą jeździć czołgi, ale są wtedy niewidoczne.                                                                         |
+| 4  | **niezniszczalny&nbsp;blok**     | Blokuje czołgi i pociski, nie można go zniszczyć.                                                                                     |
+| 5  | **niszczący&nbsp;się&nbsp;blok** | Blokuje czołgi, ale można go zniszczyć strzelając do niego.                                                                           |
+| 6  | **zniszczony&nbsp;blok**         | Działa jak droga, jest to niszczący się blok który został zniszczony przez pocisk.                                                    |
+| 7  | **mina**                         | Działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbę obrażeń z zakresu od połowy do dwukrotności basicAttack.            |
+| 8  | **teleport**                     | Automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem. Teleportuje czołg na przeciwną stronę mapy. |
 
 
 # Rodzaje bonusów
 
-| ID      | Bonus                  | Opis działania bonusu                                                                           |
-|:-------:|------------------------|---------------------------------------------------------------------------------------|
-| 1       | **zdrowie**            | Natychmiastowo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2 * basicHp.    |
-| 2       | **przeładowanie**       | Przeładowuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy. |
-| 3       | **regeneracja**        | Przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg. |
-| 4       | **tarcza**             | Przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia.                        |
-| 5       | **zwiększone&nbsp;obrażenia** | Przez 5 sekund czołg zadaje 2 razy więcej obrażeń.                                   |
-| 6       | **prędkość**           | Przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej. |
-| 7       | **railgun**            | Przez 7 sekund czołg strzela laserem, laser natychmiast dociera do celu i zadaje obrażenia.             |
-| 8       | **wszystkie bonusy**   | Przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy, w tym jednorazowo zdrowie. |
+| ID | Bonus                         | Opis działania bonusu                                                                                                       |
+|:--:|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| 1  | **zdrowie**                   | Natychmiastowo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2 * basicHp.                                          |
+| 2  | **przeładowanie**             | Przeładowuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy.           |
+| 3  | **regeneracja**               | Przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg. |
+| 4  | **tarcza**                    | Przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia.                                                               |
+| 5  | **zwiększone&nbsp;obrażenia** | Przez 5 sekund czołg zadaje 2 razy więcej obrażeń.                                                                          |
+| 6  | **prędkość**                  | Przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej.                |
+| 7  | **railgun**                   | Przez 7 sekund czołg strzela laserem, laser natychmiast dociera do celu i zadaje obrażenia.                                 |
+| 8  | **wszystkie bonusy**          | Przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy, w tym jednorazowo zdrowie.                                       |
 
 
 
@@ -194,6 +194,7 @@ tanksGame.
 │   game.py
 │   tank.py
 │   tile.py
+|   utils.py
 │   __init__.py
 │
 └───files
@@ -221,6 +222,7 @@ graph TD;
     A-->F[file.py];
     A-->D[draw.py];
     A-->TL[tile.py];
+    A-->U[utils.py];
 ```
 
 # Klasy
@@ -229,8 +231,9 @@ graph TD;
 **AITank** - dziedziczy po Tank, dodaje logikę sztucznej inteligencji, w tym wybór celu, ścieżkę poruszania się, decyzje o strzelaniu oraz reakcje na zablokowanie.</br>
 **Bullet** - reprezentuje pocisk, odpowiada za jego ruch, kolizje i interakcje z innymi obiektami na planszy.</br>
 **Bonus** - reprezentuje bonus, w tym jego pojawienie się, aktywację, działanie i wyświetlanie na planszy.</br>
-**File** - odpowiada za ładowanie i przetwarzanie plików, w tym konfiguracji, map i ustawień sterowania.</br>
-**Draw** - zawiera metody rysowania podstawowych figur oraz elementów takich jak np. bonusy.</br>
+**File** - 'statyczna' klasa, odpowiada za ładowanie i przetwarzanie plików, w tym konfiguracji, map i ustawień sterowania.</br>
+**Draw** - 'statyczna' klasa zawiera metody rysowania podstawowych figur oraz elementów takich jak np. bonusy.</br>
+**Utils** - 'statyczna' klasa zawiera pomocnicze metody wykorzystywane w innych klasach.</br>
 
 ### Enumy
 **GameMode** - definiuje dostępne tryby gry. (Single player, PVP, PVE)</br>
@@ -303,12 +306,26 @@ classDiagram
     class Draw {
         +static startDrawing()
         +static endDrawing()
+        +static drawBoard(game : Game)
+        +static drawExplosion(game : Game, x : int, y : int)
+        +static drawModalMessage(game : Game, message : str, subMessage : str)
+        +static drawHP(tank : Tank)
+        +static drawReloadBar(tank : Tank)
+        +static drawTank(tank : Tank)
     }
 
     class File {
         +static loadFileAsArray(fileName : str, errorMessage : str)
         +static parseControls(controlString : str)
         +static loadSettingsAndMapFromFile(filePath : str)
+    }
+    
+    class Utils {
+        +static safeOntimer(function : Callable, delay : int, *args, **kwargs)
+        +static conditionalExecution(condition : Callable|bool, function : Callable, *args, **kwargs)
+        +static activateKeys(keyBindings : list~tuple~)
+        +static deactivateKeys(keys : list~str~)
+        +static writeText(turtleObject : Turtle, x : int, y : int, message : str, textAlign : str, textFont : tuple, textColor : str)
     }
 
     class GameMode {
@@ -356,9 +373,12 @@ classDiagram
     Bonus "1" o-- "*" BonusType
 
     File ..> Game
-    Tile -- Game
+    Tile ..> Game
     Draw ..> Game
-
+    Draw ..> Tank
+    Utils ..> Game
+    Utils ..> Draw
+    Tile ..> Draw
 ```
 
 # Stany gry

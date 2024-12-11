@@ -1,3 +1,8 @@
+from turtle import bgcolor, Turtle
+from utils import Utils
+from tile import Tile
+
+
 class Draw:
     @staticmethod
     def startDrawing(turtleObject, x, y, fillColor="", circuitColor="black", pensize=1):
@@ -142,3 +147,107 @@ class Draw:
             Draw.drawCircle(turtleObject, x, y, portalSize, portalColor)
             Draw.drawCircle(turtleObject, x, y, int(portalSize - 2), backgroundColor)
             portalSize = max(int(0.5 * portalSize), 4)
+
+    @staticmethod
+    def drawBoard(game):
+        Draw.drawSquare(game.mapTurtle, -game.gameWidth, -game.gameHeight, 2 * (game.gameWidth + game.gameHeight), "black")
+        bgcolor('black')
+        for index in range(len(game.tiles)):
+            tile = game.tiles[index]
+            if tile > 0:
+                x, y = game.getTilePosition(index)
+                tileColor = game.tileColors[tile]
+                Draw.drawSquare(game.mapTurtle, x, y, game.tileSize, squareColor=tileColor)
+                if tile == Tile.MINE.value:  # drawing mines
+                    Draw.drawCircle(game.minesTurtle, x + game.tileSize // 2, y + game.tileSize // 2, game.tileSize // 2, "black")
+                if tile == Tile.TELEPORT.value:  # drawing portals
+                    Draw.drawPortal(game.mapTurtle, x + game.tileSize // 2, y + game.tileSize // 2, game.tileSize * 0.8, 5, "purple", "black")
+        Draw.drawRectangle(game.mapTurtle, 0, 0, game.rows * game.tileSize, game.columns * game.tileSize, "", "white", True)  # drawing white circuit around board
+
+    @staticmethod
+    def drawExplosion(game, x, y, drawingTurtle=None, explosionIteration=0, maxIterations=3):
+        drawingTurtle = drawingTurtle or Turtle(visible=False)
+        explosionColors = ["red", "yellow", "orange"]
+        explosionColor = explosionColors[explosionIteration % len(explosionColors)]
+        t = game.tileSize // 20
+        offsets = [(0, 0), (2 * t, 2 * t), (-2 * t, -2 * t), (-2 * t, 2 * t), (2 * t, -2 * t), (4 * t, 0), (0, 4 * t), (-4 * t, 0), (0, -4 * t)]
+        for dx, dy in offsets:
+            Draw.drawSquare(drawingTurtle, x + dx * (explosionIteration + t), y + dy * (explosionIteration + t), 2 * t + explosionIteration, explosionColor)
+        if explosionIteration < maxIterations:
+            Utils.safeOntimer(lambda: Draw.drawExplosion(game, x, y, drawingTurtle, explosionIteration + 1, maxIterations), 150)
+        else:
+            Utils.safeOntimer(drawingTurtle.clear, 200)
+
+    @staticmethod
+    def drawModalMessage(game, message, subMessage, x=0, y=0, modalWidth=350, modalHeight=120):
+        game.messageTurtle.clear()
+        Draw.drawRectangle(game.messageTurtle, x, y, modalWidth, modalHeight, "white", "black", True)
+        Utils.writeText(game.messageTurtle, 0, 0, message)
+        Utils.writeText(game.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
+
+    @staticmethod
+    def drawHP(tank, hpColor="red", bgColor="black"):
+        tank.hpTurtle.clear()
+        if tank.hp > 0:
+            x, y = tank.position - tank.game.tankCentralization
+            barWidth = tank.game.tileSize
+            barHeight = tank.game.tileSize // 20 * 3
+            baseHpRatio = min(tank.hp / tank.game.basicHp, 1)
+            Draw.drawRectangle(tank.hpTurtle, x, y + tank.game.tileSize*1.2, barWidth, barHeight, bgColor)
+            Draw.drawRectangle(tank.hpTurtle, x, y + tank.game.tileSize*1.2, barWidth*baseHpRatio, barHeight, hpColor)
+            if tank.hp > tank.game.basicHp:
+                additionalHpRatio = (tank.hp - tank.game.basicHp) / tank.game.basicHp
+                Draw.drawRectangle(tank.hpTurtle, x, y + tank.game.tileSize * 1.2, barWidth*additionalHpRatio, barHeight, "purple", "")
+
+    @staticmethod
+    def drawReloadBar(tank, reloadColor="gold", bgColor="black"):
+        if tank.reloadTurtle is None:
+            return
+        tank.reloadTurtle.clear()
+        if tank.hp > 0:
+            x, y = tank.position - tank.game.tankCentralization
+            barWidth = tank.game.tileSize
+            barHeight = tank.game.tileSize // 20 * 3
+            reloadRatio = max(1 - (tank.reloadingRemainingTime / tank.reloadingTime), 0) if tank.reloadingTime > 0 else 1
+            Draw.drawRectangle(tank.reloadTurtle, x, y + tank.game.tileSize, barWidth, barHeight, bgColor)
+            Draw.drawRectangle(tank.reloadTurtle, x, y + tank.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
+
+    @staticmethod
+    def drawTank(tank):
+        tank.tankTurtle.clear()
+        x, y = tank.position
+        angle = tank.direction
+        t = tank.game.tileSize // 20
+        """Draw tracks."""
+        trackOffsets = {
+            0: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t), (12 * t, 12 * t)],
+            90: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)],
+            180: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t), (12 * t, 12 * t)],
+            270: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)]
+        }
+        for index, (dx, dy) in enumerate(trackOffsets[angle]):
+            Draw.drawSquare(tank.tankTurtle, x + dx, y + dy, 4 * t, tank.tankColor)
+            if tank.destroyed and index in [0, t, 5, t]:
+                Draw.drawSquare(tank.tankTurtle, x + dx, y + dy, 4 * t, "black")
+        """Draw hull."""
+        hullOffsets = {0: (4 * t, t), 90: (t, 4 * t), 180: (4 * t, 7 * t), 270: (7 * t, 4 * t)}
+        Draw.drawSquare(tank.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, tank.tankColor)
+        if tank.destroyed:
+            Draw.drawSquare(tank.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
+            Draw.drawSquare(tank.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
+            Draw.drawSquare(tank.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+            Draw.drawSquare(tank.tankTurtle, x + hullOffsets[angle][0] + 2 * t, y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
+            Draw.drawSquare(tank.tankTurtle, x + hullOffsets[angle][0] + 6 * t, y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
+        """Draw cannon."""
+        cannonOffsets = {
+            0: [(7 * t, 9 * t), (7 * t, 11 * t), (7 * t, 13 * t)],
+            90: [(9 * t, 7 * t), (11 * t, 7 * t), (13 * t, 7 * t)],
+            180: [(7 * t, 5 * t), (7 * t, 3 * t), (7 * t, t)],
+            270: [(5 * t, 7 * t), (3 * t, 7 * t), (t, 7 * t)]
+        }
+        for dx, dy in cannonOffsets[angle]:
+            Draw.drawSquare(tank.tankTurtle, x + dx, y + dy, 2 * t, tank.tankColor)
+        if tank.destroyed:
+            Draw.drawSquare(tank.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
+        Draw.drawHP(tank)
+        Draw.drawReloadBar(tank)

@@ -1,4 +1,4 @@
-from turtle import Turtle, setup, hideturtle, listen, update, done, tracer, bgcolor, clearscreen, resetscreen
+from turtle import Turtle, setup, hideturtle, listen, update, done, tracer, clearscreen, resetscreen
 from freegames import floor, vector
 import os
 from pygame import mixer
@@ -252,7 +252,7 @@ class Game:
 
         self.replaceBordersWithTeleport()
         self.spawnRandomMines()
-        self.drawBoard()
+        Draw.drawBoard(self)
         self.roundOfMovement()
 
     def roundOfMovement(self):
@@ -297,11 +297,11 @@ class Game:
     def endGame(self, victory, announcement):
         self.gameRunning = False
         for tank in self.allTanks:  # draw destroyed tanks
-            tank.drawTank()
+            Draw.drawTank(tank)
         currentRound = self.gameRound
         Utils.safeOntimer(lambda: Utils.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, self.victorySound.play if victory else self.gameOverSound.play), 1000)
         Utils.safeOntimer(lambda: Utils.conditionalExecution(not self.gameRunning and currentRound == self.gameRound,
-                                                             self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
+                                                             Draw.drawModalMessage, self, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
         if self.gameMode == GameMode.SINGLE:
             Utils.safeOntimer(lambda: Utils.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, lambda v=victory: self.initHallOfFame(v)), 2000)
         Utils.activateKeys([(self.startGame, "r")])
@@ -326,7 +326,7 @@ class Game:
             self.roundOfMovement()
         else:
             print("Game paused!")
-            self.drawModalMessage("Game Paused!", "Press 'P' to play")
+            Draw.drawModalMessage(self, "Game Paused!", "Press 'P' to play")
 
     def toggleHelpMenu(self):
         if not self.helpContent:
@@ -342,64 +342,25 @@ class Game:
         else:
             self.showHelpMenu()
 
-    @staticmethod
-    def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold"), textColor="black"):
-        turtleObject.color(textColor)
-        turtleObject.goto(x, y)
-        turtleObject.write(message, align=textAlign, font=textFont)
-
-    def drawBoard(self):
-        Draw.drawSquare(self.mapTurtle, -self.gameWidth, -self.gameHeight, 2 * (self.gameWidth + self.gameHeight), "black")
-        bgcolor('black')
-        for index in range(len(self.tiles)):
-            tile = self.tiles[index]
-            if tile > 0:
-                x, y = self.getTilePosition(index)
-                tileColor = self.tileColors[tile]
-                Draw.drawSquare(self.mapTurtle, x, y, self.tileSize, squareColor=tileColor)
-                if tile == Tile.MINE.value:  # drawing mines
-                    Draw.drawCircle(self.minesTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize // 2, "black")
-                if tile == Tile.TELEPORT.value:  # drawing portals
-                    Draw.drawPortal(self.mapTurtle, x + self.tileSize // 2, y + self.tileSize // 2, self.tileSize * 0.8, 5, "purple", "black")
-        Draw.drawRectangle(self.mapTurtle, 0, 0, self.rows * self.tileSize, self.columns * self.tileSize, "", "white", True)  # drawing white circuit around board
-
-    def drawExplosion(self, drawingTurtle, x, y, explosionIteration=0, maxIterations=3):
-        explosionColors = ["red", "yellow", "orange"]
-        explosionColor = explosionColors[explosionIteration % len(explosionColors)]
-        t = self.tileSize // 20
-        offsets = [(0, 0), (2 * t, 2 * t), (-2 * t, -2 * t), (-2 * t, 2 * t), (2 * t, -2 * t), (4 * t, 0), (0, 4 * t), (-4 * t, 0), (0, -4 * t)]
-        for dx, dy in offsets:
-            Draw.drawSquare(drawingTurtle, x + dx * (explosionIteration + t), y + dy * (explosionIteration + t), 2 * t + explosionIteration, explosionColor)
-        if explosionIteration < maxIterations:
-            Utils.safeOntimer(lambda: self.drawExplosion(drawingTurtle, x, y, explosionIteration + 1, maxIterations), 150)
-        else:
-            Utils.safeOntimer(drawingTurtle.clear, 200)
-
-    def drawModalMessage(self, message, subMessage, x=0, y=0, modalWidth=350, modalHeight=120):
-        self.messageTurtle.clear()
-        Draw.drawRectangle(self.messageTurtle, x, y, modalWidth, modalHeight, "white", "black", True)
-        self.writeText(self.messageTurtle, 0, 0, message)
-        self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
-
     def showStartMenu(self):
         self.gameRunning = False
         self.resetGame(420, 420, 540, 200)
         Utils.activateKeys([(self.showGameModeMenu, "p"), (self.toggleHelpMenu, "h"), (exit, "Escape")])
         Draw.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
-        self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 32, "bold"))
-        self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 18, "normal"))
-        self.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 18, "normal"))
-        self.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 18, "normal"))
+        Utils.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 32, "bold"))
+        Utils.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 18, "normal"))
+        Utils.writeText(self.messageTurtle, 0, -60, "Press 'H' for Help", textFont=("Arial", 18, "normal"))
+        Utils.writeText(self.messageTurtle, 0, -100, "Press Escape for Exit", textFont=("Arial", 18, "normal"))
 
     def showGameModeMenu(self):
         self.messageTurtle.clear()
         Draw.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
-        self.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 28, "bold"))
-        self.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, 0, "Press '2' for PvP mode     ", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, -50, "Press '3' for PvE mode     ", textFont=("Arial", 16, "normal"))
-        self.writeText(self.messageTurtle, 0, -110, "Press 'H' for Help", textFont=("Arial", 12, "italic"))
-        self.writeText(self.messageTurtle, 0, -140, "Press 'Escape' to return to Menu", textFont=("Arial", 12, "italic"))
+        Utils.writeText(self.messageTurtle, 0, 100, "Select Game Mode", textFont=("Arial", 28, "bold"))
+        Utils.writeText(self.messageTurtle, 0, 50, "Press '1' for Single Player", textFont=("Arial", 16, "normal"))
+        Utils.writeText(self.messageTurtle, 0, 0, "Press '2' for PvP mode     ", textFont=("Arial", 16, "normal"))
+        Utils.writeText(self.messageTurtle, 0, -50, "Press '3' for PvE mode     ", textFont=("Arial", 16, "normal"))
+        Utils.writeText(self.messageTurtle, 0, -110, "Press 'H' for Help", textFont=("Arial", 12, "italic"))
+        Utils.writeText(self.messageTurtle, 0, -140, "Press 'Escape' to return to Menu", textFont=("Arial", 12, "italic"))
         Utils.activateKeys([(lambda: self.setGameMode(GameMode.SINGLE), "1"),
                            (lambda: self.setGameMode(GameMode.PVP), "2"),
                            (lambda: self.setGameMode(GameMode.PVE), "3"),
@@ -420,12 +381,12 @@ class Game:
             leadingSpaces = len(line) - len(strippedLine)
             xOffset = -modalWidth / 2 + (modalWidth - longestTextLineWidth) / 2
             xOffset += leadingSpaces * 10
-            self.writeText(self.messageTurtle, xOffset, yOffset, line, "left", ("Arial", 10, "normal"))
+            Utils.writeText(self.messageTurtle, xOffset, yOffset, line, "left", ("Arial", 10, "normal"))
             yOffset -= 20
         if self.gameRunning:
-            self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
+            Utils.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
         else:
-            self.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start menu", textFont=("Arial", 8, "italic"))
+            Utils.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start menu", textFont=("Arial", 8, "italic"))
 
     def initHallOfFame(self, victory):
         if os.path.exists(self.hallOfFameStoragePath):
@@ -442,15 +403,15 @@ class Game:
         scores = self.loadHallOfFame()
         self.messageTurtle.clear()
         Draw.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
-        self.writeText(self.messageTurtle, 0, 180, "🏆 Hall of Fame 🏆", textFont=("Arial", 32, "bold"))
+        Utils.writeText(self.messageTurtle, 0, 180, "🏆 Hall of Fame 🏆", textFont=("Arial", 32, "bold"))
 
         y_offset = 130
         for index, (name, score) in enumerate(scores, 1):
             resultTextFont = ("Arial", 24, "bold") if index <= 3 else ("Arial", 16, "normal")
             resultTextColor = "gold" if index == 1 else "silver" if index == 2 else "chocolate3" if index == 3 else "black"
-            self.writeText(self.messageTurtle, -150, y_offset, f"{index}. {name} - {score}", "left", textFont=resultTextFont, textColor=resultTextColor)
+            Utils.writeText(self.messageTurtle, -150, y_offset, f"{index}. {name} - {score}", "left", textFont=resultTextFont, textColor=resultTextColor)
             y_offset -= 35
-        self.writeText(self.messageTurtle, 0, -220, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
+        Utils.writeText(self.messageTurtle, 0, -220, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
 
     def loadHallOfFame(self):
         with open(self.hallOfFameStoragePath, "r", encoding="utf-8") as file:

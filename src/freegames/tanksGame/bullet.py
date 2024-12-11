@@ -44,7 +44,7 @@ class Bullet:
             return True
         for tank in game.allTanks:
             if tank != bullet.shooter and tank.position.x <= bullet.position.x <= tank.position.x + tankSize and tank.position.y <= bullet.position.y <= tank.position.y + tankSize:
-                game.drawExplosion(Turtle(visible=False), bullet.position.x, bullet.position.y)
+                Draw.drawExplosion(game, bullet.position.x, bullet.position.y)
                 tank.takeDamage(bullet.shooter.attack, f"tank {tank.tankId} was shot down by tank {bullet.shooter.tankId}")
                 return True
         bulletTileValue = game.tiles[game.getTileIndexFromPoint(bullet.position)]

@@ -24,3 +24,9 @@ class Utils:
     def deactivateKeys(keys):
         for key in keys:
             onkey(None, key)  # type: ignore
+
+    @staticmethod
+    def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold"), textColor="black"):
+        turtleObject.color(textColor)
+        turtleObject.goto(x, y)
+        turtleObject.write(message, align=textAlign, font=textFont)

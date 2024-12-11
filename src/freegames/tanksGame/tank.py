@@ -84,7 +84,7 @@ class Tank:
             x, y = self.game.getTilePosition(tileIndex)
             self.game.tiles[tileIndex] = Tile.ROAD.value
             Draw.drawSquare(self.game.mapTurtle, x, y, self.game.tileSize, squareColor=self.game.tileColors[Tile.ROAD.value])
-            self.game.drawExplosion(Turtle(visible=False), x + self.game.tileSize // 2, y + self.game.tileSize // 2)
+            Draw.drawExplosion(self.game, x + self.game.tileSize // 2, y + self.game.tileSize // 2)
             self.takeDamage(random.randint(self.game.basicAttack//2, self.game.basicAttack*2), f"tank {self.tankId} ran over a mine")
         elif tileValue == Tile.TELEPORT.value:
             if self.speed.x:
@@ -100,7 +100,8 @@ class Tank:
             self.reloadTurtle.clear()
             self.bonusDisplayTurtle.clear()
         else:
-            self.drawTank()
+            Draw.drawTank(self)
+            Bonus.displayActiveBonuses(self)
 
     def teleportToMiddleTile(self):
         tileIndex = self.game.getTileIndexFromPoint(self.position)
@@ -112,71 +113,6 @@ class Tank:
             self.position = vector(self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization, self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization + self.game.tileSize)
         else:
             self.position = vector(self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization, self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization)
-
-    def drawHP(self, hpColor="red", bgColor="black"):
-        self.hpTurtle.clear()
-        if self.hp > 0:
-            x, y = self.position - self.game.tankCentralization
-            barWidth = self.game.tileSize
-            barHeight = self.game.tileSize // 20 * 3
-            baseHpRatio = min(self.hp / self.game.basicHp, 1)
-            Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth, barHeight, bgColor)
-            Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize*1.2, barWidth*baseHpRatio, barHeight, hpColor)
-            if self.hp > self.game.basicHp:
-                additionalHpRatio = (self.hp - self.game.basicHp) / self.game.basicHp
-                Draw.drawRectangle(self.hpTurtle, x, y + self.game.tileSize * 1.2, barWidth*additionalHpRatio, barHeight, "purple", "")
-
-    def drawReloadBar(self, reloadColor="gold", bgColor="black"):
-        if self.reloadTurtle is None:
-            return
-        self.reloadTurtle.clear()
-        if self.hp > 0:
-            x, y = self.position - self.game.tankCentralization
-            barWidth = self.game.tileSize
-            barHeight = self.game.tileSize // 20 * 3
-            reloadRatio = max(1 - (self.reloadingRemainingTime / self.reloadingTime), 0) if self.reloadingTime > 0 else 1
-            Draw.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth, barHeight, bgColor)
-            Draw.drawRectangle(self.reloadTurtle, x, y + self.game.tileSize, barWidth * reloadRatio, barHeight, reloadColor)
-
-    def drawTank(self):
-        self.tankTurtle.clear()
-        x, y = self.position
-        angle = self.direction
-        t = self.game.tileSize // 20
-        """Draw tracks."""
-        trackOffsets = {
-            0: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t), (12 * t, 12 * t)],
-            90: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)],
-            180: [(0, 0), (0, 4 * t), (0, 8 * t), (0, 12 * t), (12 * t, 0), (12 * t, 4 * t), (12 * t, 8 * t), (12 * t, 12 * t)],
-            270: [(0, 0), (4 * t, 0), (8 * t, 0), (12 * t, 0), (0, 12 * t), (4 * t, 12 * t), (8 * t, 12 * t), (12 * t, 12 * t)]
-        }
-        for index, (dx, dy) in enumerate(trackOffsets[angle]):
-            Draw.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, self.tankColor)
-            if self.destroyed and index in [0, t, 5, t]:
-                Draw.drawSquare(self.tankTurtle, x + dx, y + dy, 4 * t, "black")
-        """Draw hull."""
-        hullOffsets = {0: (4 * t, t), 90: (t, 4 * t), 180: (4 * t, 7 * t), 270: (7 * t, 4 * t)}
-        Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 8 * t, self.tankColor)
-        if self.destroyed:
-            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1], 2 * t, "black", "")
-            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 4 * t, y + hullOffsets[angle][1], 2 * t, "black", "")
-            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0], y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
-            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 2 * t, y + hullOffsets[angle][1] + 2 * t, 2 * t, "black", "")
-            Draw.drawSquare(self.tankTurtle, x + hullOffsets[angle][0] + 6 * t, y + hullOffsets[angle][1] + 4 * t, 2 * t, "black", "")
-        """Draw cannon."""
-        cannonOffsets = {
-            0: [(7 * t, 9 * t), (7 * t, 11 * t), (7 * t, 13 * t)],
-            90: [(9 * t, 7 * t), (11 * t, 7 * t), (13 * t, 7 * t)],
-            180: [(7 * t, 5 * t), (7 * t, 3 * t), (7 * t, t)],
-            270: [(5 * t, 7 * t), (3 * t, 7 * t), (t, 7 * t)]
-        }
-        for dx, dy in cannonOffsets[angle]:
-            Draw.drawSquare(self.tankTurtle, x + dx, y + dy, 2 * t, self.tankColor)
-        if self.destroyed:
-            Draw.drawSquare(self.tankTurtle, x + cannonOffsets[angle][1][0], y + cannonOffsets[angle][1][1], 2 * t, "black")
-        self.drawHP()
-        self.drawReloadBar()
-        Bonus.displayActiveBonuses(self)
 
     def setControls(self):
         onkey(lambda: self.shoot(), self.shootingControl)
@@ -219,7 +155,7 @@ class Tank:
         else:
             self.loaded = True
         if self.game.tiles[self.game.getTileIndexFromPoint(self.position + int(self.game.tileSize * 0.4))] != Tile.FOREST.value:
-            self.drawReloadBar()
+            Draw.drawReloadBar(self)
 
     @staticmethod
     def debugPrintActualHpSituation(func):
@@ -238,5 +174,5 @@ class Tank:
             if self.hp <= 0:
                 self.destroyed = True
                 self.deathReason = reason
-                self.drawTank()
+                Draw.drawTank(self)
             self.game.damageSound.play()
