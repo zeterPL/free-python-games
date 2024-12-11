@@ -3,7 +3,7 @@
 
 # virutalenv directories
 /env*/
-venv/
+/venv*/
 
 # coverage files
 .coverage
