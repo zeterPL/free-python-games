@@ -153,25 +153,34 @@ maxNumberOfBonuses = 5
 ```
 
 # Rodzaje mapy
-0) **brak pola** - traktowane jako element nie należący do mapy</br>
-1) **droga** - pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów</br>
-2) **rzeka** - pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie</br>
-3) **las** - pole po którym mogą jeździć czołgi, ale są nie widoczne wtedy</br>
-4) **nieznisczalny blok** - blokuje czołgi i pociski, nie można go znisczyć</br>
-5) **nisczączy się blok** - blokuje czołgi, ale można go znisczyć strzelając do niego</br>
-6) **znisczony blok** - działa jak droga, jest to niszczący się blok który został znisczony przez pocisk</br>
-7) **mina** - działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbe obrażeń z zakresu od 0.5-2 * basicAttack</br>
-8) **teleport** - automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem, teleportuje czołg na przeciwną stronę mapy</br>
+
+| ID      | Pole mapy                        | Opis działania pola mapy                                                                 |
+|:-------:|----------------------------------|------------------------------------------------------------------------------------------|
+| 0       | **brak pola**                    | Traktowane jako element nie należący do mapy.                                            |
+| 1       | **droga**                        | Pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów.                 |
+| 2       | **rzeka**                        | Pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie.          |
+| 3       | **las**                          | Pole po którym mogą jeździć czołgi, ale są wtedy niewidoczne.                            |
+| 4       | **niezniszczalny&nbsp;blok**     | Blokuje czołgi i pociski, nie można go zniszczyć.                                        |
+| 5       | **niszczący&nbsp;się&nbsp;blok** | Blokuje czołgi, ale można go zniszczyć strzelając do niego.                              |
+| 6       | **zniszczony&nbsp;blok**         | Działa jak droga, jest to niszczący się blok który został zniszczony przez pocisk.       |
+| 7       | **mina**                         | Działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbę obrażeń z zakresu od połowy do dwukrotności basicAttack. |
+| 8       | **teleport**                     | Automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem. Teleportuje czołg na przeciwną stronę mapy. |
+
 
 # Rodzaje bonusów
-1) **zdrowie** - natychmiastwo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2*basicHp</br>
-2) **przeładowanie** - przeładowywuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy</br>
-3) **regeneracja** - przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg</br>
-4) **tarcza** - przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia</br>
-5) **zwiększone obrażenia** - przez 5 sekund czołg zadaje 2 razy więcej obrażeń</br>
-6) **prędkość** - przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej</br>
-7) **railgun** - przez 7 sekund czołg strzela laserem, natymiachstwo laser dociera do celu</br>
-8) **wszystkie bonusy** - przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy w tym zdrowie 1 raz</br>
+
+| ID      | Bonus                  | Opis działania bonusu                                                                           |
+|:-------:|------------------------|---------------------------------------------------------------------------------------|
+| 1       | **zdrowie**            | Natychmiastowo leczy czołg o 30 hp, maksymalny limit hp dla czołgu to 2 * basicHp.    |
+| 2       | **przeładowanie**       | Przeładowuje i przez 10 sekund skraca czas przeładowania dwukrotnie, minimalny czas przeładowania to 0.2 sekundy. |
+| 3       | **regeneracja**        | Przez 10 sekund co sekundę leczy czołg o 10% jego maksymalnego hp, ale nie przekracza limitu maksymalnego hp jaki ma czołg. |
+| 4       | **tarcza**             | Przez 4 sekundy czołg jest niewrażliwy na wszelkie obrażenia.                        |
+| 5       | **zwiększone&nbsp;obrażenia** | Przez 5 sekund czołg zadaje 2 razy więcej obrażeń.                                   |
+| 6       | **prędkość**           | Przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej. |
+| 7       | **railgun**            | Przez 7 sekund czołg strzela laserem, laser natychmiast dociera do celu i zadaje obrażenia.             |
+| 8       | **wszystkie bonusy**   | Przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy, w tym jednorazowo zdrowie. |
+
+
 
 # Struktura plików projektu
 <!--- W cmd: tree /F  --->
