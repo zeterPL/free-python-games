@@ -1,3 +1,21 @@
+
+"""
+Tank Battle Game
+
+Exercises:
+
+1. Change the colors of the tanks and bullets.
+2. Adjust the frame rate to make the game faster or slower.
+3. Modify the speed of the bullets.
+4. Add more obstacles or rearrange their positions.
+5. Increase or decrease the tank's movement speed.
+6. Add an AI-controlled tank.
+7. Implement a power-up system (e.g., extra bullets or health).
+8. Create a scoring system to track wins.
+9. Allow multiple players (up to 4 tanks).
+10. Add a second bullet type with different behaviors.
+"""
+
 from turtle import *
 from freegames import vector
 from math import cos, sin, radians
