@@ -91,7 +91,7 @@ screen = Screen()
 screen.setup(420, 420)
 screen.tracer(False)
 
-# Tworzenie mapy
+# Create map
 obstacles = []
 for x, y in [(-100, 50), (50, -50), (0, 100)]:
     obs = Turtle()
@@ -126,7 +126,6 @@ def update():
                 bullet_turtle.goto(bullet.x, bullet.y)
                 new_bullets.append((bullet, direction, bullet_turtle))
 
-                # Sprawdzanie trafienia
                 target = tank2 if tank == tank1 else tank1
                 if abs(bullet - target.position) < 10 and target.hit():
                     print(f"{target.color} tank destroyed!")
