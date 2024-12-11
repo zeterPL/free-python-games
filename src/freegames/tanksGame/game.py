@@ -1,4 +1,4 @@
-from turtle import Turtle, setup, hideturtle, listen, update, done, tracer, onkey, ontimer, bgcolor, clearscreen, resetscreen
+from turtle import Turtle, setup, hideturtle, listen, update, done, tracer, bgcolor, clearscreen, resetscreen
 from freegames import floor, vector
 import os
 from pygame import mixer
@@ -12,6 +12,7 @@ from bonus import Bonus
 from tile import Tile, tileColors, defaultTiles
 from draw import Draw
 from bullet import Bullet
+from utils import Utils
 
 
 class GameMode(Enum):
@@ -227,7 +228,7 @@ class Game:
         self.gamePaused = False
 
         self.resetGame(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
-        Game.activateKeys([(self.togglePause, "p"), (self.toggleHelpMenu, "h"), (self.showStartMenu, "Escape")])
+        Utils.activateKeys([(self.togglePause, "p"), (self.toggleHelpMenu, "h"), (self.showStartMenu, "Escape")])
 
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0,
@@ -274,7 +275,7 @@ class Game:
             if self.roundCounter % 10 == 0:  # every second update active bonuses statuses
                 for tank in self.allTanks:
                     Bonus.updateActiveBonuses(tank)
-            ontimer(self.roundOfMovement, 100)
+            Utils.safeOntimer(self.roundOfMovement, 100)
 
     def checkIfGameOver(self):
         if self.gameMode == GameMode.SINGLE:
@@ -298,17 +299,12 @@ class Game:
         for tank in self.allTanks:  # draw destroyed tanks
             tank.drawTank()
         currentRound = self.gameRound
-        ontimer(lambda: self.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, self.victorySound.play if victory else self.gameOverSound.play), 1000)
-        ontimer(lambda: self.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
+        Utils.safeOntimer(lambda: Utils.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, self.victorySound.play if victory else self.gameOverSound.play), 1000)
+        Utils.safeOntimer(lambda: Utils.conditionalExecution(not self.gameRunning and currentRound == self.gameRound,
+                                                             self.drawModalMessage, f"{'Victory' if victory else 'Game Over'}!\n{announcement}", "Press 'R' to restart"), 2000)
         if self.gameMode == GameMode.SINGLE:
-            ontimer(lambda: self.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, lambda v=victory: self.initHallOfFame(v)), 2000)
-        Game.activateKeys([(self.startGame, "r")])
-
-    @staticmethod
-    def conditionalExecution(condition, function, *args, **kwargs):
-        conditionResult = condition() if callable(condition) else condition
-        if conditionResult:
-            return function(*args, **kwargs)
+            Utils.safeOntimer(lambda: Utils.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, lambda v=victory: self.initHallOfFame(v)), 2000)
+        Utils.activateKeys([(self.startGame, "r")])
 
     def tanksCollision(self, tankChecking, tankCheckingPosition=None, collisionThreshold=20):
         tankCheckingPosition = tankCheckingPosition or tankChecking.position
@@ -375,9 +371,9 @@ class Game:
         for dx, dy in offsets:
             Draw.drawSquare(drawingTurtle, x + dx * (explosionIteration + t), y + dy * (explosionIteration + t), 2 * t + explosionIteration, explosionColor)
         if explosionIteration < maxIterations:
-            ontimer(lambda: self.drawExplosion(drawingTurtle, x, y, explosionIteration + 1, maxIterations), 150)
+            Utils.safeOntimer(lambda: self.drawExplosion(drawingTurtle, x, y, explosionIteration + 1, maxIterations), 150)
         else:
-            ontimer(drawingTurtle.clear, 200)
+            Utils.safeOntimer(drawingTurtle.clear, 200)
 
     def drawModalMessage(self, message, subMessage, x=0, y=0, modalWidth=350, modalHeight=120):
         self.messageTurtle.clear()
@@ -385,20 +381,10 @@ class Game:
         self.writeText(self.messageTurtle, 0, 0, message)
         self.writeText(self.messageTurtle, 0, -40, subMessage, textFont=("Arial", 12, "normal"))
 
-    @staticmethod
-    def activateKeys(keyBindings):
-        for func, key in keyBindings:
-            onkey(func, key)
-
-    @staticmethod
-    def deactivateKeys(keys):
-        for key in keys:
-            onkey(None, key)  # type: ignore
-
     def showStartMenu(self):
         self.gameRunning = False
         self.resetGame(420, 420, 540, 200)
-        Game.activateKeys([(self.showGameModeMenu, "p"), (self.toggleHelpMenu, "h"), (exit, "Escape")])
+        Utils.activateKeys([(self.showGameModeMenu, "p"), (self.toggleHelpMenu, "h"), (exit, "Escape")])
         Draw.drawRectangle(self.messageTurtle, 0, 0, self.modalWidth, self.modalHeight, "white", "black", True, borderThickness=2)
         self.writeText(self.messageTurtle, 0, 70, "Tank Battle Game", textFont=("Arial", 32, "bold"))
         self.writeText(self.messageTurtle, 0, -20, "Press 'P' to Play", textFont=("Arial", 18, "normal"))
@@ -414,13 +400,13 @@ class Game:
         self.writeText(self.messageTurtle, 0, -50, "Press '3' for PvE mode     ", textFont=("Arial", 16, "normal"))
         self.writeText(self.messageTurtle, 0, -110, "Press 'H' for Help", textFont=("Arial", 12, "italic"))
         self.writeText(self.messageTurtle, 0, -140, "Press 'Escape' to return to Menu", textFont=("Arial", 12, "italic"))
-        Game.activateKeys([(lambda: self.setGameMode(GameMode.SINGLE), "1"),
+        Utils.activateKeys([(lambda: self.setGameMode(GameMode.SINGLE), "1"),
                            (lambda: self.setGameMode(GameMode.PVP), "2"),
                            (lambda: self.setGameMode(GameMode.PVE), "3"),
                            (self.showStartMenu, "Escape")])
 
     def setGameMode(self, mode):
-        Game.deactivateKeys(["1", "2", "3"])
+        Utils.deactivateKeys(["1", "2", "3"])
         self.gameMode = mode
         self.startGame()
 

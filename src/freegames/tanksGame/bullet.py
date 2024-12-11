@@ -1,7 +1,8 @@
-from turtle import Turtle, ontimer
+from turtle import Turtle
 from freegames import vector
 from draw import Draw
 from tile import Tile
+from utils import Utils
 
 
 class Bullet:
@@ -26,7 +27,7 @@ class Bullet:
                 self.position.move(bulletDirectionMovements[self.direction] * self.shooter.speedRatio / 5)
                 laserTurtle = Turtle(visible=False)
                 Draw.drawSquare(laserTurtle, self.position.x, self.position.y, int(0.1 * self.shooter.game.tileSize), "blue", "")
-                ontimer(laserTurtle.clear, 200)
+                Utils.safeOntimer(laserTurtle.clear, 200)
             return True
         for _ in range(self.bulletSpeed//5):
             self.position.move(bulletDirectionMovements[self.direction] * self.shooter.speedRatio)

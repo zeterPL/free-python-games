@@ -1,10 +1,11 @@
-from turtle import Turtle, onkey, ontimer
+from turtle import Turtle, onkey
 from freegames import vector
 import random
 from bullet import Bullet
 from tile import Tile
 from bonus import Bonus, BonusType
 from draw import Draw
+from utils import Utils
 
 
 class Tank:
@@ -44,7 +45,7 @@ class Tank:
         self.hpTurtle = None
         self.reloadTurtle = None
         self.bonusDisplayTurtle = None
-        self.game.deactivateKeys([self.stoppingControl, self.shootingControl] + list(self.moveControls.keys()))
+        Utils.deactivateKeys([self.stoppingControl, self.shootingControl] + list(self.moveControls.keys()))
 
     def change(self, tankSpeedDirection, angle=None):
         if self.destroyed:
@@ -210,11 +211,11 @@ class Tank:
 
     def updateReload(self):
         if self.game.gamePaused:
-            ontimer(self.updateReload, 100)
+            Utils.safeOntimer(self.updateReload, 100)
             return
         if self.reloadingRemainingTime > 0:
             self.reloadingRemainingTime -= 100  # Decrease remaining time
-            ontimer(self.updateReload, 100)  # Update every 100ms
+            Utils.safeOntimer(self.updateReload, 100)  # Update every 100ms
         else:
             self.loaded = True
         if self.game.tiles[self.game.getTileIndexFromPoint(self.position + int(self.game.tileSize * 0.4))] != Tile.FOREST.value:
