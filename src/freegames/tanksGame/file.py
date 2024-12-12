@@ -66,6 +66,7 @@ class File:
         rowsCount = parseInt(config, 'settings', 'rows', default='20')
         columnsCount = parseInt(config, 'settings', 'columns', default='20')
         tileSize = parseInt(config, 'settings', 'tileSize', default='20')
+        centerGameOnScreen = parseBool(config, 'settings', 'centerGameOnScreen')
         startGameX = parseInt(config, 'settings', 'startGameX', default='500')
         startGameY = parseInt(config, 'settings', 'startGameY', default='100')
         basicHp = parseInt(config, 'settings', 'basicHp', default='3')
@@ -103,6 +104,7 @@ class File:
             "rows": rowsCount,
             "columns": columnsCount,
             "tileSize": tileSize,
+            "centerGameOnScreen": centerGameOnScreen,
             "startGameX": startGameX,
             "startGameY": startGameY,
             "basicHp": basicHp,

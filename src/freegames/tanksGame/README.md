@@ -53,8 +53,9 @@ pip install -r .\files\requirements.txt
 **tiles** - ustawienie wartości pól mapy (od 0 do 8), gdzie można zastąpić 1 spacją, jeśli nie jest to ostatnia wartość w wierszu
 
 ### settings
-**startGameX** - pozycja w osi X na ekranie gdzie ma rozpocząć grę podawana w pixelach</br>
-**startGameY** - pozycja w osi Y na ekranie gdzie ma rozpocząć grę podawana w pixelach</br>
+**centerGameOnScreen** - włączenie wyśrodkowania okna gry względem całego ekranu</br>
+**startGameX** - pozycja w osi X na ekranie gdzie ma rozpocząć grę podawana w pixelach, jeśli nie wyśrodkowano okna gry</br>
+**startGameY** - pozycja w osi Y na ekranie gdzie ma rozpocząć grę podawana w pixelach, jeśli nie wyśrodkowano okna gry</br>
 **rows** - liczba wierszy na mapie</br>
 **columns** - liczba kolumn na mapie</br>
 **tileSize** - rozmiar pola, powinien być wielokrotnością liczby 20 np. 20, 40, 60</br>

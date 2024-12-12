@@ -29,6 +29,7 @@ class Game:
         self.rows = 20
         self.columns = 20
         self.tileSize = 20
+        self.centerGameOnScreen = False
         self.startGameX = 500
         self.startGameY = 100
         self.basicHp = 3
@@ -105,6 +106,7 @@ class Game:
             self.rows = loadedData['rows'] or self.rows
             self.columns = loadedData['columns'] or self.columns
             self.tileSize = loadedData['tileSize'] or self.tileSize
+            self.centerGameOnScreen = loadedData['centerGameOnScreen'] or self.centerGameOnScreen
             self.startGameX = loadedData['startGameX'] if loadedData['startGameX'] is not None else self.startGameX
             self.startGameY = loadedData['startGameY'] if loadedData['startGameY'] is not None else self.startGameY
             self.basicHp = loadedData['basicHp'] or self.basicHp
@@ -205,7 +207,7 @@ class Game:
         clearscreen()
         hideturtle()
         tracer(False)
-        setup(setupWidth, setupHeight, setupXPosition, setupYPosition)
+        Utils.setupGameOnScreen(setupWidth, setupHeight, self.centerGameOnScreen, setupXPosition, setupYPosition)
         listen()
         self.gameRound += 1
         self.tiles = list(self.initialTiles)  # restarting map to state before changes in game
@@ -399,7 +401,7 @@ class Game:
             self.showHallOfFame()
 
     def showHallOfFame(self, modalWidth=400, modalHeight=500):
-        setup(max((self.columns + 1) * self.tileSize, 400), max((self.rows + 1) * self.tileSize, 500), self.startGameX, self.startGameY)
+        Utils.setupGameOnScreen(max((self.columns + 1) * self.tileSize, 400), max((self.rows + 1) * self.tileSize, 500), self.centerGameOnScreen, self.startGameX, self.startGameY)
         scores = self.loadHallOfFame()
         self.messageTurtle.clear()
         Draw.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)

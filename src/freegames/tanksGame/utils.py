@@ -1,4 +1,5 @@
-from turtle import ontimer, Terminator, onkey
+from turtle import ontimer, Terminator, onkey, setup
+from tkinter import Tk
 
 
 class Utils:
@@ -30,3 +31,32 @@ class Utils:
         turtleObject.color(textColor)
         turtleObject.goto(x, y)
         turtleObject.write(message, align=textAlign, font=textFont)
+
+    @staticmethod
+    def debugPrintActualHpSituation(func):
+        def wrapper(self, *args, **kwargs):
+            if hasattr(self, 'tankId') and hasattr(self, 'hp') and self.tankId in [0, 1]:
+                print(f"TankId={self.tankId} hp={self.hp} before damage:")
+            result = func(self, *args, **kwargs)
+            if hasattr(self, 'tankId') and hasattr(self, 'hp') and self.tankId in [0, 1]:
+                print(f"TankId={self.tankId} hp={self.hp} after damage")
+            return result
+        return wrapper
+
+    @staticmethod
+    def setupGameOnScreen(gameWidth, gameHeight, centerGame=False, optionalStartX=0, optionalStartY=0):
+        if centerGame:
+            root = Tk()
+            root.withdraw()
+            screenWidth = root.winfo_screenwidth()
+            screenHeight = root.winfo_screenheight()
+            xPosition = (screenWidth - gameWidth) // 2
+            yPosition = (screenHeight - gameHeight) // 2
+            # print(f"{screenWidth=} {screenHeight=} {xPosition=} {yPosition=}")
+            setup(width=gameWidth, height=gameHeight, startx=xPosition, starty=yPosition)
+            root.destroy()
+        else:
+            startX = optionalStartX if optionalStartX is not None else 0
+            startY = optionalStartY if optionalStartY is not None else 0
+            setup(gameWidth, gameHeight, startX, startY)
+
