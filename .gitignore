@@ -5,15 +5,4 @@
 /env*/
 venv/
 
-# coverage files
-.coverage
-
-# setup, test and upload directories
-/.cache/
-/.tox/
-/build/
-/dist/
-/docs/_build/
-*.egg-info/
-
-.DS_Store
+.idea/

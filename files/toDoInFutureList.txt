@@ -1,0 +1,10 @@
+potencjalne:
+    baza (trzeba chronic)
+    dodatkowe bonusy (pociski ze specalnymi efektami np. rozdzielające się lub samonaprawadzające się jeśli w pobliżu, dodatkowa aminucja jesli ograniczona ilosc)
+
+    tekstury zamiast rysowania
+    dostep z 2 komputerow
+
+bugi:
+    teleport pozwala teleportowac czolg jeden na drugi oraz na przeszkody
+    tworzenie mapy teleportu na srodku mapy
