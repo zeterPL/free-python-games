@@ -1,5 +1,4 @@
 BEST:40000
-WIN:36000
-OK:33600
-XD:13720
-Anonymous:6480
+WIN:33600
+Anonymous:12080
+nice try:10400

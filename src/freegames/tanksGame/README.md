@@ -17,6 +17,7 @@ ___
 # Opis gry
 Gra w czołgi, w której celem jest zniszczenie wszystkich wrogich czołgów.</br>
 W zależności od wybranego trybu gry, gracz musi zniszczyć wszystkie wrogie czołgi komputera lub wrogi czołg innego gracza. 
+![Demo game](files/readmeFiles/demo.gif)
 
 # Funkcjonalność
 **Gra w czołgi**
