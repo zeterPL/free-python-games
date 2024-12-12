@@ -1,4 +1,4 @@
-from turtle import Turtle, setup, hideturtle, listen, update, done, tracer, clearscreen, resetscreen
+from turtle import Turtle, hideturtle, listen, update, done, tracer, clearscreen, resetscreen
 from freegames import floor, vector
 import os
 from pygame import mixer
