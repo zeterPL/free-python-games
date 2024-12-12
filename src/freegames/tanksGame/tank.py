@@ -157,7 +157,7 @@ class Tank:
         if self.game.tiles[self.game.getTileIndexFromPoint(self.position + int(self.game.tileSize * 0.4))] != Tile.FOREST.value:
             Draw.drawReloadBar(self)
 
-    @Utils.debugPrintActualHpSituation
+    # @Utils.debugPrintActualHpSituation
     def takeDamage(self, amount, reason):
         if not self.destroyed and not self.indestructible:
             self.hp -= amount
