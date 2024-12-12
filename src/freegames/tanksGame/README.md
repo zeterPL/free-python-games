@@ -372,13 +372,13 @@ classDiagram
     Bonus --> Game
     Bonus "1" o-- "*" BonusType
 
-    File ..> Game
-    Tile ..> Game
-    Draw ..> Game
-    Draw ..> Tank
-    Utils ..> Game
-    Utils ..> Draw
-    Tile ..> Draw
+    Tile <.. Game
+    Tile <.. Draw
+    File <.. Game
+    Utils <.. Game
+    Draw <.. Game
+    Draw <.. Tank
+    Utils <.. Draw
 ```
 
 # Stany gry
