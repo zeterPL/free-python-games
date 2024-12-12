@@ -4,5 +4,7 @@
 # virutalenv directories
 /env*/
 venv/
+dist/
+build/
 
 .idea/
