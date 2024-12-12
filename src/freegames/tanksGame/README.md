@@ -17,7 +17,11 @@ ___
 # Opis gry
 Gra w czołgi, w której celem jest zniszczenie wszystkich wrogich czołgów.</br>
 W zależności od wybranego trybu gry, gracz musi zniszczyć wszystkie wrogie czołgi komputera lub wrogi czołg innego gracza. 
+<h3><details open><summary>Demo game</summary>
+
 ![Demo game](files/readmeFiles/demo.gif)
+
+</details></h3>
 
 # Funkcjonalność
 **Gra w czołgi**
@@ -430,11 +434,11 @@ P --> GM
 
 # Screenshoty z gry
 
-<h3><details><summary>Main menu</summary><img src="files/readmeFiles/mainMenu.png?raw=true" alt="Main menu"></details></h3>
-<h3><details><summary>Selection of game mode</summary><img src="files/readmeFiles/selectGameModeMenu.png?raw=true" alt="selection of game mode"></details></h3>
-<h3><details><summary>Example game</summary><img src="files/readmeFiles/exampleGame.png?raw=true" alt="example game"></details></h3>
-<h3><details><summary>Example end game</summary><img src="files/readmeFiles/endOfGame.png?raw=true" alt="example end game"></details></h3>
-<h3><details><summary>Hall of fame</summary><img src="files/readmeFiles/hallOfFame.png?raw=true" alt="Hall of fame"></details></h3>
-<h3><details><summary>Help</summary><img src="files/readmeFiles/help.png?raw=true" alt="Help"></details></h3>
-<h3><details><summary>Pause</summary><img src="files/readmeFiles/pause.png?raw=true" alt="Pause"></details></h3>
+<h3><details open><summary>Main menu</summary><img src="files/readmeFiles/mainMenu.png?raw=true" alt="Main menu"></details></h3>
+<h3><details open><summary>Selection of game mode</summary><img src="files/readmeFiles/selectGameModeMenu.png?raw=true" alt="selection of game mode"></details></h3>
+<h3><details open><summary>Example game</summary><img src="files/readmeFiles/exampleGame.png?raw=true" alt="example game"></details></h3>
+<h3><details open><summary>Example end game</summary><img src="files/readmeFiles/endOfGame.png?raw=true" alt="example end game"></details></h3>
+<h3><details open><summary>Hall of fame</summary><img src="files/readmeFiles/hallOfFame.png?raw=true" alt="Hall of fame"></details></h3>
+<h3><details open><summary>Help</summary><img src="files/readmeFiles/help.png?raw=true" alt="Help"></details></h3>
+<h3><details open><summary>Pause</summary><img src="files/readmeFiles/pause.png?raw=true" alt="Pause"></details></h3>
 
