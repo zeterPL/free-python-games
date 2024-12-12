@@ -1,3 +1,5 @@
+> [!Tip]  
+> ## [English version of the README is available in README.en.md](README.en.md)
 ___
 **Gra w czołgi stworzona w python 3.11**
 ___
