@@ -67,16 +67,23 @@ def generateUML(files):
                     umlLines.append("}")
     # Add relationships
     umlLines.extend([
-        "Game --> Tank : manages",
-        "Game --> AITank : manages",
-        "Game --> Bonus : manages",
-        "Game --> Bullet : manages",
-        "Game --> Tile : uses",
-        "Game --> File : loads",
-        "Game --> Draw : uses",
-        "Game --> GameMode : has",
-        "Tank <|-- AITank : inherits",
-        "Bonus --> BonusType : has"
+        "Game \"1\" *-- \"*\" Tank",
+        "Game \"1\" *-- \"*\" Bullet",
+        "Game \"1\" *-- \"*\" Bonus",
+        "Game \"1\" *-- \"1\" GameMode",
+        "Tank --> Game",
+        "Tank <|-- AITank",
+        "Tank \"1\" o-- \"*\" BonusType",
+        "Bullet --> Tank",
+        "Bonus --> Game",
+        "Bonus \"1\" o-- \"*\" BonusType",
+        "Tile <.. Game",
+        "Tile <.. Draw",
+        "File <.. Game",
+        "Utils <.. Game",
+        "Draw <.. Game",
+        "Draw <.. Tank",
+        "Utils <.. Draw"
     ])
     umlLines.append("@enduml")
     return "\n".join(umlLines)
@@ -98,7 +105,7 @@ uploadedFiles = [
 umlContent = generateUML(uploadedFiles)
 
 # Save to a file
-umlFilePath = "files/diagrams/diagram7.puml"
+umlFilePath = "files/diagrams/diagram.puml"
 with open(umlFilePath, "w", encoding="utf-8") as umlFile:
     umlFile.write(umlContent)
 

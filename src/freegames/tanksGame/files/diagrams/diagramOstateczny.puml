@@ -11,6 +11,7 @@ class Game {
 - rows : int
 - columns : int
 - tileSize : int
+- centerGameOnScreen : bool
 - startGameX : int
 - startGameY : int
 - basicHp : int
@@ -68,16 +69,9 @@ class Game {
   + roundOfMovement()
   + checkIfGameOver()
   + endGame(victory, announcement)
-  + conditionalExecution(condition, function)
   + tanksCollision(tankChecking, tankCheckingPosition, collisionThreshold)
   + togglePause()
   + toggleHelpMenu()
-  + writeText(turtleObject, x, y, message, textAlign, textFont, textColor)
-  + drawBoard()
-  + drawExplosion(drawingTurtle, x, y, explosionIteration, maxIterations)
-  + drawModalMessage(message, subMessage, x, y, modalWidth, modalHeight)
-  + activateKeys(keyBindings)
-  + deactivateKeys(keys)
   + showStartMenu()
   + showGameModeMenu()
   + setGameMode(mode)
@@ -120,15 +114,11 @@ class Tank {
   + change(tankSpeedDirection, angle)
   + moveTank(wantMove)
   + teleportToMiddleTile()
-  + drawHP(hpColor, bgColor)
-  + drawReloadBar(reloadColor, bgColor)
-  + drawTank()
   + setControls()
   + keyPressHandler(key)
   + tankMovement()
   + shoot()
   + updateReload()
-  + debugPrintActualHpSituation(func)
   + takeDamage(amount, reason)
 }
 enum Tile {
@@ -163,6 +153,12 @@ class Draw {
   + drawLightning(turtleObject, x, y, t, fillColor, circuitColor)
   + drawTriangle(turtleObject, x, y, sideSize, trianglePointedUp, fillColor, circuitColor)
   + drawPortal(turtleObject, x, y, portalSize, numberOfLayers, portalColor, backgroundColor)
+  + drawBoard(game)
+  + drawExplosion(game, x, y, drawingTurtle, explosionIteration, maxIterations)
+  + drawModalMessage(game, message, subMessage, x, y, modalWidth, modalHeight)
+  + drawHP(tank, hpColor, bgColor)
+  + drawReloadBar(tank, reloadColor, bgColor)
+  + drawTank(tank)
 }
 class Bullet {
 - position : vector
@@ -219,14 +215,21 @@ class AITank {
   + decideToShoot()
   + hasLineOfSight(targetPosition)
 }
-Game --> Tank : manages
-Game --> AITank : manages
-Game --> Bonus : manages
-Game --> Bullet : manages
-Game --> Tile : uses
-Game --> File : loads
-Game --> Draw : uses
-Game --> GameMode : has
-Tank <|-- AITank : inherits
-Bonus --> BonusType : has
+Game "1" *-- "*" Tank
+Game "1" *-- "*" Bullet
+Game "1" *-- "*" Bonus
+Game "1" *-- "1" GameMode
+Tank --> Game
+Tank <|-- AITank
+Tank "1" o-- "*" BonusType
+Bullet --> Tank
+Bonus --> Game
+Bonus "1" o-- "*" BonusType
+Tile <.. Game
+Tile <.. Draw
+File <.. Game
+Utils <.. Game
+Draw <.. Game
+Draw <.. Tank
+Utils <.. Draw
 @enduml
