@@ -1,4 +1,5 @@
 BEST:40000
+DEMO:36800
 WIN:33600
 Anonymous:12080
 nice try:10400
