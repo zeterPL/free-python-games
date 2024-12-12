@@ -7,11 +7,12 @@ ___
 2. :scroll: [Funkcjonalność](#funkcjonalność)
 3. :dragon: [Instrukcja instalacji](#instrukcja-instalacji)
 4. :wrench: [Opcje pliku konfiguracyjnego](#opcje-pliku-konfiguracyjnego)
-5. :earth_africa: [Rodzaje mapy](#rodzaje-mapy)
+5. :earth_africa: [Rodzaje pól mapy](#rodzaje-pól-mapy)
 6. :gift: [Rodzaje bonusów](#rodzaje-bonusów)
 7. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
 8. :godmode: [Klasy](#klasy)
 9. :recycle: [Stany gry](#stany-gry)
+10. :camera: [Screenshoty z gry](#screenshoty-z-gry)
 
 # Opis gry
 Gra w czołgi, w której celem jest zniszczenie wszystkich wrogich czołgów.</br>
@@ -152,7 +153,7 @@ bonusSpawningFrequency = 5
 maxNumberOfBonuses = 5
 ```
 
-# Rodzaje mapy
+# Rodzaje pól mapy
 
 | ID | Pole mapy                        | Opis działania pola mapy                                                                                                              |
 |:--:|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
@@ -247,8 +248,8 @@ classDiagram
         +bullets : list~Bullet~
         +bonuses : list~Bonus~
         +gameMode : GameMode
-        +startGame()
-        +roundOfMovement()
+        +startGame() void
+        +roundOfMovement() void
     }
 
     class Tank {
@@ -265,20 +266,20 @@ classDiagram
         +loaded : bool
         +destroyed : bool
         +activeBonuses : dict~BonusType, int~
-        +change(tankSpeedDirection : Vector, angle : int)
-        +moveTank(wantMove : bool)
-        +setControls()
-        +shoot()
-        +takeDamage(amount : int, reason : str)
+        +change(tankSpeedDirection : Vector, angle : int) int
+        +moveTank(wantMove : bool) void
+        +setControls() void
+        +shoot() void
+        +takeDamage(amount : int, reason : str) void
     }
 
     class AITank {
         +target : Tank
         +path : list~int~
-        +decideTarget()
-        +findPath(startIndex : int, endIndex : int)
-        +moveTank(wantMove : bool)
-        +decideToShoot()
+        +decideTarget() void
+        +findPath(startIndex : int, endIndex : int) list~int~
+        +moveTank(wantMove : bool) void
+        +decideToShoot() void
     }
 
     class Bullet {
@@ -286,46 +287,46 @@ classDiagram
         +direction : int
         +bulletSpeed : int
         +shooter : Tank
-        +moveBullet()
-        +static checkBulletHit(game : Game, bullet : Bullet)
-        +static processBulletsMovementsAndCollisions(game : Game)
+        +moveBullet() bool
+        +static checkBulletHit(game : Game, bullet : Bullet) bool
+        +static processBulletsMovementsAndCollisions(game : Game) void
     }
 
     class Bonus {
         +game : Game
         +bonusType : BonusType
         +position : Vector
-        +static spawnBonus(game : Game)
-        +static tankIsOnBonus(tank : Tank, bonus : Bonus, tileSize : int)
-        +static activateBonus(tank : Tank, bonusType : BonusType, amountTime : int)
-        +static updateActiveBonuses(tank : Tank)
-        +static deactivateBonus(tank : Tank, bonusType : BonusType)
-        +static displayActiveBonuses(tank : Tank)
+        +static spawnBonus(game : Game) void
+        +static tankIsOnBonus(tank : Tank, bonus : Bonus, tileSize : int) bool
+        +static activateBonus(tank : Tank, bonusType : BonusType, amountTime : int) void
+        +static updateActiveBonuses(tank : Tank) void
+        +static deactivateBonus(tank : Tank, bonusType : BonusType) void
+        +static displayActiveBonuses(tank : Tank) void
     }
 
     class Draw {
-        +static startDrawing()
-        +static endDrawing()
-        +static drawBoard(game : Game)
-        +static drawExplosion(game : Game, x : int, y : int)
-        +static drawModalMessage(game : Game, message : str, subMessage : str)
-        +static drawHP(tank : Tank)
-        +static drawReloadBar(tank : Tank)
-        +static drawTank(tank : Tank)
+        +static startDrawing() void
+        +static endDrawing() void
+        +static drawBoard(game : Game) void
+        +static drawExplosion(game : Game, x : int, y : int) void
+        +static drawModalMessage(game : Game, message : str, subMessage : str) void
+        +static drawHP(tank : Tank) void
+        +static drawReloadBar(tank : Tank) void
+        +static drawTank(tank : Tank) void
     }
 
     class File {
-        +static loadFileAsArray(fileName : str, errorMessage : str)
-        +static parseControls(controlString : str)
-        +static loadSettingsAndMapFromFile(filePath : str)
+        +static loadFileAsArray(fileName : str, errorMessage : str) list~str~
+        +static parseControls(controlString : str) dict~str, str~
+        +static loadSettingsAndMapFromFile(filePath : str) dict
     }
     
     class Utils {
-        +static safeOntimer(function : Callable, delay : int, *args, **kwargs)
-        +static conditionalExecution(condition : Callable|bool, function : Callable, *args, **kwargs)
-        +static activateKeys(keyBindings : list~tuple~)
-        +static deactivateKeys(keys : list~str~)
-        +static writeText(turtleObject : Turtle, x : int, y : int, message : str, textAlign : str, textFont : tuple, textColor : str)
+        +static safeOntimer(function : Callable, delay : int, *args, **kwargs) void
+        +static conditionalExecution(condition : Callable|bool, function : Callable, *args, **kwargs) Any
+        +static activateKeys(keyBindings : list~tuple~) void
+        +static deactivateKeys(keys : list~str~) void
+        +static writeText(turtleObject : Turtle, x : int, y : int, message : str, textAlign : str, textFont : tuple, textColor : str) void
     }
 
     class GameMode {
@@ -364,7 +365,7 @@ classDiagram
 	Game "1" *-- "*" Tank
     Game "1" *-- "*" Bullet
     Game "1" *-- "*" Bonus
-    Game "1" o-- "1" GameMode
+    Game "1" *-- "1" GameMode
     Tank --> Game
     Tank <|-- AITank
     Tank "1" o-- "*" BonusType
@@ -424,3 +425,14 @@ P: Pauza
 P --> G
 P --> GM
 ```
+
+# Screenshoty z gry
+
+<h3><details><summary>Main menu</summary><img src="files/readmeFiles/mainMenu.png?raw=true" alt="Main menu"></details></h3>
+<h3><details><summary>Selection of game mode</summary><img src="files/readmeFiles/selectGameModeMenu.png?raw=true" alt="selection of game mode"></details></h3>
+<h3><details><summary>Example game</summary><img src="files/readmeFiles/exampleGame.png?raw=true" alt="example game"></details></h3>
+<h3><details><summary>Example end game</summary><img src="files/readmeFiles/endOfGame.png?raw=true" alt="example end game"></details></h3>
+<h3><details><summary>Hall of fame</summary><img src="files/readmeFiles/hallOfFame.png?raw=true" alt="Hall of fame"></details></h3>
+<h3><details><summary>Help</summary><img src="files/readmeFiles/help.png?raw=true" alt="Help"></details></h3>
+<h3><details><summary>Pause</summary><img src="files/readmeFiles/pause.png?raw=true" alt="Pause"></details></h3>
+
