@@ -5,14 +5,15 @@ ___
 ## README Content
 1. :video_game: [Game Description](#game-description)
 2. :scroll: [Functionality](#functionality)
-3. :dragon: [Installation Instructions](#installation-instructions)
-4. :wrench: [Configuration File Options](#configuration-file-options)
-5. :earth_africa: [Map Tile Types](#map-tile-types)
-6. :gift: [Bonus Types](#bonus-types)
-7. :file_folder: [Project File Structure](#project-file-structure)
-8. :godmode: [Classes](#classes)
-9. :recycle: [Game States](#game-states)
-10. :camera: [Game Screenshots](#game-screenshots)
+3. :cd: [Installation via Installer](#installation-via-installer)
+4. :dragon: [Installation Guide for Developers](#installation-guide-for-developers)
+5. :wrench: [Configuration File Options](#configuration-file-options)
+6. :earth_africa: [Map Tile Types](#map-tile-types)
+7. :gift: [Bonus Types](#bonus-types)
+8. :file_folder: [Project File Structure](#project-file-structure)
+9. :godmode: [Classes](#classes)
+10. :recycle: [Game States](#game-states)
+11. :camera: [Game Screenshots](#game-screenshots)
 
 # Game Description
 A tank game where the goal is to destroy all enemy tanks.<br/>
@@ -36,7 +37,23 @@ Depending on the selected game mode, the player must destroy all computer-contro
 9) [x] Hall of fame saving the top 10 player scores.
 10) [x] Pause the game, open help, and return to the menu.
 
-# Installation Instructions
+# Installation via Installer
+
+1. Download the installer:
+   **`TanksBattleGameInstaller.exe`** located in the **`installer`** folder or available in [Releases](../../releases/latest).
+
+2. Run the installer and follow the on-screen instructions.
+
+3. After installation:
+   - A game shortcut will be created on the desktop (if this option was selected in the installer).
+   - You can also launch the game from the Start menu or directly from the installation folder.
+
+### Uninstalling the Game
+You can uninstall the game at any time:
+   - Via the **Control Panel** in the **Programs and Features** section.
+   - Or from the installation folder by using the **`unins000.exe`** file.
+
+# Installation Guide for Developers
 Navigate in the console to the **`tanksGame`** folder.
 
 Create a virtual environment:
@@ -249,19 +266,20 @@ graph TD;
 ```
 
 # Classes
-**Game** - Manages the game, changes game states. Initializes the map and tanks. Contains the method <b><code>roundOfMovement</code></b>, which includes the main game loop.<br/>
-**Tank** - Represents the player's tank, stores its attributes (e.g., health, position) and the logic for movement, shooting, and collisions.<br/>
-**AITank** - Inherits from Tank, adds AI logic, including target selection, movement pathfinding, shooting decisions, and responses to being blocked.<br/>
-**Bullet** - Represents a bullet, handles its movement, collisions, and interactions with other objects on the board.<br/>
-**Bonus** - Represents a bonus, including its appearance, activation, functionality, and display on the board.<br/>
-**File** - 'Static' class responsible for loading and processing files, including configuration, maps, and control settings.<br/>
-**Draw** - 'Static' class containing methods for drawing basic shapes and elements such as bonuses.<br/>
-**Utils** - 'Static' class containing helper methods used in other classes.<br/>
+**Game** - manages the game, changes game states. Initializes the map and tanks. Contains the method <b><code>roundOfMovement</code></b>, which includes the main game loop.<br/>
+**Tank** - represents the player's tank, stores its attributes (e.g., health, position) and the logic for movement, shooting, and collisions.<br/>
+**AITank** - inherits from Tank, adds AI logic, including target selection, movement pathfinding, shooting decisions, and responses to being blocked.<br/>
+**Bullet** - represents a bullet, handles its movement, collisions, and interactions with other objects on the board.<br/>
+**Bonus** - represents a bonus, including its appearance, activation, functionality, and display on the board.<br/>
+**File** - 'static' class responsible for loading and processing files, including configuration, maps, and control settings.<br/>
+**Draw** - 'static' class containing methods for drawing basic shapes and elements such as bonuses.<br/>
+**Utils** - 'static' class containing helper methods used in other classes.<br/>
+**Vector** - represents a two-dimensional vector, used for handling the position, movement, and transformation of objects in the game.</br>
 
 ### Enums
-**GameMode** - Defines available game modes (Single player, PVP, PVE).<br/>
-**Tile** - Defines map tile types (road, forest, teleport, mine...).<br/>
-**BonusType** - Defines available bonus types (health, regeneration, speed, attack...).<br/>
+**GameMode** - defines available game modes (Single player, PVP, PVE).<br/>
+**Tile** - defines map tile types (road, forest, teleport, mine...).<br/>
+**BonusType** - defines available bonus types (health, regeneration, speed, attack...).<br/>
 
 ```mermaid
 classDiagram

@@ -7,14 +7,15 @@ ___
 ## Zawartość REDME
 1. :video_game: [Opis gry](#opis-gry)
 2. :scroll: [Funkcjonalność](#funkcjonalność)
-3. :dragon: [Instrukcja instalacji](#instrukcja-instalacji)
-4. :wrench: [Opcje pliku konfiguracyjnego](#opcje-pliku-konfiguracyjnego)
-5. :earth_africa: [Rodzaje pól mapy](#rodzaje-pól-mapy)
-6. :gift: [Rodzaje bonusów](#rodzaje-bonusów)
-7. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
-8. :godmode: [Klasy](#klasy)
-9. :recycle: [Stany gry](#stany-gry)
-10. :camera: [Screenshoty z gry](#screenshoty-z-gry)
+3. :cd: [Instalacja za pomocą instalatora](#instalacja-za-pomocą-instalatora)
+4. :dragon: [Instrukcja instalacji dla programistów](#instrukcja-instalacji-dla-programistów)
+5. :wrench: [Opcje pliku konfiguracyjnego](#opcje-pliku-konfiguracyjnego)
+6. :earth_africa: [Rodzaje pól mapy](#rodzaje-pól-mapy)
+7. :gift: [Rodzaje bonusów](#rodzaje-bonusów)
+8. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
+9. :godmode: [Klasy](#klasy)
+10. :recycle: [Stany gry](#stany-gry)
+11. :camera: [Screenshoty z gry](#screenshoty-z-gry)
 
 # Opis gry
 Gra w czołgi, w której celem jest zniszczenie wszystkich wrogich czołgów.</br>
@@ -38,7 +39,23 @@ W zależności od wybranego trybu gry, gracz musi zniszczyć wszystkie wrogie cz
 9) [x] Hala sławy zapisująca 10 najlepszych wyników graczy.
 10) [x] Pauzowanie gry, otwieranie helpa oraz powrót do menu.
 
-# Instrukcja instalacji
+# Instalacja za pomocą instalatora
+
+1. Pobierz plik instalatora:
+   **`TanksBattleGameInstaller.exe`** znajdujący się w folderze **`installer`** lub dostępny w [Releases](../../releases/latest).
+
+2. Uruchom instalator i postępuj zgodnie z wyświetlanymi instrukcjami.
+
+3. Po zakończeniu instalacji:
+   - Na pulpicie zostanie utworzona ikona gry (jeśli wybrano tę opcję w instalatorze).
+   - Możesz uruchomić grę również z menu Start lub bezpośrednio z folderu instalacyjnego.
+
+### Odinstalowanie gry
+Grę możesz odinstalować w dowolnym momencie:
+   - Za pomocą **Panelu sterowania** w sekcji **Programy i funkcje**.
+   - Lub z folderu instalacyjnego, używając pliku **`unins000.exe`**.
+
+# Instrukcja instalacji dla programistów
 Przechodzimy w konsoli do folderu **`tanksGame`**
 
 Tworzymy wirtualne środowisko
@@ -259,6 +276,7 @@ graph TD;
 **File** - 'statyczna' klasa, odpowiada za ładowanie i przetwarzanie plików, w tym konfiguracji, map i ustawień sterowania.</br>
 **Draw** - 'statyczna' klasa zawiera metody rysowania podstawowych figur oraz elementów takich jak np. bonusy.</br>
 **Utils** - 'statyczna' klasa zawiera pomocnicze metody wykorzystywane w innych klasach.</br>
+**Vector** - reprezentuje dwuwymiarowy wektor, wykorzystywany do obsługi pozycji, ruchu oraz transformacji obiektów w grze.</br>
 
 ### Enumy
 **GameMode** - definiuje dostępne tryby gry. (Single player, PVP, PVE)</br>
