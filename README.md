@@ -191,44 +191,63 @@ maxNumberOfBonuses = 5
 # Struktura plików projektu
 <!--- W cmd: tree /F  --->
 ```
-tanksGame.
-│   aiTank.py
-│   bonus.py
-│   bullet.py
-│   draw.py
-│   file.py
-│   game.py
-│   tank.py
-│   tile.py
-|   utils.py
-│   __init__.py
+tanksGame
+│   game.spec
+│   main.py
+│   main.spec
+│   requirements.txt
 │
-└───files
-    │   hallOfFame.txt
-    │   help.txt
-    │   requirements.txt
-    │   tanksConfig.ini
-    │
-    └───sounds
-            damage.wav
-            explosion.wav
-            game-over.mp3
-            laserShoot.wav
-            railgun.mp3
-            victory.mp3
+├───src
+│       aiTank.py
+│       bonus.py
+│       bullet.py
+│       draw.py
+│       file.py
+│       game.py
+│       tank.py
+│       tile.py
+│       utils.py
+│       __init__.py
+│
+├───assets
+│   │   hallOfFame.txt
+│   │   help.txt
+│   │
+│   └───sounds
+│           damage.wav
+│           explosion.wav
+│           game-over.mp3
+│           laserShoot.wav
+│           railgun.mp3
+│           victory.mp3
+│
+├───settings
+│       game-config.ini
+└───installer
+        setupScript.iss
+        TanksBattleGameInstaller.exe
 ```
 
 ```mermaid
 graph TD;
-    A[tanksGame]-->G[game.py];
-    A-->T[tank.py];
-    A-->AI[aiTank.py];
-    A-->BL[bullet.py];
-    A-->BS[bonus.py];
-    A-->F[file.py];
-    A-->D[draw.py];
-    A-->TL[tile.py];
-    A-->U[utils.py];
+    T[tanksGame]-->S[src];
+    S-->G([game.py]);
+    S-->TK([tank.py]);
+    S-->AI([aiTank.py]);
+    S-->BL([bullet.py]);
+    S-->BS([bonus.py]);
+    S-->F([file.py]);
+    S-->D([draw.py]);
+    S-->TL([tile.py]);
+    S-->U([utils.py]);
+    T-->A[assets];
+    A-->HF([hallOfFame.txt]);
+    A-->HP([halp.txt]);
+    A-->SS[sounds];
+    T-->ST[settings];
+    ST-->GC([game-config.ini]);
+    T-->I[installer];
+    T-->M([main.py]);
 ```
 
 # Klasy
@@ -364,6 +383,33 @@ classDiagram
         DESTROYED_DESTRUCTIBLE_BLOCK
         MINE
         TELEPORT
+    }
+
+    class Vector {
+        - PRECISION : int
+        - _x : float
+        - _y : float
+        + x()
+        + x(value)
+        + y()
+        + y(value)
+        + set(other)
+        + __len__()
+        + __getitem__(index)
+        + copy()
+        + __eq__(other)
+        + __ne__(other)
+        + __iadd__(other)
+        + __add__(other)
+        + move(other)
+        + __isub__(other)
+        + __sub__(other)
+        + __imul__(other)
+        + __mul__(other)
+        + __itruediv__(other)
+        + __truediv__(other)
+        + __neg__()
+        + __abs__()
     }
 
     %% Relationships
