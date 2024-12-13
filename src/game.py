@@ -1,19 +1,19 @@
 from turtle import Turtle, hideturtle, listen, update, done, tracer, clearscreen, resetscreen
-import os
 from pygame import mixer
 import random
+import os
+import sys
 from tkinter.simpledialog import askstring
 from enum import Enum
 from file import File
 from tank import Tank
 from aiTank import AITank
 from bonus import Bonus
-from tile import Tile, tileColors, defaultTiles
+from tile import Tile
 from draw import Draw
 from bullet import Bullet
 from utils import Utils, Vector
-import os
-import sys
+
 
 class GameMode(Enum):
     SINGLE = 0
@@ -117,9 +117,9 @@ class Game:
             self.secondTankSpawnIndex = loadedData['secondTankIndex'] if loadedData['secondTankIndex'] != -1 else None
             self.enemyTanksSpawnIndexes = loadedData['enemies'] or self.enemyTanksSpawnIndexes
 
-            halllOfFameTmpPath = loadedData.get("hallOfFameStoragePath", self.hallOfFameStoragePath)
+            hallOfFameTmpPath = loadedData.get("hallOfFameStoragePath", self.hallOfFameStoragePath)
             helpFileTmpPath = loadedData.get('helpFilePath', self.helpFilePath)
-            self.hallOfFameStoragePath = os.path.join(rootPath, halllOfFameTmpPath)
+            self.hallOfFameStoragePath = os.path.join(rootPath, hallOfFameTmpPath)
             self.helpFilePath = os.path.join(rootPath, helpFileTmpPath)
 
             self.firstTankControls = loadedData['firstTankControls'] or self.firstTankControls
@@ -446,6 +446,3 @@ class Game:
         with open(self.hallOfFameStoragePath, "w", encoding="utf-8") as file:
             for player_name, player_score in scores:
                 file.write(f"{player_name}:{player_score}\n")
-
-
-

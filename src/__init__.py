@@ -1,2 +1,2 @@
-from game import *
-from tile import *
+from game import Game
+from tile import Tile, tileColors, defaultTiles

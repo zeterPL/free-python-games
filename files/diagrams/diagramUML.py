@@ -1,3 +1,5 @@
+import os
+import sys
 import ast
 
 
@@ -81,32 +83,44 @@ def generateUML(files):
         "Tile <.. Draw",
         "File <.. Game",
         "Utils <.. Game",
+        "Utils <.. Tank",
         "Draw <.. Game",
         "Draw <.. Tank",
-        "Utils <.. Draw"
+        "Utils <.. Draw",
+        "Vector <.. Game",
+        "Vector <.. Tank",
+        "Vector <.. Bonus",
+        "Vector <.. Bullet",
     ])
     umlLines.append("@enduml")
     return "\n".join(umlLines)
 
 
-# Example of how to use the function with files
-uploadedFiles = [
-    "game.py",
-    "tank.py",
-    "tile.py",
-    "file.py",
-    "draw.py",
-    "bullet.py",
-    "bonus.py",
-    "aiTank.py",
-]
+if __name__ == "__main__":
+    # Ustawienie ścieżki projektu jako katalogu głównego
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    SRC_DIR = os.path.join(BASE_DIR, "src")
+    # Dodanie katalogu src do sys.path, aby widzieć moduły z katalogu src
+    sys.path.append(SRC_DIR)
 
-# Generate UML content
-umlContent = generateUML(uploadedFiles)
+    uploadedFiles = [
+        os.path.join(SRC_DIR, "game.py"),
+        os.path.join(SRC_DIR, "tank.py"),
+        os.path.join(SRC_DIR, "tile.py"),
+        os.path.join(SRC_DIR, "file.py"),
+        os.path.join(SRC_DIR, "draw.py"),
+        os.path.join(SRC_DIR, "bullet.py"),
+        os.path.join(SRC_DIR, "bonus.py"),
+        os.path.join(SRC_DIR, "aiTank.py"),
+        os.path.join(SRC_DIR, "utils.py"),
+    ]
 
-# Save to a file
-umlFilePath = "files/diagrams/diagram.puml"
-with open(umlFilePath, "w", encoding="utf-8") as umlFile:
-    umlFile.write(umlContent)
+    # Generate UML content
+    umlContent = generateUML(uploadedFiles)
 
-print(f"UML file saved to {umlFilePath}")
+    # Save to a file
+    umlFilePath = "diagram.puml"
+    with open(umlFilePath, "w", encoding="utf-8") as umlFile:
+        umlFile.write(umlContent)
+
+    print(f"UML file saved to {umlFilePath}")

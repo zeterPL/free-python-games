@@ -215,6 +215,50 @@ class AITank {
   + decideToShoot()
   + hasLineOfSight(targetPosition)
 }
+class Utils {
+  + safeOntimer(function, delay)
+  + conditionalExecution(condition, function)
+  + activateKeys(keyBindings)
+  + deactivateKeys(keys)
+  + writeText(turtleObject, x, y, message, textAlign, textFont, textColor)
+  + debugPrintActualHpSituation(func)
+  + setupGameOnScreen(gameWidth, gameHeight, centerGame, optionalStartX, optionalStartY)
+  + floor(value, size, offset)
+}
+class Vector {
+- PRECISION : unknown
+- __slots__ : unknown
+- _hash : NoneType
+- _x : round
+- _y : round
+- __radd__ : unknown
+- __rmul__ : unknown
+  + x()
+  + x(value)
+  + y()
+  + y(value)
+  + __hash__()
+  + set(other)
+  + __len__()
+  + __getitem__(index)
+  + copy()
+  + __eq__(other)
+  + __ne__(other)
+  + __iadd__(other)
+  + __add__(other)
+  + move(other)
+  + __isub__(other)
+  + __sub__(other)
+  + __imul__(other)
+  + __mul__(other)
+  + scale(other)
+  + __itruediv__(other)
+  + __truediv__(other)
+  + __neg__()
+  + __abs__()
+  + rotate(angle)
+  + __repr__()
+}
 Game "1" *-- "*" Tank
 Game "1" *-- "*" Bullet
 Game "1" *-- "*" Bonus
@@ -229,7 +273,12 @@ Tile <.. Game
 Tile <.. Draw
 File <.. Game
 Utils <.. Game
+Utils <.. Tank
 Draw <.. Game
 Draw <.. Tank
 Utils <.. Draw
+Vector <.. Game
+Vector <.. Tank
+Vector <.. Bonus
+Vector <.. Bullet
 @enduml
