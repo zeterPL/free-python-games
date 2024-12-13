@@ -5,14 +5,14 @@ import os
 import sys
 from tkinter.simpledialog import askstring
 from enum import Enum
-from file import File
-from tank import Tank
-from aiTank import AITank
-from bonus import Bonus
-from tile import Tile
-from draw import Draw
-from bullet import Bullet
-from utils import Utils, Vector
+from .file import File
+from .tank import Tank
+from .aiTank import AITank
+from .bonus import Bonus
+from .tile import Tile
+from .draw import Draw
+from .bullet import Bullet
+from .utils import Utils, Vector
 
 
 class GameMode(Enum):

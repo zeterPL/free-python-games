@@ -54,8 +54,6 @@ You can uninstall the game at any time:
    - Or from the installation folder by using the **`unins000.exe`** file.
 
 # Installation Guide for Developers
-Navigate in the console to the **`tanksGame`** folder.
-
 Create a virtual environment:
 ```sh
 python -m venv venv

@@ -56,8 +56,6 @@ Grę możesz odinstalować w dowolnym momencie:
    - Lub z folderu instalacyjnego, używając pliku **`unins000.exe`**.
 
 # Instrukcja instalacji dla programistów
-Przechodzimy w konsoli do folderu **`tanksGame`**
-
 Tworzymy wirtualne środowisko
 ```sh
 python -m venv venv

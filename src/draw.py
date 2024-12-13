@@ -1,6 +1,6 @@
 from turtle import bgcolor, Turtle
-from utils import Utils
-from tile import Tile
+from .utils import Utils
+from .tile import Tile
 
 
 class Draw:

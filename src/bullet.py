@@ -1,7 +1,7 @@
 from turtle import Turtle
-from draw import Draw
-from tile import Tile
-from utils import Utils, Vector
+from .draw import Draw
+from .tile import Tile
+from .utils import Utils, Vector
 
 
 class Bullet:

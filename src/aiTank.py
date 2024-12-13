@@ -1,7 +1,7 @@
 from collections import deque
-from tank import Tank
-from utils import Vector
-from tile import Tile
+from .tank import Tank
+from .utils import Vector
+from .tile import Tile
 
 
 class AITank(Tank):

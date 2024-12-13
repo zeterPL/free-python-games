@@ -1,9 +1,9 @@
 from turtle import Turtle
 import random
 from enum import Enum
-from draw import Draw
-from tile import Tile
-from utils import Vector
+from .draw import Draw
+from .tile import Tile
+from .utils import Vector
 
 
 class BonusType(Enum):

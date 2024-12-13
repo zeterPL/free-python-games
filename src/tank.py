@@ -1,10 +1,10 @@
 from turtle import Turtle, onkey
 import random
-from bullet import Bullet
-from tile import Tile
-from bonus import Bonus, BonusType
-from draw import Draw
-from utils import Utils, Vector
+from .bullet import Bullet
+from .tile import Tile
+from .bonus import Bonus, BonusType
+from .draw import Draw
+from .utils import Utils, Vector
 
 
 class Tank:
