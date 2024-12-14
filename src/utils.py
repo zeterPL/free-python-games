@@ -1,4 +1,4 @@
-from turtle import ontimer, Terminator, onkey, setup
+from turtle import ontimer, Terminator, onkey, setup, Screen
 from tkinter import Tk
 import collections.abc
 import math
@@ -61,6 +61,9 @@ class Utils:
             startX = optionalStartX if optionalStartX is not None else 0
             startY = optionalStartY if optionalStartY is not None else 0
             setup(gameWidth, gameHeight, startX, startY)
+        screen = Screen()
+        screen.title("Tanks Battle Game")
+        screen._root.iconbitmap("assets/icons/tank.ico")
 
     @staticmethod
     def floor(value, size, offset=200):

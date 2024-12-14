@@ -34,7 +34,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir={#SourcePath}\installer
 OutputBaseFilename=TanksBattleGameInstaller
-SetupIconFile={#SourcePath}\installer\installerTankGameIcon.ico
+SetupIconFile={#SourcePath}\assets\icons\installerTankGameIcon.ico
 Compression=zip
 SolidCompression=yes
 WizardStyle=modern
@@ -51,11 +51,13 @@ Source: "{#SourcePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourcePath}\settings\*"; DestDir: "{app}\settings"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourcePath}\src\*"; DestDir: "{app}\src"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourcePath}\installer\tanksGameIcon.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\assets\icons\tanksGameIcon.ico"; DestDir: "{app}\assets\icons"; Flags: ignoreversion
+Source: "{#SourcePath}\assets\icons\tank.ico"; DestDir: "{app}\assets\icons"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\tanksGameIcon.ico"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\tanksGameIcon.ico"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\icons\tanksGameIcon.ico"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\icons\tanksGameIcon.ico"; Tasks: desktopicon
+
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

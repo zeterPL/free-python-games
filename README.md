@@ -155,7 +155,7 @@ numberOfRandomMines = 0
 timeAfterWhichMinesHide = 20
 
 [controls]
-firstTankControls = Up:Up, Down:Down, Left:Left, Right:Right, Stop:Shift_L, Shoot:Return
+firstTankControls = Up:Up, Down:Down, Left:Left, Right:Right, Stop:Control_R, Shoot:Return
 secondTankControls = Up:w, Down:s, Left:a, Right:d, Stop:i, Shoot:u
 
 [filePaths]

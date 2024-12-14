@@ -404,20 +404,20 @@ class Game:
             self.saveToHallOfFame(playerName, score)
             self.showHallOfFame()
 
-    def showHallOfFame(self, modalWidth=400, modalHeight=500):
+    def showHallOfFame(self, modalWidth=500, modalHeight=625):
         Utils.setupGameOnScreen(max((self.columns + 1) * self.tileSize, 400), max((self.rows + 1) * self.tileSize, 500), self.centerGameOnScreen, self.startGameX, self.startGameY)
         scores = self.loadHallOfFame()
         self.messageTurtle.clear()
         Draw.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
-        Utils.writeText(self.messageTurtle, 0, 180, "🏆 Hall of Fame 🏆", textFont=("Arial", 32, "bold"))
+        Utils.writeText(self.messageTurtle, 0, 200, "🏆 Hall of Fame 🏆", textFont=("Arial", 40, "bold"))
 
         y_offset = 130
         for index, (name, score) in enumerate(scores, 1):
-            resultTextFont = ("Arial", 24, "bold") if index <= 3 else ("Arial", 16, "normal")
+            resultTextFont = ("Arial", 24, "bold") if index <= 3 else ("Arial", 20, "normal")
             resultTextColor = "gold" if index == 1 else "silver" if index == 2 else "chocolate3" if index == 3 else "black"
-            Utils.writeText(self.messageTurtle, -150, y_offset, f"{index}. {name} - {score}", "left", textFont=resultTextFont, textColor=resultTextColor)
+            Utils.writeText(self.messageTurtle, -180, y_offset, f"{index}. {name[:10]} - {score}", "left", textFont=resultTextFont, textColor=resultTextColor)
             y_offset -= 35
-        Utils.writeText(self.messageTurtle, 0, -220, "Press 'R' to restart", textFont=("Arial", 10, "italic"))
+        Utils.writeText(self.messageTurtle, 0, -300, "Press 'R' to restart", textFont=("Arial", 16, "italic"))
 
     def loadHallOfFame(self):
         with open(self.hallOfFameStoragePath, "r", encoding="utf-8") as file:
