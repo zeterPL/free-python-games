@@ -9,3 +9,5 @@ build/
 
 .idea/
 __pycache__/
+
+main.exe

@@ -8,12 +8,13 @@ ___
 3. :cd: [Installation via Installer](#installation-via-installer)
 4. :dragon: [Installation Guide for Developers](#installation-guide-for-developers)
 5. :wrench: [Configuration File Options](#configuration-file-options)
-6. :earth_africa: [Map Tile Types](#map-tile-types)
+6. :world_map: [Map Tile Types](#map-tile-types)
 7. :gift: [Bonus Types](#bonus-types)
 8. :file_folder: [Project File Structure](#project-file-structure)
 9. :godmode: [Classes](#classes)
 10. :recycle: [Game States](#game-states)
 11. :camera: [Game Screenshots](#game-screenshots)
+12. :hammer_and_wrench: [Creating a Game Installer](#creating-a-game-installer)
 
 # Game Description
 A tank game where the goal is to destroy all enemy tanks.<br/>
@@ -493,10 +494,25 @@ P --> GM
 
 # Game Screenshots
 
-<h3><details open><summary>Main menu</summary><img src="files/readmeFiles/mainMenu.png?raw=true" alt="Main menu"></details></h3>
-<h3><details open><summary>Selection of game mode</summary><img src="files/readmeFiles/selectGameModeMenu.png?raw=true" alt="selection of game mode"></details></h3>
-<h3><details open><summary>Example game</summary><img src="files/readmeFiles/exampleGame.png?raw=true" alt="example game"></details></h3>
-<h3><details open><summary>Example end game</summary><img src="files/readmeFiles/endOfGame.png?raw=true" alt="example end game"></details></h3>
-<h3><details open><summary>Hall of fame</summary><img src="files/readmeFiles/hallOfFame.png?raw=true" alt="Hall of fame"></details></h3>
-<h3><details open><summary>Help</summary><img src="files/readmeFiles/help.png?raw=true" alt="Help"></details></h3>
-<h3><details open><summary>Pause</summary><img src="files/readmeFiles/pause.png?raw=true" alt="Pause"></details></h3>
+<h3><details hide><summary>Main menu</summary><img src="files/readmeFiles/mainMenu.png?raw=true" alt="Main menu"></details></h3>
+<h3><details hide><summary>Selection of game mode</summary><img src="files/readmeFiles/selectGameModeMenu.png?raw=true" alt="selection of game mode"></details></h3>
+<h3><details hide><summary>Example game</summary><img src="files/readmeFiles/exampleGame.png?raw=true" alt="example game"></details></h3>
+<h3><details hide><summary>Example end game</summary><img src="files/readmeFiles/endOfGame.png?raw=true" alt="example end game"></details></h3>
+<h3><details hide><summary>Hall of fame</summary><img src="files/readmeFiles/hallOfFame.png?raw=true" alt="Hall of fame"></details></h3>
+<h3><details hide><summary>Help</summary><img src="files/readmeFiles/help.png?raw=true" alt="Help"></details></h3>
+<h3><details hide><summary>Pause</summary><img src="files/readmeFiles/pause.png?raw=true" alt="Pause"></details></h3>
+
+# Creating a Game Installer
+
+1. Navigate to the directory containing `main.py`:
+    ```bash
+    cd /path/to/directory
+    ```
+2. Run the following command in the terminal to create an executable file:
+    ```bash
+    pyinstaller --onefile --noconsole --add-data "assets:assets" --add-data "settings:settings" --distpath=. main.py
+    ```
+3. Launch **Inno Setup Compiler** and compile the `setupScript.iss` file:
+    - Open Inno Setup Compiler.
+    - Select the `setupScript.iss` file.
+    - Click **Compile** (or use the `F9` shortcut) to create the installer.

@@ -8,3 +8,4 @@ potencjalne:
 bugi:
     teleport pozwala teleportowac czolg jeden na drugi oraz na przeszkody
     tworzenie mapy teleportu na srodku mapy
+    hala sławy za mała, przy dłuższej nazwie wystaje poza obszar

@@ -10,12 +10,13 @@ ___
 3. :cd: [Instalacja za pomocą instalatora](#instalacja-za-pomocą-instalatora)
 4. :dragon: [Instrukcja instalacji dla programistów](#instrukcja-instalacji-dla-programistów)
 5. :wrench: [Opcje pliku konfiguracyjnego](#opcje-pliku-konfiguracyjnego)
-6. :earth_africa: [Rodzaje pól mapy](#rodzaje-pól-mapy)
+6. :world_map: [Rodzaje pól mapy](#rodzaje-pól-mapy)
 7. :gift: [Rodzaje bonusów](#rodzaje-bonusów)
 8. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
 9. :godmode: [Klasy](#klasy)
 10. :recycle: [Stany gry](#stany-gry)
 11. :camera: [Screenshoty z gry](#screenshoty-z-gry)
+12. :hammer_and_wrench: [Tworzenie instalatora do gry](#tworzenie-instalatora-do-gry)
 
 # Opis gry
 Gra w czołgi, w której celem jest zniszczenie wszystkich wrogich czołgów.</br>
@@ -495,10 +496,25 @@ P --> GM
 
 # Screenshoty z gry
 
-<h3><details open><summary>Main menu</summary><img src="files/readmeFiles/mainMenu.png?raw=true" alt="Main menu"></details></h3>
-<h3><details open><summary>Selection of game mode</summary><img src="files/readmeFiles/selectGameModeMenu.png?raw=true" alt="selection of game mode"></details></h3>
-<h3><details open><summary>Example game</summary><img src="files/readmeFiles/exampleGame.png?raw=true" alt="example game"></details></h3>
-<h3><details open><summary>Example end game</summary><img src="files/readmeFiles/endOfGame.png?raw=true" alt="example end game"></details></h3>
-<h3><details open><summary>Hall of fame</summary><img src="files/readmeFiles/hallOfFame.png?raw=true" alt="Hall of fame"></details></h3>
-<h3><details open><summary>Help</summary><img src="files/readmeFiles/help.png?raw=true" alt="Help"></details></h3>
-<h3><details open><summary>Pause</summary><img src="files/readmeFiles/pause.png?raw=true" alt="Pause"></details></h3>
+<h3><details hide><summary>Main menu</summary><img src="files/readmeFiles/mainMenu.png?raw=true" alt="Main menu"></details></h3>
+<h3><details hide><summary>Selection of game mode</summary><img src="files/readmeFiles/selectGameModeMenu.png?raw=true" alt="selection of game mode"></details></h3>
+<h3><details hide><summary>Example game</summary><img src="files/readmeFiles/exampleGame.png?raw=true" alt="example game"></details></h3>
+<h3><details hide><summary>Example end game</summary><img src="files/readmeFiles/endOfGame.png?raw=true" alt="example end game"></details></h3>
+<h3><details hide><summary>Hall of fame</summary><img src="files/readmeFiles/hallOfFame.png?raw=true" alt="Hall of fame"></details></h3>
+<h3><details hide><summary>Help</summary><img src="files/readmeFiles/help.png?raw=true" alt="Help"></details></h3>
+<h3><details hide><summary>Pause</summary><img src="files/readmeFiles/pause.png?raw=true" alt="Pause"></details></h3>
+
+# Tworzenie instalatora do gry
+
+1. Przejdź do katalogu z `main.py`:
+    ```bash
+    cd /ścieżka/do/katalogu
+    ```
+2. W terminalu wykonaj poniższe polecenie, aby stworzyć plik wykonywalny:
+    ```bash
+    pyinstaller --onefile --noconsole --add-data "assets:assets" --add-data "settings:settings" --distpath=. main.py
+    ```
+3. Uruchom **Inno Setup Compiler** i skompiluj plik `setupScript.iss`:
+    - Otwórz Inno Setup Compiler.
+    - Wybierz plik `setupScript.iss`.
+    - Kliknij **Compile** (lub użyj skrótu `F9`), aby stworzyć instalator.
