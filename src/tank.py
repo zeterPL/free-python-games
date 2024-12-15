@@ -1,5 +1,6 @@
-from turtle import Turtle, onkey
+from turtle import Turtle
 import random
+from collections import deque
 from .bullet import Bullet
 from .tile import Tile
 from .bonus import Bonus, BonusType
@@ -67,7 +68,7 @@ class Tank:
 
     def moveTank(self, wantMove=True):
         newPosition = self.position + self.speed
-        if not self.destroyed and self.game.valid(newPosition) and wantMove and not self.game.tanksCollision(self, newPosition, int(self.game.tileSize * 0.8)):
+        if not self.destroyed and self.game.valid(newPosition) and wantMove and not Tank.tanksCollision(self.game, self, newPosition, int(self.game.tileSize * 0.8)):
             self.position = newPosition
 
         for bonus in self.game.bonuses[:]:
@@ -86,13 +87,7 @@ class Tank:
             Draw.drawExplosion(self.game, x + self.game.tileSize // 2, y + self.game.tileSize // 2)
             self.takeDamage(random.randint(self.game.basicAttack//2, self.game.basicAttack*2), f"tank {self.tankId} ran over a mine")
         elif tileValue == Tile.TELEPORT.value:
-            if self.speed.x:
-                numberOfTiles = self.game.columns - 2.5 if self.speed.x > 0 else self.game.columns - 2
-                self.position -= Vector(self.speed.x // abs(self.speed.x) * self.game.tileSize * numberOfTiles, 0)
-            else:
-                numberOfTiles = self.game.rows - 2.5 if self.speed.y > 0 else self.game.rows - 2
-                self.position -= Vector(0, self.speed.y // abs(self.speed.y) * self.game.tileSize * numberOfTiles)
-
+            self.teleportTankThroughTeleport()
         elif tileValue == Tile.FOREST.value:  # tank hide in forest
             self.tankTurtle.clear()
             self.hpTurtle.clear()
@@ -102,7 +97,50 @@ class Tank:
             Draw.drawTank(self)
             Bonus.displayActiveBonuses(self)
 
-    def teleportToMiddleTile(self):
+    def teleportTankThroughTeleport(self):
+        index = self.game.getTileIndexFromPoint(self.position)
+        row, column = divmod(index, self.game.columns)
+        newRow = row if self.speed.x else self.game.rows - row - 1 if self.speed.y > 0 else self.game.rows - row
+        newColumn = column if self.speed.y else self.game.columns - column - 1 if self.speed.x > 0 else self.game.columns - column - 2
+        potentialIndex = newRow * self.game.rows + newColumn
+        newIndex = Tank.getClosestAvailableIndex(self.game, potentialIndex, index+1)
+        self.position = Vector(*self.game.getTilePosition(newIndex)) + self.game.tankCentralization
+        self.hp = max(1, int(0.9 * self.hp))
+        self.game.teleportSound.play()
+
+    @staticmethod
+    def getClosestAvailableIndex(game, newIndex, repeatingIndex):
+        if Tank.checkIfIndexAvailableForTankTeleport(game, newIndex, [repeatingIndex]):
+            return newIndex
+        visited = {newIndex}
+        queue = deque([newIndex])
+        while queue:
+            current = queue.popleft()
+            currentRow, currentColumn = divmod(current, game.columns)
+            for deltaRow, deltaColumn in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                neighborRow = currentRow + deltaRow
+                neighborColumn = currentColumn + deltaColumn
+                if 0 <= neighborRow < game.rows and 0 <= neighborColumn < game.columns:
+                    neighborIndex = neighborRow * game.columns + neighborColumn
+                    if neighborIndex not in visited:
+                        visited.add(neighborIndex)
+                        if Tank.checkIfIndexAvailableForTankTeleport(game, neighborIndex, [repeatingIndex]):
+                            return neighborIndex
+                        queue.append(neighborIndex)
+        print("Not found available index, so teleport just to not available place to die.")
+        return newIndex  # If no available index was found return newIndex anyway
+
+    @staticmethod
+    def checkIfIndexAvailableForTankTeleport(game, newIndex, blockedIndex):
+        if (newIndex not in blockedIndex
+                and game.tiles[newIndex] in [Tile.ROAD.value, Tile.FOREST.value, Tile.DESTROYED_DESTRUCTIBLE_BLOCK.value, Tile.MINE.value]
+                and newIndex not in game.occupiedTilesByEnemies
+                and newIndex != game.getTileIndexFromPoint(game.firstTank.position)
+                and (game.secondTank is None or newIndex != game.getTileIndexFromPoint(game.secondTank.position))):
+            return True
+        return False
+
+    def teleportTankToMiddleTile(self):
         tileIndex = self.game.getTileIndexFromPoint(self.position)
         dx = (self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization) - self.position.x
         dy = (self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization) - self.position.y
@@ -114,12 +152,10 @@ class Tank:
             self.position = Vector(self.game.getTilePosition(tileIndex)[0] + self.game.tankCentralization, self.game.getTilePosition(tileIndex)[1] + self.game.tankCentralization)
 
     def setControls(self):
-        onkey(lambda: self.shoot(), self.shootingControl)
-        onkey(lambda: self.change(Vector(0, 0)), self.stoppingControl)
+        keyBindings = [(self.shoot, self.shootingControl), (lambda: self.change(Vector(0, 0)), self.stoppingControl)]
         for key in self.moveControls.keys():
-            onkey(lambda k=key: self.keyPressHandler(k), key)
-            if len(key) == 1 and key.isalpha():
-                onkey(lambda k=key: self.keyPressHandler(k), key.upper())
+            keyBindings.append((lambda k=key: self.keyPressHandler(k), key))
+        Utils.activateKeys(keyBindings)
 
     def keyPressHandler(self, key):
         self.keysPressed[key] = True
@@ -165,3 +201,16 @@ class Tank:
                 self.deathReason = reason
                 Draw.drawTank(self)
             self.game.damageSound.play()
+
+    @staticmethod
+    def tanksCollision(game, tankChecking, tankCheckingPosition=None, collisionThreshold=20):
+        tankCheckingPosition = tankCheckingPosition or tankChecking.position
+        for otherTank in game.allTanks:
+            distanceBetweenTanks = abs(tankCheckingPosition - otherTank.position)
+            if otherTank != tankChecking and distanceBetweenTanks < collisionThreshold and tankChecking.speed != Vector(0, 0):
+                if not otherTank.destroyed:  # to improve gameplay collision with destroyed tank won't take damage
+                    tankChecking.takeDamage(otherTank.attack//20, f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
+                    otherTank.takeDamage(tankChecking.attack//20, f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
+                tankChecking.speed = Vector(0, 0)
+                return True
+        return False

@@ -106,7 +106,7 @@ class Bonus:
             tank.attack *= 2
         elif bonusType == BonusType.SPEED:
             tank.activeBonuses[BonusType.SPEED] += amountTime or 10000
-            tank.teleportToMiddleTile()
+            tank.teleportTankToMiddleTile()
             tank.speedRatio = 2
             tank.change(tank.speed, tank.direction)
         elif bonusType == BonusType.RAILGUN:
@@ -140,7 +140,7 @@ class Bonus:
         elif bonusType == BonusType.ATTACK:
             tank.attack = tank.defaultAttack
         elif bonusType == BonusType.SPEED:
-            tank.teleportToMiddleTile()
+            tank.teleportTankToMiddleTile()
             tank.speedRatio = 1
             tank.change(tank.speed/2, tank.direction)
         elif bonusType == BonusType.RAILGUN:

@@ -19,14 +19,23 @@ class Utils:
             return function(*args, **kwargs)
 
     @staticmethod
+    def normalizeKeys(key):
+        if len(key) == 1 and key.isalpha():
+            return [key.lower(), key.upper()]
+        else:
+            return [key]
+
+    @staticmethod
     def activateKeys(keyBindings):
         for func, key in keyBindings:
-            onkey(func, key)
+            for variant in Utils.normalizeKeys(key):
+                onkey(func, variant)
 
     @staticmethod
     def deactivateKeys(keys):
         for key in keys:
-            onkey(None, key)  # type: ignore
+            for variant in Utils.normalizeKeys(key):
+                onkey(None, variant)  # type: ignore
 
     @staticmethod
     def writeText(turtleObject, x, y, message, textAlign="center", textFont=("Arial", 16, "bold"), textColor="black"):

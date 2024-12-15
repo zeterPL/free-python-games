@@ -95,7 +95,7 @@ Dostępne [wartości klawiszy](https://anzeljg.github.io/rin2/book2/2405/docs/tk
  - Poruszanie się w lewo Left: wartość klawisza np. a</br>
  - Poruszanie się w prawo Right: wartość klawisza np. d</br>
  - Strzelanie Shoot: wartość klawisza np. Return (odpowiednik Enter-a)</br>
- - Zatrzymywanie czołgu Stop: wartość klawisza np. Shift_L (odpowiednik lewego shifta)</br>
+ - Zatrzymywanie czołgu Stop: wartość klawisza np. Control_R (odpowiednik prawego controla)</br>
 
 **firstTankControls** - ustawienie klawiszy sterujących czołgiem 1 gracza</br>
 **secondTankControls** - ustawienie klawiszy sterujących czołgiem 2 gracza</br>
@@ -179,17 +179,17 @@ maxNumberOfBonuses = 5
 
 # Rodzaje pól mapy
 
-| ID | Pole mapy                        | Opis działania pola mapy                                                                                                              |
-|:--:|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| 0  | **brak pola**                    | Traktowane jako element nie należący do mapy.                                                                                         |
-| 1  | **droga**                        | Pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów.                                                              |
-| 2  | **rzeka**                        | Pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie.                                                       |
-| 3  | **las**                          | Pole po którym mogą jeździć czołgi, ale są wtedy niewidoczne.                                                                         |
-| 4  | **niezniszczalny&nbsp;blok**     | Blokuje czołgi i pociski, nie można go zniszczyć.                                                                                     |
-| 5  | **niszczący&nbsp;się&nbsp;blok** | Blokuje czołgi, ale można go zniszczyć strzelając do niego.                                                                           |
-| 6  | **zniszczony&nbsp;blok**         | Działa jak droga, jest to niszczący się blok który został zniszczony przez pocisk.                                                    |
-| 7  | **mina**                         | Działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbę obrażeń z zakresu od połowy do dwukrotności basicAttack.            |
-| 8  | **teleport**                     | Automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem. Teleportuje czołg na przeciwną stronę mapy. |
+| ID | Pole mapy                        | Opis działania pola mapy                                                                                                                                                     |
+|:--:|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0  | **brak pola**                    | Traktowane jako element nie należący do mapy.                                                                                                                                |
+| 1  | **droga**                        | Pole po którym mogą jeździć czołgi i nie ma żadnych specjalnych efektów.                                                                                                     |
+| 2  | **rzeka**                        | Pole po którym nie mogą jeździć czołgi, ale pociski mogą przelatywać przez nie.                                                                                              |
+| 3  | **las**                          | Pole po którym mogą jeździć czołgi, ale są wtedy niewidoczne.                                                                                                                |
+| 4  | **niezniszczalny&nbsp;blok**     | Blokuje czołgi i pociski, nie można go zniszczyć.                                                                                                                            |
+| 5  | **niszczący&nbsp;się&nbsp;blok** | Blokuje czołgi, ale można go zniszczyć strzelając do niego.                                                                                                                  |
+| 6  | **zniszczony&nbsp;blok**         | Działa jak droga, jest to niszczący się blok który został zniszczony przez pocisk.                                                                                           |
+| 7  | **mina**                         | Działa jak droga, ale przy wjeździe czołg otrzymuje losową liczbę obrażeń z zakresu od połowy do dwukrotności basicAttack.                                                   |
+| 8  | **teleport**                     | Automatycznie tworzy się na obrzeżach mapy dla pól, które nie są niezniszczalnym blokiem. Teleportuje czołg na przeciwną stronę mapy. Zabiera 10% hp, ale nie zabija czołgu. |
 
 # Rodzaje bonusów
 

@@ -156,7 +156,7 @@ class AITank(Tank):
                 self.stuckRounds = 0
             elif self.stuckRounds == 50:
                 print(f"{self.tankId=} was stuck 50 rounds try teleport it to middle")
-                self.teleportToMiddleTile()
+                self.teleportTankToMiddleTile()
             elif self.stuckRounds > 30:
                 self.getStuckTankOut()
             elif self.stuckRounds == 20:

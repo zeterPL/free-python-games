@@ -5,8 +5,8 @@ Player 1:
     Stop - right Ctrl
 Player 2:
     Movement - WASD keys
-    Shooting - Shift
-    Stop - left Ctrl
+    Shooting - U
+    Stop - I
 
 Global controls:
 Pause: P

@@ -1,4 +1,5 @@
 potencjalne:
+	poprawić helpa, żeby wyświetlał aktualne sterowanie, a nie te przykładowe
     baza (trzeba chronic)
     dodatkowe bonusy (pociski ze specalnymi efektami np. rozdzielające się lub samonaprawadzające się jeśli w pobliżu, dodatkowa aminucja jesli ograniczona ilosc)
 
@@ -6,6 +7,4 @@ potencjalne:
     dostep z 2 komputerow
 
 bugi:
-    teleport pozwala teleportowac czolg jeden na drugi oraz na przeszkody
-    tworzenie mapy teleportu na srodku mapy
-    hala sławy za mała, przy dłuższej nazwie wystaje poza obszar
+

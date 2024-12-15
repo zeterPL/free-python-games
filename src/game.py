@@ -92,6 +92,7 @@ class Game:
         self.damageSound = mixer.Sound("assets/sounds/damage.wav")
         self.gameOverSound = mixer.Sound("assets/sounds/game-over.mp3")
         self.victorySound = mixer.Sound("assets/sounds/victory.mp3")
+        self.teleportSound = mixer.Sound("assets/sounds/teleport.mp3")
 
         self.modalWidth, self.modalHeight = 400, 300
         self.showStartMenu()
@@ -312,18 +313,6 @@ class Game:
             Utils.safeOntimer(lambda: Utils.conditionalExecution(not self.gameRunning and currentRound == self.gameRound, lambda v=victory: self.initHallOfFame(v)), 2000)
         Utils.activateKeys([(self.startGame, "r")])
 
-    def tanksCollision(self, tankChecking, tankCheckingPosition=None, collisionThreshold=20):
-        tankCheckingPosition = tankCheckingPosition or tankChecking.position
-        for otherTank in self.allTanks:
-            distanceBetweenTanks = abs(tankCheckingPosition - otherTank.position)
-            if otherTank != tankChecking and distanceBetweenTanks < collisionThreshold and tankChecking.speed != Vector(0, 0):
-                if not otherTank.destroyed:  # to improve gameplay collision with destroyed tank won't take damage
-                    tankChecking.takeDamage(otherTank.attack//20, f"tank {tankChecking.tankId} collide with tank {otherTank.tankId}")
-                    otherTank.takeDamage(tankChecking.attack//20, f"tank {otherTank.tankId} collide with tank {tankChecking.tankId}")
-                tankChecking.speed = Vector(0, 0)
-                return True
-        return False
-
     def togglePause(self):
         self.gamePaused = not self.gamePaused
         if not self.gamePaused:
@@ -404,20 +393,22 @@ class Game:
             self.saveToHallOfFame(playerName, score)
             self.showHallOfFame()
 
-    def showHallOfFame(self, modalWidth=500, modalHeight=625):
-        Utils.setupGameOnScreen(max((self.columns + 1) * self.tileSize, 400), max((self.rows + 1) * self.tileSize, 500), self.centerGameOnScreen, self.startGameX, self.startGameY)
+    def showHallOfFame(self, modalWidth=420, modalHeight=525):
+        Utils.setupGameOnScreen(max((self.columns + 1) * self.tileSize, modalWidth), max((self.rows + 1) * self.tileSize, modalHeight), self.centerGameOnScreen, self.startGameX, self.startGameY)
         scores = self.loadHallOfFame()
         self.messageTurtle.clear()
         Draw.drawRectangle(self.messageTurtle, 0, 0, modalWidth, modalHeight, "white", "black", True)
-        Utils.writeText(self.messageTurtle, 0, 200, "🏆 Hall of Fame 🏆", textFont=("Arial", 40, "bold"))
+        Utils.writeText(self.messageTurtle, 0, 180, "🏆 Hall of Fame 🏆", textFont=("Arial", 36, "bold"))
 
         y_offset = 130
         for index, (name, score) in enumerate(scores, 1):
-            resultTextFont = ("Arial", 24, "bold") if index <= 3 else ("Arial", 20, "normal")
+            resultTextFont = ("Arial", 24, "bold") if index <= 3 else ("Arial", 16, "normal")
             resultTextColor = "gold" if index == 1 else "silver" if index == 2 else "chocolate3" if index == 3 else "black"
-            Utils.writeText(self.messageTurtle, -180, y_offset, f"{index}. {name[:10]} - {score}", "left", textFont=resultTextFont, textColor=resultTextColor)
+            Utils.writeText(self.messageTurtle, -180, y_offset, f"{index}.", "left", textFont=resultTextFont, textColor=resultTextColor)
+            Utils.writeText(self.messageTurtle, -140, y_offset, f"{name[:10]}", "left", textFont=resultTextFont, textColor=resultTextColor)
+            Utils.writeText(self.messageTurtle, 75, y_offset, f"{score}", "left", textFont=resultTextFont, textColor=resultTextColor)
             y_offset -= 35
-        Utils.writeText(self.messageTurtle, 0, -300, "Press 'R' to restart", textFont=("Arial", 16, "italic"))
+        Utils.writeText(self.messageTurtle, 0, -250, "Press 'R' to restart", textFont=("Arial", 12, "italic"))
 
     def loadHallOfFame(self):
         with open(self.hallOfFameStoragePath, "r", encoding="utf-8") as file:

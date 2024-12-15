@@ -113,7 +113,7 @@ class Tank {
   + delete()
   + change(tankSpeedDirection, angle)
   + moveTank(wantMove)
-  + teleportToMiddleTile()
+  + teleportTankToMiddleTile()
   + setControls()
   + keyPressHandler(key)
   + tankMovement()

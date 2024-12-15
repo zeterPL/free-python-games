@@ -93,7 +93,7 @@ Available [key values](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/ke
  - Move left Left: key value (e.g., a).<br/>
  - Move right Right: key value (e.g., d).<br/>
  - Shoot Shoot: key value (e.g., Return for Enter).<br/>
- - Stop tank Stop: key value (e.g., Shift_L for left Shift).<br/>
+ - Stop tank Stop: key value (e.g., Control_R for right Control).<br/>
 
 **firstTankControls** - Set keys for controlling player 1's tank.<br/>
 **secondTankControls** - Set keys for controlling player 2's tank.<br/>
@@ -177,17 +177,17 @@ maxNumberOfBonuses = 5
 
 # Map Tile Types
 
-| ID | Map Tile                      | Description                                                                  |
-|:--:|-------------------------------|------------------------------------------------------------------------------|
-| 0  | **no tile**                   | Treated as an element not part of the map.                                   |
-| 1  | **road**                      | Tile where tanks can move with no special effects.                           |
-| 2  | **river**                     | Tile where tanks cannot move, but bullets can pass through.                  |
-| 3  | **forest**                    | Tile where tanks can move but remain invisible.                              |
-| 4  | **indestructible&nbsp;block** | Blocks tanks and bullets, cannot be destroyed.                               |
-| 5  | **destructible&nbsp;block**   | Blocks tanks but can be destroyed by shooting.                               |
-| 6  | **destroyed&nbsp;block**      | Acts like a road; a destructible block destroyed by a bullet.                |
-| 7  | **mine**                      | Acts like a road but damages tanks randomly upon entry.                      |
-| 8  | **teleport**                  | Automatically appears on map edges and teleports tanks to the opposite side. |
+| ID | Map Tile                      | Description                                                                                                                                                                                |
+|:--:|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0  | **no tile**                   | Treated as an element that does not belong to the map.                                                                                                                                     |
+| 1  | **road**                      | Tile where tanks can move with no special effects.                                                                                                                                         |
+| 2  | **river**                     | Tile where tanks cannot move, but bullets can pass through.                                                                                                                                |
+| 3  | **forest**                    | Tile where tanks can move but remain invisible.                                                                                                                                            |
+| 4  | **indestructible&nbsp;block** | Blocks tanks and bullets, cannot be destroyed.                                                                                                                                             |
+| 5  | **destructible&nbsp;block**   | Blocks tanks but can be destroyed by shooting it.                                                                                                                                          |
+| 6  | **destroyed&nbsp;block**      | Acts like a road. It’s a destructible block that has been destroyed by a bullet.                                                                                                           |
+| 7  | **mine**                      | Acts like a road but damages tanks randomly upon entry. Damage ranges from half to twice the basicAttack.                                                                                  |
+| 8  | **teleport**                  | Automatically appears at the edges of the map on tiles that are not indestructible blocks. Teleports the tank to the opposite side of the map. Removes 10% HP, but does not kill the tank. |
 
 # Bonus Types
 
