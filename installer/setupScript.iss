@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 #define SourcePath ".."
 #define MyAppName "Tanks Battle Game"
-#define MyAppVersion "0.3"
+#define MyAppVersion "0.6"
 #define MyAppURL "https://github.com/zeterPL/free-python-games"
 #define MyAppExeName "main.exe"
 

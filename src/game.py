@@ -236,6 +236,8 @@ class Game:
 
         self.resetGame(max((self.columns + 1) * self.tileSize, 420), max((self.rows + 1) * self.tileSize, 420), self.startGameX, self.startGameY)
         Utils.activateKeys([(self.togglePause, "p"), (self.toggleHelpMenu, "h"), (self.showStartMenu, "Escape")])
+        if self.gameMode == GameMode.SINGLE:
+            Utils.activateKeys([(lambda: self.endGame(False, "The player surrendered."), "G")])
 
         firstTankPosition = self.getTilePosition(self.firstTankSpawnIndex)
         self.firstTank = Tank(self, firstTankPosition[0] + self.tankCentralization, firstTankPosition[1] + self.tankCentralization, "dark green", 0,
@@ -362,7 +364,7 @@ class Game:
                            (self.showStartMenu, "Escape")])
 
     def setGameMode(self, mode):
-        Utils.deactivateKeys(["1", "2", "3"])
+        Utils.deactivateKeys(["1", "2", "3", "G"])
         self.gameMode = mode
         self.startGame()
 
@@ -377,18 +379,30 @@ class Game:
             xOffset = -modalWidth / 2 + (modalWidth - longestTextLineWidth) / 2
             xOffset += leadingSpaces * 10
             Utils.writeText(self.messageTurtle, xOffset, yOffset, line, "left", ("Arial", 10, "normal"))
-            yOffset -= 20
+            yOffset -= 19
         if self.gameRunning:
-            Utils.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
+            Utils.writeText(self.messageTurtle, 0, yOffset, "Press 'H' to return to the game", textFont=("Arial", 8, "italic"))
         else:
-            Utils.writeText(self.messageTurtle, 0, yOffset - 10, "Press 'H' to return to the start menu", textFont=("Arial", 8, "italic"))
+            Utils.writeText(self.messageTurtle, 0, yOffset, "Press 'H' to return to the start menu", textFont=("Arial", 8, "italic"))
+
+    def calculateScore(self, victory):
+        nEnemies, rounds = len(self.enemyTanks), self.roundCounter
+        victoryMultiplier = nEnemies * (2 if victory else 1)
+        scoreForDestroyedTanks = int(400 * (self.basicHp / self.basicAttack) * sum(1 for tank in self.enemyTanks if tank.destroyed))
+        scoreForDamage = int(200 / self.basicAttack * sum(max(self.basicHp - tank.hp, 0) for tank in self.enemyTanks if not tank.destroyed))
+        scoreForRemainingHp = int(max(500 / self.basicHp * self.firstTank.hp, 0))
+        t1, t2, t3, t4 = 50*nEnemies, 75*nEnemies, 100*nEnemies, 150*nEnemies
+        scoreForRemainingTime = (25 * max(t1 - rounds, 0) +
+                                 10 * max(t2 - t1 - max(min(rounds-t1, t1), 0), 0) +
+                                 5 * max(t3 - t2 - max(min(rounds-t2, t2), 0), 0) +
+                                 round(max(t4 - t3 - max(min(rounds-t3, t3), 0), 0), -1))
+        print(f"{rounds=}\n{25 * max(t1 - rounds, 0)=}\n{10 * max(t2 - t1 - max(min(rounds-t1, t1), 0), 0)=}\n{5 * max(t3 - t2 - max(min(rounds-t2, t2), 0), 0)=}\n{round(1 * max(t4 - t3 - max(min(rounds-t3, t3), 0), 0), -1)=}")
+        print(f"{victoryMultiplier=} {scoreForDestroyedTanks=} {scoreForDamage=} {scoreForRemainingHp=} {scoreForRemainingTime=}")
+        return victoryMultiplier * (scoreForDestroyedTanks + scoreForDamage + scoreForRemainingHp + (scoreForRemainingTime if victory else 0))
 
     def initHallOfFame(self, victory):
         if os.path.exists(self.hallOfFameStoragePath):
-            score = int(len(self.enemyTanks) * (2 if victory else 1) *
-                        (20 * self.basicHp * sum(1 for tank in self.enemyTanks if tank.destroyed) +
-                        10 * sum(max(self.basicHp - tank.hp, 0) for tank in self.enemyTanks if not tank.destroyed) +
-                        max(10 * self.firstTank.hp, 0)))
+            score = self.calculateScore(victory)
             playerName = askstring("Hall of Fame", "Enter your name:\t\t\t\t") or "Anonymous"
             self.saveToHallOfFame(playerName, score)
             self.showHallOfFame()

@@ -12,20 +12,17 @@ ___
 5. :wrench: [Opcje pliku konfiguracyjnego](#opcje-pliku-konfiguracyjnego)
 6. :world_map: [Rodzaje pól mapy](#rodzaje-pól-mapy)
 7. :gift: [Rodzaje bonusów](#rodzaje-bonusów)
-8. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
-9. :godmode: [Klasy](#klasy)
-10. :recycle: [Stany gry](#stany-gry)
-11. :camera: [Screenshoty z gry](#screenshoty-z-gry)
-12. :hammer_and_wrench: [Tworzenie instalatora do gry](#tworzenie-instalatora-do-gry)
+8. :coin: [Punktacja](#punktacja)
+9. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
+10. :godmode: [Klasy](#klasy)
+11. :recycle: [Stany gry](#stany-gry)
+12. :camera: [Screenshoty z gry](#screenshoty-z-gry)
+13. :hammer_and_wrench: [Tworzenie instalatora do gry](#tworzenie-instalatora-do-gry)
 
 # Opis gry
 Gra w czołgi, w której celem jest zniszczenie wszystkich wrogich czołgów.</br>
 W zależności od wybranego trybu gry, gracz musi zniszczyć wszystkie wrogie czołgi komputera lub wrogi czołg innego gracza. 
-<h3><details open><summary>Demo game</summary>
 
-![Demo game](files/readmeFiles/demo.gif)
-
-</details></h3>
 
 # Funkcjonalność
 **Gra w czołgi**
@@ -203,6 +200,34 @@ maxNumberOfBonuses = 5
 | 6  | **prędkość**                  | Przez 10 sekund czołg porusza się 2 razy szybciej, pociski wystrzelone przez czołg też lecą 2 razy szybciej.                |
 | 7  | **railgun**                   | Przez 7 sekund czołg strzela laserem, laser natychmiast dociera do celu i zadaje obrażenia.                                 |
 | 8  | **wszystkie bonusy**          | Przez 5 sekund czołg otrzymuje wszystkie pozostałe bonusy, w tym jednorazowo zdrowie.                                       |
+
+# Punktacja
+
+### W trybie single player gracz otrzymuje punkty naliczane według wzoru:</br>
+**punkty** = **`m * (z + u + h + t)`**</br>
+**`m`** - **mnożnik punktowy**</br>
+**`z`** - **punkty za zniszczone czołgi**</br>
+**`u`** - **punkty za uszkodzone czołgi**</br>
+**`h`** - **punkty za pozostałe życie**</br>
+**`t`** - **punkty za pozostały czas**</br>
+
+**`m`** = **liczba_wrogich_czołgów * (2 jeśli wygrana lub 1 jeśli przegrana)**</br>
+**`z`** = **400 * podstawowe_życie / podstawowy_atak * liczba zniszczonych czołgów**</br>
+**`u`** = **200 / podstawowy_atak * (suma zabranego życia nie znisczonym czołgom)**</br>
+**`h`** = **500 / podstawowe_życie * pozostałe_życie**</br>
+**`t`** = **punkty_z_1_progu_czasowego + punkty_z_2_progu_czasowego + punkty_z_3_progu_czasowego + punkty_z_4_progu_czasowego**</br>
+
+### Progi czasowe:
+| Próg | Mnożnik w progu | Koniec progu czasowego               |
+|:----:|:---------------:|--------------------------------------|
+|  1   |       25        | 5 sekund * liczba_wrogich_czołgów    |
+|  2   |       10        | 7,5 sekundy * liczba_wrogich_czołgów |
+|  3   |        5        | 10 sekund * liczba_wrogich_czołgów   |
+|  4   |        1        | 15 sekund * liczba_wrogich_czołgów   |
+
+#### Punktacja za progi czasowe jest naliczana co 0.1 sekundy</br>
+np. jeśli był 1 wrogi czołg, a ukończyliśmy grę w 4.2 sekundy to otrzymamy:</br>
+<b>t = 25 * (10 * (5-4.2)s) + 10 * (10 * 2.5s) + 5 * (10 * 2.5s) + (10 * 5s) = 200 + 250 + 125 + 50 = 625</b></br>
 
 # Struktura plików projektu
 <!--- W cmd: tree /F  --->

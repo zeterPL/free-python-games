@@ -12,7 +12,8 @@ Global controls:
 Pause: P
 Help: H
 Restart: R
+Give up: G (only in single player mode)
 Exit: Escape
 
 The objective of the game is to destroy your opponent.
-Avoid mines and obstacles on the map.
+Avoid mines and obstacles on the map. Collect bonuses.

@@ -23,13 +23,18 @@ class File:
 
     @staticmethod
     def loadSettingsAndMapFromFile(filePath):
-        def parseInt(fileConfig, section, key, default=None, required=False):
+        def parseInt(fileConfig, section, key, default=None, required=False, onlyPositiveValues=True):
             try:
-                return int(fileConfig[section].get(key, default))
+                result = int(fileConfig[section].get(key, default))
+                if onlyPositiveValues and result < 0:
+                    raise NegativeValueError(f"Negative value for '{key}' in section '{section}' is not acceptable.")
+                return result
             except KeyError:
                 if required:
                     raise KeyError(f"Missing key '{key}' in section '{section}'.")
                 return default
+            except NegativeValueError as nve:
+                raise nve
             except ValueError:
                 raise ValueError(f"Invalid integer value for '{key}' in section '{section}'.")
 
@@ -123,3 +128,7 @@ class File:
             "bonusSpawningFrequency": bonusSpawningFrequency,
             "maxNumberOfBonuses": maxNumberOfBonuses
         }
+
+
+class NegativeValueError(ValueError):
+    pass

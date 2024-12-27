@@ -10,20 +10,17 @@ ___
 5. :wrench: [Configuration File Options](#configuration-file-options)
 6. :world_map: [Map Tile Types](#map-tile-types)
 7. :gift: [Bonus Types](#bonus-types)
-8. :file_folder: [Project File Structure](#project-file-structure)
-9. :godmode: [Classes](#classes)
-10. :recycle: [Game States](#game-states)
-11. :camera: [Game Screenshots](#game-screenshots)
-12. :hammer_and_wrench: [Creating a Game Installer](#creating-a-game-installer)
+8. :coin: [Scoring](#scoring)
+9. :file_folder: [Project File Structure](#project-file-structure)
+10. :godmode: [Classes](#classes)
+11. :recycle: [Game States](#game-states)
+12. :camera: [Game Screenshots](#game-screenshots)
+13. :hammer_and_wrench: [Creating a Game Installer](#creating-a-game-installer)
 
 # Game Description
 A tank game where the goal is to destroy all enemy tanks.<br/>
 Depending on the selected game mode, the player must destroy all computer-controlled enemy tanks or the enemy tank of another player. 
-<h3><details open><summary>Demo game</summary>
 
-![Demo game](files/readmeFiles/demo.gif)
-
-</details></h3>
 
 # Functionality
 **Tank Game**
@@ -201,6 +198,35 @@ maxNumberOfBonuses = 5
 | 6  | **speed**                 | Doubles the tank's speed and bullet speed for 10 seconds.                                  |
 | 7  | **railgun**               | Fires lasers for 7 seconds, instantly hitting targets.                                     |
 | 8  | **all bonuses**           | Activates all bonuses for 5 seconds, including a one-time health boost.                    |
+
+# Scoring
+
+### In single-player mode, the player earns points calculated using the following formula:</br>
+**points** = **`m * (z + u + h + t)`**</br>
+**`m`** - **score multiplier**</br>
+**`z`** - **points for destroyed tanks**</br>
+**`u`** - **points for damaged tanks**</br>
+**`h`** - **points for remaining health**</br>
+**`t`** - **points for remaining time**</br>
+
+**`m`** = **number_of_enemy_tanks * (2 if victory or 1 if defeat)**</br>
+**`z`** = **400 * basicHp / basicAttack * number_of_destroyed_tanks**</br>
+**`u`** = **200 / basicAttack * (sum of health lost by undestroyed tanks)**</br>
+**`h`** = **500 / basicHp * remaining_health**</br>
+**`t`** = **points_from_1st_time_threshold + points_from_2nd_time_threshold + points_from_3rd_time_threshold + points_from_4th_time_threshold**</br>
+
+### Time thresholds:
+| Threshold | Multiplier in threshold | End of time threshold               |
+|:---------:|:-----------------------:|-------------------------------------|
+|     1     |           25            | 5 seconds * number_of_enemy_tanks   |
+|     2     |           10            | 7.5 seconds * number_of_enemy_tanks |
+|     3     |            5            | 10 seconds * number_of_enemy_tanks  |
+|     4     |            1            | 15 seconds * number_of_enemy_tanks  |
+
+#### Points for time thresholds are calculated every 0.1 seconds</br>
+For example, if there was 1 enemy tank and the game was completed in 4.2 seconds, we would receive:</br>
+<b>t = 25 * (10 * (5-4.2)s) + 10 * (10 * 2.5s) + 5 * (10 * 2.5s) + (10 * 5s) = 200 + 250 + 125 + 50 = 625</b></br>
+
 
 # Project File Structure
 <!---cmd: tree /F  --->
