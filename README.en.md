@@ -10,7 +10,7 @@ ___
 5. :wrench: [Configuration File Options](#configuration-file-options)
 6. :world_map: [Map Tile Types](#map-tile-types)
 7. :gift: [Bonus Types](#bonus-types)
-8. :coin: [Scoring](#scoring)
+8. :gem: [Scoring](#scoring)
 9. :file_folder: [Project File Structure](#project-file-structure)
 10. :godmode: [Classes](#classes)
 11. :recycle: [Game States](#game-states)
@@ -19,8 +19,12 @@ ___
 
 # Game Description
 A tank game where the goal is to destroy all enemy tanks.<br/>
-Depending on the selected game mode, the player must destroy all computer-controlled enemy tanks or the enemy tank of another player. 
+Depending on the selected game mode, the player must destroy all computer-controlled enemy tanks or the enemy tank of another player.
+<h3><details open><summary>Demo game</summary>
 
+![Demo game](files/readmeFiles/demo.gif)
+
+</details></h3>
 
 # Functionality
 **Tank Game**

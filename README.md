@@ -12,7 +12,7 @@ ___
 5. :wrench: [Opcje pliku konfiguracyjnego](#opcje-pliku-konfiguracyjnego)
 6. :world_map: [Rodzaje pól mapy](#rodzaje-pól-mapy)
 7. :gift: [Rodzaje bonusów](#rodzaje-bonusów)
-8. :coin: [Punktacja](#punktacja)
+8. :gem: [Punktacja](#punktacja)
 9. :file_folder: [Struktura plików projektu](#struktura-plików-projektu)
 10. :godmode: [Klasy](#klasy)
 11. :recycle: [Stany gry](#stany-gry)
@@ -21,8 +21,12 @@ ___
 
 # Opis gry
 Gra w czołgi, w której celem jest zniszczenie wszystkich wrogich czołgów.</br>
-W zależności od wybranego trybu gry, gracz musi zniszczyć wszystkie wrogie czołgi komputera lub wrogi czołg innego gracza. 
+W zależności od wybranego trybu gry, gracz musi zniszczyć wszystkie wrogie czołgi komputera lub wrogi czołg innego gracza.
+<h3><details open><summary>Demo game</summary>
 
+![Demo game](files/readmeFiles/demo.gif)
+
+</details></h3>
 
 # Funkcjonalność
 **Gra w czołgi**
